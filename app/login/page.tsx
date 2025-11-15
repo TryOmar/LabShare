@@ -153,7 +153,26 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              {error && <p className="text-red-600 mb-4">{error}</p>}
+              {error && (
+                <div className="mb-4">
+                  <p className="text-red-600 mb-2">{error}</p>
+                  {error === "Email not found in student database" && (
+                    <div className="bg-gray-50 border border-gray-300 p-4 text-sm text-gray-700">
+                      <p className="mb-3">
+                        Email not registered. Submit your ITI email through our form to request access.
+                      </p>
+                      <a
+                        href="https://forms.gle/yUSfPU1Vo4aHQKud7"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold"
+                      >
+                        Submit Email Registration Form →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={loading}
