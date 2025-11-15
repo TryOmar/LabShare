@@ -359,7 +359,7 @@ export default function SubmissionPage() {
         {isOwner && (
           <div className="mt-8 flex gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push(`/lab/${submission?.lab_id}?edit=${submissionId}`)}
               className="px-6 py-2 bg-black text-white font-semibold hover:bg-gray-800"
             >
               Edit

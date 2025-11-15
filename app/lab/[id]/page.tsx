@@ -40,6 +40,8 @@ export default function LabPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [userSubmission, setUserSubmission] = useState<Submission | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [editSubmissionId, setEditSubmissionId] = useState<string | null>(null);
+  const [editSubmissionData, setEditSubmissionData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const router = useRouter();
@@ -47,11 +49,17 @@ export default function LabPage() {
   const labId = params.id as string;
 
   useEffect(() => {
-    // Check if upload=true is in query params
+    // Check if upload=true or edit=<id> is in query params
     const searchParams = new URLSearchParams(window.location.search);
     const shouldUpload = searchParams.get("upload") === "true";
+    const editId = searchParams.get("edit");
     
     if (shouldUpload) {
+      setShowUploadModal(true);
+      // Remove the query param from URL
+      router.replace(`/lab/${labId}`, { scroll: false });
+    } else if (editId) {
+      setEditSubmissionId(editId);
       setShowUploadModal(true);
       // Remove the query param from URL
       router.replace(`/lab/${labId}`, { scroll: false });
@@ -124,6 +132,32 @@ export default function LabPage() {
 
     loadLabData();
   }, [labId, router]);
+
+  useEffect(() => {
+    // Load submission data when editing
+    const loadSubmissionData = async () => {
+      if (!editSubmissionId) return;
+
+      try {
+        const response = await fetch(`/api/submission/${editSubmissionId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          console.error("Failed to load submission for editing");
+          return;
+        }
+
+        const data = await response.json();
+        setEditSubmissionData(data);
+      } catch (err) {
+        console.error("Error loading submission data:", err);
+      }
+    };
+
+    loadSubmissionData();
+  }, [editSubmissionId]);
 
   if (loading) {
     return (
@@ -206,8 +240,11 @@ export default function LabPage() {
         {showUploadModal && (
           <UploadModal
             labId={labId}
+            existingSubmissionData={editSubmissionData}
             onClose={() => {
               setShowUploadModal(false);
+              setEditSubmissionId(null);
+              setEditSubmissionData(null);
               // Reload the page to refresh lab data and make it accessible
               window.location.href = `/lab/${labId}`;
             }}
@@ -261,10 +298,11 @@ export default function LabPage() {
 
 interface UploadModalProps {
   labId: string;
+  existingSubmissionData?: any;
   onClose: () => void;
 }
 
-function UploadModal({ labId, onClose }: UploadModalProps) {
+function UploadModal({ labId, existingSubmissionData, onClose }: UploadModalProps) {
   const [title, setTitle] = useState("");
   const [uploadType, setUploadType] = useState<"paste" | "file">("paste");
   const [codeContent, setCodeContent] = useState("");
@@ -288,6 +326,30 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     ".txt": "text",
     ".sql": "SQL"
   };
+
+  // Pre-populate form when editing existing submission
+  useEffect(() => {
+    if (existingSubmissionData) {
+      const { submission, files: existingFiles } = existingSubmissionData;
+      
+      if (submission) {
+        setTitle(submission.title || "");
+      }
+      
+      if (existingFiles && existingFiles.length > 0) {
+        // If there's only one file, use paste mode and pre-populate it
+        if (existingFiles.length === 1) {
+          setUploadType("paste");
+          setCodeContent(existingFiles[0].content || "");
+          setLanguage(existingFiles[0].language || "javascript");
+        } else {
+          // For multiple files, keep file upload mode
+          // Note: We can't pre-populate File objects, so user will need to re-upload
+          setUploadType("file");
+        }
+      }
+    }
+  }, [existingSubmissionData]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -370,7 +432,9 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white border-2 border-black p-6 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-black mb-4">Upload Solution</h2>
+        <h2 className="text-2xl font-bold text-black mb-4">
+          {existingSubmissionData ? "Edit Solution" : "Upload Solution"}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
@@ -479,7 +543,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               disabled={loading}
               className="flex-1 bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
             >
-              {loading ? "Uploading..." : "Upload"}
+              {loading ? (existingSubmissionData ? "Saving..." : "Uploading...") : (existingSubmissionData ? "Save" : "Upload")}
             </button>
             <button
               type="button"
