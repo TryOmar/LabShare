@@ -243,7 +243,7 @@ export default function DashboardPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="border border-black p-4">
+            <div className="border border-black p-4 mb-4">
               <h3 className="font-bold text-black mb-4">Profile</h3>
               <div className="space-y-2 text-sm">
                 <p>
@@ -262,6 +262,20 @@ export default function DashboardPage() {
                   <span className="text-gray-600">{track?.name}</span>
                 </p>
               </div>
+            </div>
+            <div className="border border-black p-4">
+              <h3 className="font-bold text-black mb-4">Need Help?</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Report issues, request assistance, or suggest improvements to the platform. We're here to help and listen to your feedback.
+              </p>
+              <a
+                href="https://forms.gle/25mEvcjTPrhA6THf9"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
+              >
+                Report Issue or Request Help
+              </a>
             </div>
           </div>
         </div>
