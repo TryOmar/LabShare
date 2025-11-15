@@ -59,6 +59,18 @@ export async function GET(
       .eq("is_deleted", false)
       .single();
 
+    // Check if this is an upload request (allows access for uploading)
+    const { searchParams } = new URL(request.url);
+    const isUploadRequest = searchParams.get("upload") === "true";
+
+    // Security check: User must have submitted this lab to access it (unless it's an upload request)
+    if (!userSubmissionData && !isUploadRequest) {
+      return NextResponse.json(
+        { error: "Access denied. You must submit a solution for this lab before accessing it." },
+        { status: 403 }
+      );
+    }
+
     // Check if user has unlocked this lab
     const { data: labUnlock } = await supabase
       .from("lab_unlocks")
@@ -74,9 +86,14 @@ export async function GET(
       .eq("lab_id", labId)
       .eq("is_deleted", false);
 
-    // If not unlocked and hasn't submitted, show only own
-    if (!labUnlock && !userSubmissionData) {
+    // If not unlocked and hasn't submitted, show only own (unless it's an upload request)
+    if (!labUnlock && !userSubmissionData && !isUploadRequest) {
       submissionsQuery = submissionsQuery.eq("student_id", studentId);
+    }
+
+    // For upload requests, don't show any submissions until user has submitted
+    if (isUploadRequest && !userSubmissionData) {
+      submissionsQuery = submissionsQuery.eq("student_id", studentId).limit(0);
     }
 
     const { data: submissionData, error: submissionError } = await submissionsQuery;

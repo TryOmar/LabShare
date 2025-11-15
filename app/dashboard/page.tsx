@@ -31,6 +31,17 @@ interface Lab {
   description: string;
 }
 
+interface Lab {
+  id: string;
+  lab_number: number;
+  title: string;
+  course_id: string;
+  courses?: {
+    id: string;
+    name: string;
+  };
+}
+
 interface Submission {
   id: string;
   student_id: string;
@@ -39,6 +50,8 @@ interface Submission {
   view_count: number;
   created_at: string;
   students?: Student;
+  labs?: Lab;
+  hasAccess?: boolean;
 }
 
 export default function DashboardPage() {
@@ -120,6 +133,7 @@ export default function DashboardPage() {
                   courses.map((course) => (
                     <div
                       key={course.id}
+                      onClick={() => router.push(`/labs?course=${course.id}`)}
                       className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
                     >
                       <h3 className="font-semibold text-black">
@@ -145,30 +159,81 @@ export default function DashboardPage() {
               </h2>
               <div className="space-y-2">
                 {recentSubmissions.length > 0 ? (
-                  recentSubmissions.map((submission) => (
-                    <div
-                      key={submission.id}
-                      onClick={() => router.push(`/submission/${submission.id}`)}
-                      className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold text-black">
-                            {submission.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            by {submission.students?.name}
-                          </p>
+                  recentSubmissions.map((submission) => {
+                    const isUserSubmission = submission.student_id === student?.id;
+                    const isLocked = !submission.hasAccess;
+                    return (
+                      <div
+                        key={submission.id}
+                        onClick={() => {
+                          if (!isLocked) {
+                            router.push(`/submission/${submission.id}`);
+                          }
+                        }}
+                        className={`border border-black p-4 relative ${
+                          isLocked
+                            ? "bg-gray-100 opacity-60 cursor-not-allowed"
+                            : "hover:bg-gray-50 cursor-pointer"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+                                {submission.labs?.courses?.name && (
+                                  <span className="font-medium">
+                                    {submission.labs.courses.name}
+                                  </span>
+                                )}
+                                {submission.labs && (
+                                  <>
+                                    {submission.labs?.courses?.name && <span>•</span>}
+                                    <span>
+                                      {submission.labs.title.startsWith(`Lab ${submission.labs.lab_number}`) 
+                                        ? submission.labs.title 
+                                        : `Lab ${submission.labs.lab_number}: ${submission.labs.title}`}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className={`font-semibold text-base ${isLocked ? "text-gray-500" : "text-black"}`}>
+                                  {submission.title}
+                                </h3>
+                                {isLocked && (
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 text-gray-600 flex-shrink-0"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                    />
+                                  </svg>
+                                )}
+                              </div>
+                              <p className={`text-sm ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
+                                by {submission.students?.name}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 ${
+                            isLocked ? "bg-gray-200 text-gray-500" : "bg-gray-100"
+                          }`}>
+                            {submission.view_count} views
+                          </span>
                         </div>
-                        <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
-                          {submission.view_count} views
-                        </span>
+                        <p className={`text-xs mt-2 ${isLocked ? "text-gray-400" : "text-gray-500"}`}>
+                          {new Date(submission.created_at).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {new Date(submission.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-gray-600">No submissions yet</p>
                 )}

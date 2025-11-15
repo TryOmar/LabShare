@@ -52,6 +52,24 @@ export async function GET(
 
     const isOwner = submissionData.student_id === studentId;
 
+    // Security check: User must have submitted a solution for this lab to view any submission
+    if (!isOwner) {
+      const { data: userSubmission } = await supabase
+        .from("submissions")
+        .select("id")
+        .eq("lab_id", submissionData.lab_id)
+        .eq("student_id", studentId)
+        .eq("is_deleted", false)
+        .single();
+
+      if (!userSubmission) {
+        return NextResponse.json(
+          { error: "Access denied. You must submit a solution for this lab before viewing other submissions." },
+          { status: 403 }
+        );
+      }
+    }
+
     // Increment view count (only for non-owners) - server-side validation
     if (!isOwner) {
       await supabase

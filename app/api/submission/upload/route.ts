@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Unlock lab for this student (ignore if already exists)
-    await supabase
+    const { error: unlockError } = await supabase
       .from("lab_unlocks")
       .insert([
         {
@@ -139,10 +139,13 @@ export async function POST(request: NextRequest) {
         },
       ])
       .select()
-      .single()
-      .catch(() => {
-        // Ignore if already exists
-      });
+      .single();
+
+    // Ignore error if unlock already exists (unique constraint violation)
+    if (unlockError && unlockError.code !== "23505") {
+      // 23505 is PostgreSQL unique constraint violation - that's okay, it already exists
+      console.error("Error unlocking lab:", unlockError);
+    }
 
     return NextResponse.json({
       success: true,

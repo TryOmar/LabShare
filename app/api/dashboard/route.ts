@@ -58,10 +58,14 @@ export async function GET(request: NextRequest) {
       .map((ct: any) => ct.courses)
       .filter(Boolean);
 
-    // Get recent submissions (all submissions, not just user's)
+    // Get recent submissions with lab and course information
     const { data: submissionData, error: submissionError } = await supabase
       .from("submissions")
-      .select("*, students(id, name, email)")
+      .select(`
+        *,
+        students(id, name, email),
+        labs(id, lab_number, title, course_id, courses(id, name))
+      `)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -74,11 +78,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get all labs the user has submitted to
+    const { data: userSubmissions } = await supabase
+      .from("submissions")
+      .select("lab_id")
+      .eq("student_id", studentId)
+      .eq("is_deleted", false);
+
+    const solvedLabIds = new Set(
+      (userSubmissions || []).map((s: any) => s.lab_id)
+    );
+
+    // Add hasAccess flag to each submission
+    const submissionsWithAccess = (submissionData || []).map((submission: any) => ({
+      ...submission,
+      hasAccess: submission.student_id === studentId || solvedLabIds.has(submission.lab_id),
+    }));
+
     return NextResponse.json({
       student: studentData,
       track: studentData.tracks,
       courses: coursesList,
-      recentSubmissions: submissionData || [],
+      recentSubmissions: submissionsWithAccess,
     });
   } catch (error) {
     console.error("Error in dashboard API:", error);

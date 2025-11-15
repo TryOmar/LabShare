@@ -16,6 +16,7 @@ interface Lab {
   lab_number: number;
   title: string;
   description: string;
+  hasSubmission?: boolean;
 }
 
 interface Student {
@@ -71,8 +72,12 @@ export default function LabsPage() {
         });
         setLabs(labsMap);
 
-        // Set first course as selected
-        if (data.courses && data.courses.length > 0) {
+        // Set first course as selected if no course param in URL
+        const params = new URLSearchParams(window.location.search);
+        const courseParam = params.get("course");
+        if (courseParam && data.courses.some((c: Course) => c.id === courseParam)) {
+          setSelectedCourse(courseParam);
+        } else if (data.courses && data.courses.length > 0) {
           setSelectedCourse(data.courses[0].id);
         }
       } catch (err) {
@@ -112,7 +117,10 @@ export default function LabsPage() {
               {courses.map((course) => (
                 <button
                   key={course.id}
-                  onClick={() => setSelectedCourse(course.id)}
+                  onClick={() => {
+                    setSelectedCourse(course.id);
+                    router.replace(`/labs?course=${course.id}`);
+                  }}
                   className={`w-full text-left p-3 border border-black ${
                     selectedCourse === course.id
                       ? "bg-black text-white"
@@ -129,29 +137,62 @@ export default function LabsPage() {
           <div className="lg:col-span-3">
             {selectedLabs && selectedLabs.length > 0 ? (
               <div className="space-y-3">
-                {selectedLabs.map((lab) => (
-                  <div
-                    key={lab.id}
-                    onClick={() => router.push(`/lab/${lab.id}`)}
-                    className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-black">
-                          Lab {lab.lab_number}: {lab.title}
-                        </h3>
-                        {lab.description && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {lab.description}
-                          </p>
-                        )}
+                {selectedLabs.map((lab) => {
+                  const isLocked = !lab.hasSubmission;
+                  return (
+                    <div
+                      key={lab.id}
+                      onClick={() => {
+                        if (!isLocked) {
+                          router.push(`/lab/${lab.id}`);
+                        } else {
+                          router.push(`/lab/${lab.id}/locked`);
+                        }
+                      }}
+                        className={`border border-black p-4 relative ${
+                        isLocked
+                          ? "bg-gray-100 opacity-60 cursor-pointer"
+                          : "hover:bg-gray-50 cursor-pointer"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className={`font-semibold ${isLocked ? "text-gray-500" : "text-black"}`}>
+                              Lab {lab.lab_number}: {lab.title}
+                            </h3>
+                            {isLocked && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5 text-gray-600 flex-shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          {lab.description && (
+                            <p className={`text-sm mt-1 ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
+                              {lab.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 ${
+                          isLocked ? "bg-gray-200 text-gray-500" : "bg-gray-100"
+                        }`}>
+                          Lab {lab.lab_number}
+                        </span>
                       </div>
-                      <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
-                        Lab {lab.lab_number}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-600">No labs available for this course</p>

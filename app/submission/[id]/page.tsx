@@ -70,6 +70,7 @@ export default function SubmissionPage() {
   const [track, setTrack] = useState<Track | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
   const router = useRouter();
   const params = useParams();
   const submissionId = params.id as string;
@@ -87,6 +88,28 @@ export default function SubmissionPage() {
           if (response.status === 401) {
             // Unauthorized - redirect to login
             router.push("/login");
+            return;
+          }
+          if (response.status === 403) {
+            // Access denied - user hasn't solved this lab
+            const errorData = await response.json().catch(() => ({}));
+            setError(errorData.error || "Access denied. You must submit a solution for this lab before viewing other submissions.");
+            setLoading(false);
+            // Still try to get student data for navigation
+            try {
+              const authResponse = await fetch("/api/auth/status", {
+                method: "GET",
+                credentials: "include",
+              });
+              if (authResponse.ok) {
+                const authData = await authResponse.json();
+                if (authData.authenticated && authData.student) {
+                  setStudent(authData.student);
+                }
+              }
+            } catch (err) {
+              // Ignore auth errors
+            }
             return;
           }
           throw new Error(`Failed to load submission: ${response.statusText}`);
@@ -149,6 +172,42 @@ export default function SubmissionPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <p className="text-black">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <Navigation student={student} track={track} />
+        <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+          <div className="border-2 border-red-500 bg-red-50 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
+            </div>
+            <p className="text-red-700 mb-4">{error}</p>
+            <button
+              onClick={() => router.push("/labs")}
+              className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800"
+            >
+              Back to Labs
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

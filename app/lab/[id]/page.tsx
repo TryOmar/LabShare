@@ -29,6 +29,7 @@ interface Submission {
   id: string;
   title: string;
   student_id: string;
+  view_count: number;
   students?: Student;
 }
 
@@ -40,15 +41,36 @@ export default function LabPage() {
   const [userSubmission, setUserSubmission] = useState<Submission | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
   const router = useRouter();
   const params = useParams();
   const labId = params.id as string;
 
   useEffect(() => {
+    // Check if upload=true is in query params
+    const searchParams = new URLSearchParams(window.location.search);
+    const shouldUpload = searchParams.get("upload") === "true";
+    
+    if (shouldUpload) {
+      setShowUploadModal(true);
+      // Remove the query param from URL
+      router.replace(`/lab/${labId}`, { scroll: false });
+    }
+  }, [labId, router]);
+
+  useEffect(() => {
     const loadLabData = async () => {
       try {
+        // Check if this is an upload request
+        const searchParams = new URLSearchParams(window.location.search);
+        const isUploadRequest = searchParams.get("upload") === "true";
+        
         // Fetch lab data from API route (server-side validation)
-        const response = await fetch(`/api/lab/${labId}`, {
+        const url = isUploadRequest 
+          ? `/api/lab/${labId}?upload=true`
+          : `/api/lab/${labId}`;
+        
+        const response = await fetch(url, {
           method: "GET",
           credentials: "include", // Include cookies
         });
@@ -57,6 +79,28 @@ export default function LabPage() {
           if (response.status === 401) {
             // Unauthorized - redirect to login
             router.push("/login");
+            return;
+          }
+          if (response.status === 403) {
+            // Access denied - lab is locked
+            const errorData = await response.json().catch(() => ({}));
+            setError(errorData.error || "Access denied. You must submit a solution for this lab before accessing it.");
+            setLoading(false);
+            // Still try to get student data for navigation
+            try {
+              const authResponse = await fetch("/api/auth/status", {
+                method: "GET",
+                credentials: "include",
+              });
+              if (authResponse.ok) {
+                const authData = await authResponse.json();
+                if (authData.authenticated && authData.student) {
+                  setStudent(authData.student);
+                }
+              }
+            } catch (err) {
+              // Ignore auth errors
+            }
             return;
           }
           throw new Error(`Failed to load lab: ${response.statusText}`);
@@ -85,6 +129,42 @@ export default function LabPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <p className="text-black">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <Navigation student={student} track={track} />
+        <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+          <div className="border-2 border-red-500 bg-red-50 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
+            </div>
+            <p className="text-red-700 mb-4">{error}</p>
+            <button
+              onClick={() => router.push("/labs")}
+              className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800"
+            >
+              Back to Labs
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -128,8 +208,8 @@ export default function LabPage() {
             labId={labId}
             onClose={() => {
               setShowUploadModal(false);
-              // Reload submissions
-              window.location.reload();
+              // Reload the page to refresh lab data and make it accessible
+              window.location.href = `/lab/${labId}`;
             }}
           />
         )}
@@ -148,7 +228,7 @@ export default function LabPage() {
                   className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
                 >
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-black">
                         {submission.title}
                       </h3>
@@ -156,11 +236,16 @@ export default function LabPage() {
                         by {submission.students?.name}
                       </p>
                     </div>
-                    <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
-                      {submission.students?.id === student?.id
-                        ? "Your Solution"
-                        : "View"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {submission.students?.id === student?.id && (
+                        <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
+                          Your Solution
+                        </span>
+                      )}
+                      <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
+                        {submission.view_count} {submission.view_count === 1 ? 'view' : 'views'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}

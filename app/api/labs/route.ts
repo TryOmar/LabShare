@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       .map((ct: any) => ct.courses)
       .filter(Boolean);
 
-    // Get labs for each course
+    // Get labs for each course with submission status
     const labsByCourse: Record<string, any[]> = {};
     for (const course of coursesList) {
       const { data: labData, error: labError } = await supabase
@@ -60,7 +60,24 @@ export async function GET(request: NextRequest) {
         .order("lab_number");
 
       if (!labError && labData) {
-        labsByCourse[course.id] = labData;
+        // Check which labs the user has submitted
+        const labIds = labData.map((lab: any) => lab.id);
+        const { data: userSubmissions } = await supabase
+          .from("submissions")
+          .select("lab_id")
+          .eq("student_id", studentId)
+          .eq("is_deleted", false)
+          .in("lab_id", labIds);
+
+        const submittedLabIds = new Set(
+          (userSubmissions || []).map((s: any) => s.lab_id)
+        );
+
+        // Add hasSubmission flag to each lab
+        labsByCourse[course.id] = labData.map((lab: any) => ({
+          ...lab,
+          hasSubmission: submittedLabIds.has(lab.id),
+        }));
       }
     }
 
