@@ -16,17 +16,32 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("/api/auth/status", {
+        const authResponse = await fetch("/api/auth/status", {
           method: "GET",
           credentials: "include",
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated) {
-            // User is already logged in, redirect to terms (will redirect to dashboard if already accepted)
-            router.push("/terms");
-            return;
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          if (authData.authenticated) {
+            // User is authenticated, check if terms are accepted
+            const termsResponse = await fetch("/api/auth/check-terms", {
+              method: "GET",
+              credentials: "include",
+            });
+
+            if (termsResponse.ok) {
+              const termsData = await termsResponse.json();
+              if (termsData.termsAccepted) {
+                // Both authenticated and terms accepted, go directly to dashboard
+                router.push("/dashboard");
+                return;
+              } else {
+                // Authenticated but terms not accepted, go to terms
+                router.push("/terms");
+                return;
+              }
+            }
           }
         }
       } catch (err) {
