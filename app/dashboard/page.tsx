@@ -65,6 +65,21 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
+        // Check if terms are accepted first
+        const termsResponse = await fetch("/api/auth/check-terms", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (termsResponse.ok) {
+          const termsData = await termsResponse.json();
+          if (!termsData.termsAccepted) {
+            // Terms not accepted, redirect to terms page
+            router.push("/terms");
+            return;
+          }
+        }
+
         // Fetch dashboard data from API route (server-side validation)
         const response = await fetch("/api/dashboard", {
           method: "GET",

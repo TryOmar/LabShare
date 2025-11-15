@@ -24,8 +24,8 @@ export default function LoginPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.authenticated) {
-            // User is already logged in, redirect to dashboard
-            router.push("/dashboard");
+            // User is already logged in, redirect to terms (will redirect to dashboard if already accepted)
+            router.push("/terms");
             return;
           }
         }
@@ -112,8 +112,8 @@ export default function LoginPage() {
 
       // Cookies are set by the server (httpOnly, secure, 7 days expiration)
       // No need to store in localStorage - the cookie persists across sessions
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to terms page first (will redirect to dashboard if already accepted)
+      router.push("/terms");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
