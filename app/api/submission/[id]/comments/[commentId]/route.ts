@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+
+/**
+ * DELETE /api/submission/[id]/comments/[commentId]
+ * Deletes a comment (soft delete - sets is_deleted to true).
+ * Only the owner can delete their comment.
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; commentId: string }> }
+) {
+  try {
+    // Validate authentication
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+
+    const { commentId } = await params;
+    const supabase = await createClient();
+
+    // Get comment to verify ownership
+    const { data: commentData, error: commentError } = await supabase
+      .from("comments")
+      .select("student_id")
+      .eq("id", commentId)
+      .single();
+
+    if (commentError || !commentData) {
+      return NextResponse.json(
+        { error: "Comment not found" },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership
+    if (commentData.student_id !== studentId) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot delete other users' comments" },
+        { status: 403 }
+      );
+    }
+
+    // Soft delete
+    const { error: deleteError } = await supabase
+      .from("comments")
+      .update({ is_deleted: true })
+      .eq("id", commentId);
+
+    if (deleteError) {
+      console.error("Error deleting comment:", deleteError);
+      return NextResponse.json(
+        { error: "Failed to delete comment" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error in delete comment API:", error);
+    return NextResponse.json(
+      { error: "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
