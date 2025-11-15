@@ -134,9 +134,14 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="w-full max-w-md">
         <div className="bg-white border border-black p-8">
-          <h1 className="text-2xl font-bold mb-6 text-black">
-            ITI Share Solutions
+          <h1 className="text-2xl font-bold mb-4 text-black">
+            Lab Sharing
           </h1>
+          <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+            A collaborative learning platform where students share lab solutions, learn from each other, 
+            and provide constructive feedback. Complete your labs, review with your instructor, then 
+            explore peer solutions to enhance your understanding.
+          </p>
 
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit}>

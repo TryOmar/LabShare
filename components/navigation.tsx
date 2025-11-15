@@ -30,7 +30,7 @@ export default function Navigation({ student, track }: NavigationProps) {
       <div className="px-6 py-4 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold text-black">
-            ITI Share Solutions
+            Lab Sharing
           </h1>
           <p className="text-xs text-gray-600">
             {track?.code} • {student?.name}
