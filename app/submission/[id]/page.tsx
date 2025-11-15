@@ -58,6 +58,7 @@ const languageColors: Record<string, string> = {
   go: "bg-cyan-100 text-cyan-800",
   rust: "bg-red-100 text-red-800",
   text: "bg-gray-100 text-gray-800",
+  SQL:"bg-blue-100 text-white-800"
 };
 
 export default function SubmissionPage() {
