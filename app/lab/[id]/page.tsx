@@ -515,6 +515,11 @@ function UploadModal({ labId, existingSubmissionData, onClose }: UploadModalProp
               <label className="block text-black font-semibold mb-2">
                 Files
               </label>
+              {existingSubmissionData && existingSubmissionData.files && existingSubmissionData.files.length > 1 && (
+                <p className="text-sm text-gray-600 mb-2">
+                  Note: Re-upload all files for your submission. Previous files: {existingSubmissionData.files.map((f: any) => f.filename).join(", ")}
+                </p>
+              )}
               <input
                 type="file"
                 multiple
