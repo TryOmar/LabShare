@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Navigation from "@/components/navigation";
 import CommentsSection from "@/components/comments-section";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface SubmissionFile {
   id: string;
@@ -59,6 +61,26 @@ const languageColors: Record<string, string> = {
   rust: "bg-red-100 text-red-800",
   text: "bg-gray-100 text-gray-800",
   SQL:"bg-blue-100 text-white-800"
+};
+
+// Map incoming language strings (from API) to Prism language identifiers
+const mapLanguageToPrism = (lang?: string) => {
+  if (!lang) return 'text';
+  const l = lang.toLowerCase();
+  if (l === 'c++' || l === 'cpp') return 'cpp';
+  if (l === 'c#' || l === 'csharp') return 'csharp';
+  if (l === 'ts' || l === 'tsx' || l === 'typescript') return 'typescript';
+  if (l === 'js' || l === 'jsx' || l === 'javascript') return 'javascript';
+  if (l === 'py' || l === 'python') return 'python';
+  if (l === 'sql') return 'sql';
+  if (l === 'html') return 'html';
+  if (l === 'java') return 'java';
+  if (l === 'php') return 'php';
+  if (l === 'ruby') return 'ruby';
+  if (l === 'go') return 'go';
+  if (l === 'rust') return 'rust';
+  if (l === 'text' || l === 'plain') return 'text';
+  return l; // fallback: try the provided value
 };
 
 export default function SubmissionPage() {
@@ -336,8 +358,18 @@ export default function SubmissionPage() {
                 </div>
 
                 {/* Code Content */}
-                <pre className="p-4 bg-gray-50 overflow-x-auto text-xs leading-relaxed">
-                  <code className="text-black font-mono">{selectedFile.content}</code>
+                <pre className="p-0 bg-gray-50 overflow-x-auto text-xs leading-relaxed">
+                  <SyntaxHighlighter
+                    language={mapLanguageToPrism(selectedFile.language)}
+                    style={oneLight}
+                    PreTag="div"
+                    showLineNumbers={true}
+                    wrapLongLines={true}
+                    customStyle={{ margin: 0, background: 'transparent' }}
+                    className="!p-4 text-xs leading-relaxed"
+                  >
+                    {selectedFile.content}
+                  </SyntaxHighlighter>
                 </pre>
               </div>
             ) : (
