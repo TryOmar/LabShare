@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
+import Link from "next/link";
 import Navigation from "@/components/navigation";
+import LastUpdates from "@/components/last-updates";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Student {
   id: string;
@@ -168,7 +177,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Submissions */}
-            <div>
+            <div className="mb-8">
               <h2 className="text-xl font-bold text-black mb-4">
                 Recent Uploads
               </h2>
@@ -254,6 +263,49 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+
+            {/* Last Updates */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-black">Last Updates</h2>
+                <Link
+                  href="/last-updates"
+                  className="text-black hover:underline text-sm font-semibold"
+                >
+                  View Full Page →
+                </Link>
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="border border-black p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <LastUpdates showTitle={false} maxItems={5} />
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-sm text-gray-600 text-center">
+                        Click to view all updates →
+                      </p>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-black">
+                      Last Updates
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <LastUpdates showTitle={false} />
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <Link
+                      href="/last-updates"
+                      className="text-sm text-black hover:underline font-semibold"
+                    >
+                      View Full Page →
+                    </Link>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -320,6 +372,46 @@ export default function DashboardPage() {
                 Report Issue or Request Help
               </a>
             </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="border border-black p-4 mt-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <h3 className="font-bold text-black mb-4">Last Updates</h3>
+                  <div className="space-y-3 mb-4">
+                    <LastUpdates showTitle={false} maxItems={5} />
+                  </div>
+                  <div className="pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 text-center mb-2">
+                      Click to view all updates
+                    </p>
+                    <Link
+                      href="/last-updates"
+                      onClick={(e) => e.stopPropagation()}
+                      className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800 text-sm"
+                    >
+                      View Full Changelog
+                    </Link>
+                  </div>
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-bold text-black">
+                    Last Updates
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="mt-4">
+                  <LastUpdates showTitle={false} />
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <Link
+                    href="/last-updates"
+                    className="text-sm text-black hover:underline font-semibold"
+                  >
+                    View Full Page →
+                  </Link>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
