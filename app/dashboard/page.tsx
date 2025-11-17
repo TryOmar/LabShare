@@ -330,10 +330,11 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
+            {/* 1. Repository */}
             <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Open Source</h3>
+              <h3 className="font-bold text-black mb-4">Repository</h3>
               <p className="text-sm text-gray-600 mb-4">
-                This project is open source and anyone can contribute! Help us improve LabShare by contributing code, documentation, or ideas.
+                Explore the LabShare codebase, architecture, and project structure. See how the platform works and track development progress.
               </p>
               <a
                 href="https://github.com/TryOmar/LabShare"
@@ -341,13 +342,15 @@ export default function DashboardPage() {
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
-                Contribute on GitHub
+                Go to Repo
               </a>
             </div>
+
+            {/* 2. Contribute */}
             <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Report Issues</h3>
+              <h3 className="font-bold text-black mb-4">Contribute</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Found a bug or have a feature request? Feel free to open an issue on GitHub. Your feedback helps us make LabShare better!
+                Share feature ideas, improvements, or code contributions. Get publicly credited in the Last Updates section for your work.
               </p>
               <a
                 href="https://github.com/TryOmar/LabShare/issues"
@@ -355,13 +358,15 @@ export default function DashboardPage() {
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
-                Open an Issue
+                Contribute on GitHub
               </a>
             </div>
-            <div className="border border-black p-4">
-              <h3 className="font-bold text-black mb-4">Need Help?</h3>
+
+            {/* 3. Report */}
+            <div className="border border-black p-4 mb-4">
+              <h3 className="font-bold text-black mb-4">Report</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Report issues, request assistance, or suggest improvements to the platform. We're here to help and listen to your feedback.
+                Found a bug or have feedback? Submit reports anonymously or with contact info. No coding required.
               </p>
               <a
                 href="https://forms.gle/25mEvcjTPrhA6THf9"
@@ -369,7 +374,7 @@ export default function DashboardPage() {
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
-                Report Issue or Request Help
+                Submit Report
               </a>
             </div>
             <Dialog>
