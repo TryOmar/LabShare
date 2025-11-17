@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { getAttachmentDownloadUrl } from "@/lib/storage";
 
 /**
  * GET /api/submission/[id]
- * Returns submission data including versions and files.
+ * Returns submission data including code files and attachments.
  */
 export async function GET(
   request: NextRequest,
@@ -80,42 +81,54 @@ export async function GET(
         .eq("id", submissionId);
     }
 
-    // Get all versions for this submission
-    const { data: versionData, error: versionError } = await supabase
-      .from("submission_versions")
+    // Get code files for this submission
+    const { data: codeFiles, error: codeFilesError } = await supabase
+      .from("submission_code")
       .select("*")
       .eq("submission_id", submissionId)
-      .eq("is_deleted", false)
-      .order("version_number", { ascending: false });
+      .order("created_at", { ascending: false });
 
-    if (versionError) {
-      console.error("Error fetching versions:", versionError);
+    if (codeFilesError) {
+      console.error("Error fetching code files:", codeFilesError);
       return NextResponse.json(
-        { error: "Failed to fetch versions" },
+        { error: "Failed to fetch code files" },
         { status: 500 }
       );
     }
 
-    // Get files for the latest version (or first version if available)
-    let filesData: any[] = [];
-    if (versionData && versionData.length > 0) {
-      const { data: files, error: filesError } = await supabase
-        .from("submission_files")
-        .select("*")
-        .eq("version_id", versionData[0].id);
+    // Get attachments for this submission
+    const { data: attachments, error: attachmentsError } = await supabase
+      .from("submission_attachments")
+      .select("*")
+      .eq("submission_id", submissionId)
+      .order("created_at", { ascending: false });
 
-      if (!filesError && files) {
-        filesData = files;
-      }
+    if (attachmentsError) {
+      console.error("Error fetching attachments:", attachmentsError);
+      return NextResponse.json(
+        { error: "Failed to fetch attachments" },
+        { status: 500 }
+      );
     }
+
+    // Generate signed URLs for attachments (valid for 1 hour)
+    const attachmentsWithUrls = await Promise.all(
+      (attachments || []).map(async (attachment) => {
+        const urlResult = await getAttachmentDownloadUrl(attachment.storage_path, 3600);
+        return {
+          ...attachment,
+          downloadUrl: 'url' in urlResult ? urlResult.url : null,
+        };
+      })
+    );
 
     return NextResponse.json({
       submission: submissionData,
       student: studentData,
       track: studentData.tracks,
       isOwner,
-      versions: versionData || [],
-      files: filesData,
+      codeFiles: codeFiles || [],
+      attachments: attachmentsWithUrls,
     });
   } catch (error) {
     console.error("Error in submission API:", error);
