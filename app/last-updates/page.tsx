@@ -51,8 +51,33 @@ export default function LastUpdatesPage() {
         </div>
 
         {/* Updates List */}
-        <div className="border border-black p-6">
+        <div className="border border-black p-6 mb-6">
           <LastUpdates showTitle={false} />
+        </div>
+
+        {/* Call to Action */}
+        <div className="border border-black p-4 bg-gray-50">
+          <p className="text-xs text-gray-700 mb-3">
+            Want to see your name here? Contribute and get credited in Last Updates.
+          </p>
+          <div className="flex gap-2">
+            <a
+              href="https://github.com/TryOmar/LabShare"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 px-3 py-1.5 bg-black text-white text-xs font-semibold text-center hover:bg-gray-800"
+            >
+              View Repo
+            </a>
+            <a
+              href="https://github.com/TryOmar/LabShare/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 px-3 py-1.5 border border-black text-black text-xs font-semibold text-center hover:bg-gray-100"
+            >
+              Suggest / Fix
+            </a>
+          </div>
         </div>
       </div>
     </div>
