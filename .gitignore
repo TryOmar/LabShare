@@ -140,3 +140,9 @@ out
 tmp/
 temp/
 
+# Sensitive data files
+data/*.csv
+data/ITI Emails - Sheet1.csv
+**/*emails*.csv
+**/*Emails*.csv
+
