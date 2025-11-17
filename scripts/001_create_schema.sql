@@ -69,23 +69,27 @@ CREATE TABLE IF NOT EXISTS submissions (
   UNIQUE(student_id, lab_id)
 );
 
--- Create submission_versions table
-CREATE TABLE IF NOT EXISTS submission_versions (
+-- Create submission_code table (for code files - pasted or uploaded code)
+CREATE TABLE IF NOT EXISTS submission_code (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
-  version_number INT NOT NULL,
+  filename TEXT NOT NULL,
+  language TEXT NOT NULL,
+  content TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT now(),
-  is_deleted BOOLEAN DEFAULT FALSE
+  updated_at TIMESTAMP DEFAULT now()
 );
 
--- Create submission_files table
-CREATE TABLE IF NOT EXISTS submission_files (
+-- Create submission_attachments table (for non-code files - PDFs, images, etc.)
+CREATE TABLE IF NOT EXISTS submission_attachments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  version_id UUID NOT NULL REFERENCES submission_versions(id) ON DELETE CASCADE,
+  submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
   filename TEXT NOT NULL,
-  language TEXT,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
+  storage_path TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  file_size BIGINT,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
 -- Create comments table
@@ -116,8 +120,8 @@ ALTER TABLE course_track ENABLE ROW LEVEL SECURITY;
 ALTER TABLE labs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE auth_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE submission_versions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE submission_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE submission_code ENABLE ROW LEVEL SECURITY;
+ALTER TABLE submission_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lab_unlocks ENABLE ROW LEVEL SECURITY;
 
@@ -147,15 +151,13 @@ CREATE POLICY "submissions_insert_own" ON submissions FOR INSERT WITH CHECK (tru
 CREATE POLICY "submissions_update_own" ON submissions FOR UPDATE USING (true);
 CREATE POLICY "submissions_delete_own" ON submissions FOR DELETE USING (true);
 
--- Policies for submission_versions (anyone can read, owner can manage)
-CREATE POLICY "submission_versions_select_all" ON submission_versions FOR SELECT USING (is_deleted = FALSE);
-CREATE POLICY "submission_versions_insert_own" ON submission_versions FOR INSERT WITH CHECK (true);
-CREATE POLICY "submission_versions_update_own" ON submission_versions FOR UPDATE USING (true);
-CREATE POLICY "submission_versions_delete_own" ON submission_versions FOR DELETE USING (true);
+-- Policies for submission_code (anyone can read)
+CREATE POLICY "submission_code_select_all" ON submission_code FOR SELECT USING (true);
+CREATE POLICY "submission_code_insert_own" ON submission_code FOR INSERT WITH CHECK (true);
 
--- Policies for submission_files (anyone can read)
-CREATE POLICY "submission_files_select_all" ON submission_files FOR SELECT USING (true);
-CREATE POLICY "submission_files_insert_own" ON submission_files FOR INSERT WITH CHECK (true);
+-- Policies for submission_attachments (anyone can read)
+CREATE POLICY "submission_attachments_select_all" ON submission_attachments FOR SELECT USING (true);
+CREATE POLICY "submission_attachments_insert_own" ON submission_attachments FOR INSERT WITH CHECK (true);
 
 -- Policies for comments (anyone can read and write)
 CREATE POLICY "comments_select_all" ON comments FOR SELECT USING (is_deleted = FALSE);

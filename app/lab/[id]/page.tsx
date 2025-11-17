@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Navigation from "@/components/navigation";
 
@@ -265,13 +265,18 @@ interface UploadModalProps {
 }
 
 function UploadModal({ labId, onClose }: UploadModalProps) {
-  const [title, setTitle] = useState("");
-  const [uploadType, setUploadType] = useState<"paste" | "file">("paste");
-  const [codeContent, setCodeContent] = useState("");
+  const [title, setTitle] = useState("My Solution");
+  const [pastedContent, setPastedContent] = useState("");
+  const [pastedFileName, setPastedFileName] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [files, setFiles] = useState<File[]>([]);
+  const [pastedCodeFiles, setPastedCodeFiles] = useState<Array<{ filename: string; language: string; content: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [showPasteArea, setShowPasteArea] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const pasteTextareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const detectedLanguages: Record<string, string> = {
     ".js": "javascript",
@@ -291,11 +296,144 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     ".css": "CSS",
   };
 
+  const codeExtensions = ['.js', '.ts', '.py', '.cpp', '.c', '.java', '.cs', '.php', '.rb', '.go', '.rs', '.txt', '.sql', '.html', '.css'];
+
+  // Helper function to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Add files to the list (avoid duplicates)
+  const addFiles = (newFiles: File[]) => {
+    setFiles((prev) => {
+      const existingNames = new Set(prev.map(f => f.name));
+      const uniqueNewFiles = newFiles.filter(f => !existingNames.has(f.name));
+      return [...prev, ...uniqueNewFiles];
+    });
+    setError("");
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFiles(Array.from(e.target.files));
-      setError("");
+      addFiles(Array.from(e.target.files));
     }
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      addFiles(droppedFiles);
+    }
+  };
+
+  // Handle paste (Ctrl+V) for files/images and text
+  React.useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      // Check for files first
+      const filesToAdd: File[] = [];
+      let hasText = false;
+      
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) {
+            filesToAdd.push(file);
+          }
+        } else if (item.kind === 'string' && item.type === 'text/plain') {
+          hasText = true;
+        }
+      }
+
+      // If files found, add them
+      if (filesToAdd.length > 0) {
+        e.preventDefault();
+        addFiles(filesToAdd);
+      } else if (hasText && !showPasteArea) {
+        // Show paste area if text is pasted and area is not visible
+        e.preventDefault();
+        setShowPasteArea(true);
+        // Focus the textarea after a brief delay to allow it to render
+        setTimeout(() => {
+          pasteTextareaRef.current?.focus();
+        }, 10);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [showPasteArea]);
+
+  // Handle text paste in textarea
+  const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (pastedText && !pastedContent) {
+      // Capture the paste if textarea is empty
+      setPastedContent(pastedText);
+      setPastedFileName("");
+    }
+    // Otherwise, let normal paste behavior happen (user is editing)
+  };
+
+  // Cancel paste area
+  const handleCancelPaste = () => {
+    setShowPasteArea(false);
+    setPastedContent("");
+    setPastedFileName("");
+  };
+
+  // Add pasted code as a file
+  const handleAddPastedCode = () => {
+    if (!pastedContent.trim()) {
+      setError("Please paste some code first");
+      return;
+    }
+    
+    const filename = pastedFileName.trim() || `code.${language}`;
+    setPastedCodeFiles(prev => [...prev, {
+      filename,
+      language,
+      content: pastedContent,
+    }]);
+    
+    setPastedContent("");
+    setPastedFileName("");
+    setError("");
+  };
+
+  // Remove file from list
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -304,41 +442,54 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     setError("");
 
     try {
-      if (!title.trim()) {
-        setError("Title is required");
+      // Validate title - if user deleted the default, require them to enter one
+      if (!title.trim() || title.trim() === "") {
+        setError("Solution name is required");
         setLoading(false);
         return;
       }
 
-      let filesToUpload: Array<{ filename: string; language: string; content: string }> = [];
+      let filesToUpload: Array<
+        | { filename: string; language: string; content: string }
+        | { filename: string; mimeType: string; base64: string }
+      > = [];
 
-      if (uploadType === "paste") {
-        if (!codeContent.trim()) {
-          setError("Code content is required");
-          setLoading(false);
-          return;
-        }
-        filesToUpload = [
-          { filename: `code.${language}`, language, content: codeContent },
-        ];
-      } else {
-        if (files.length === 0) {
-          setError("Please select at least one file");
-          setLoading(false);
-          return;
-        }
+      // Add pasted code files
+      filesToUpload.push(...pastedCodeFiles);
 
+      // Process uploaded/dropped files
+      if (files.length > 0) {
         for (const file of files) {
-          const content = await file.text();
           const ext = "." + file.name.split(".").pop()?.toLowerCase();
-          const detectedLang = detectedLanguages[ext] || "text";
+          
+          // Check if it's a code file
+          if (codeExtensions.includes(ext)) {
+            // Parse as code file
+            const content = await file.text();
+            const detectedLang = detectedLanguages[ext] || "text";
 
-          filesToUpload.push({
-            filename: file.name,
-            language: detectedLang,
-            content,
-          });
+            filesToUpload.push({
+              filename: file.name,
+              language: detectedLang,
+              content,
+            });
+          } else {
+            // Convert to base64 for attachment
+            const base64 = await fileToBase64(file);
+            filesToUpload.push({
+              filename: file.name,
+              mimeType: file.type || 'application/octet-stream',
+              base64: base64,
+            });
+          }
         }
+      }
+
+      // Validate that we have at least one file
+      if (filesToUpload.length === 0) {
+        setError("Please add at least one file");
+        setLoading(false);
+        return;
       }
 
       // Upload submission via API route (server-side validation)
@@ -369,116 +520,193 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     }
   };
 
+  // Remove pasted code file
+  const removePastedCodeFile = (index: number) => {
+    setPastedCodeFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white border-2 border-black p-6 max-w-md w-full">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white border border-black p-6 max-w-lg w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-2xl font-bold text-black mb-4">Upload Solution</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-black font-semibold mb-2">Title</label>
+            <label className="block text-black font-semibold mb-2">Solution Name</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., My Solution"
               className="w-full px-3 py-2 border border-black bg-white text-black"
               required
             />
           </div>
 
-          {/* Upload Type */}
+          {/* Combined Upload & Paste Box */}
           <div>
-            <label className="block text-black font-semibold mb-2">Type</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={uploadType === "paste"}
-                  onChange={() => setUploadType("paste")}
-                  className="w-4 h-4"
-                />
-                <span className="text-black">Paste Code</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={uploadType === "file"}
-                  onChange={() => setUploadType("file")}
-                  className="w-4 h-4"
-                />
-                <span className="text-black">Upload Files</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Paste Code */}
-          {uploadType === "paste" && (
-            <>
-              <div>
-                <label className="block text-black font-semibold mb-2">
-                  Language
-                </label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-3 py-2 border border-black bg-white text-black"
-                >
-                  {Object.entries(detectedLanguages).map(([ext, lang]) => (
-                    <option key={ext} value={lang}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
+            <label className="block text-black font-semibold mb-2">Files & Code</label>
+            <div
+              onDragEnter={handleDragEnter}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed p-4 ${
+                isDragging ? 'border-black bg-gray-100' : 'border-black bg-white'
+              }`}
+            >
+              <div className="text-center">
+                <p className="text-sm text-black mb-1">
+                  Drag files here or{' '}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="underline"
+                  >
+                    browse
+                  </button>
+                  {' '}or{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasteArea(true);
+                      setTimeout(() => pasteTextareaRef.current?.focus(), 10);
+                    }}
+                    className="underline"
+                  >
+                    paste code
+                  </button>
+                </p>
+                <p className="text-xs text-gray-600">
+                  Press Ctrl+V to paste files or code
+                </p>
               </div>
-              <div>
-                <label className="block text-black font-semibold mb-2">
-                  Code
-                </label>
-                <textarea
-                  value={codeContent}
-                  onChange={(e) => setCodeContent(e.target.value)}
-                  placeholder="Paste your code here..."
-                  rows={6}
-                  className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-sm"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Upload Files */}
-          {uploadType === "file" && (
-            <div>
-              <label className="block text-black font-semibold mb-2">
-                Files
-              </label>
               <input
+                ref={fileInputRef}
                 type="file"
                 multiple
                 onChange={handleFileChange}
-                accept=".js,.ts,.py,.cpp,.c,.java,.cs,.php,.rb,.go,.rs,.txt"
-                className="w-full"
+                className="hidden"
+                accept="*/*"
               />
-              {files.length > 0 && (
-                <div className="mt-2">
-                  {files.map((file) => (
-                    <p key={file.name} className="text-sm text-gray-600">
-                      ✓ {file.name}
-                    </p>
-                  ))}
+
+              {/* Paste Code Area - Only show when user clicks paste or presses Ctrl+V */}
+              {showPasteArea && (
+                <div className="space-y-2 mt-3 border-t border-black pt-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm text-black font-semibold">Paste Code</label>
+                    <button
+                      type="button"
+                      onClick={handleCancelPaste}
+                      className="text-xs text-gray-600 hover:text-black underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <textarea
+                    ref={pasteTextareaRef}
+                    value={pastedContent}
+                    onChange={(e) => setPastedContent(e.target.value)}
+                    onPaste={handleTextareaPaste}
+                    placeholder="Paste code here (Ctrl+V)..."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-xs"
+                  />
+                  {pastedContent && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={pastedFileName}
+                        onChange={(e) => setPastedFileName(e.target.value)}
+                        placeholder="File name (optional)"
+                        className="flex-1 px-3 py-2 border border-black bg-white text-black text-sm"
+                      />
+                      <select
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                        className="px-3 py-2 border border-black bg-white text-black text-sm"
+                      >
+                        {Object.entries(detectedLanguages).map(([ext, lang]) => (
+                          <option key={ext} value={lang}>
+                            {lang}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleAddPastedCode();
+                          // Keep paste area open for next paste
+                          setPastedContent("");
+                          setPastedFileName("");
+                          pasteTextareaRef.current?.focus();
+                        }}
+                        className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800 text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* File List */}
+          {(files.length > 0 || pastedCodeFiles.length > 0) && (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {pastedCodeFiles.map((file, index) => (
+                <div
+                  key={`pasted-${index}`}
+                  className="flex items-center justify-between p-2 border border-black bg-white"
+                >
+                  <span className="text-xs text-black truncate flex-1">📄 {file.filename}</span>
+                  <button
+                    type="button"
+                    onClick={() => removePastedCodeFile(index)}
+                    className="ml-2 text-black hover:text-red-600 text-sm"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {files.map((file, index) => {
+                const ext = "." + file.name.split(".").pop()?.toLowerCase();
+                const isCodeFile = codeExtensions.includes(ext);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 border border-black bg-white"
+                  >
+                    <span className="text-xs text-black truncate flex-1">
+                      {isCodeFile ? '📄' : '📎'} {file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="ml-2 text-black hover:text-red-600 text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           {/* Buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (files.length === 0 && pastedCodeFiles.length === 0)}
               className="flex-1 bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? "Uploading..." : "Upload"}

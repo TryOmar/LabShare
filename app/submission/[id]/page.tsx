@@ -7,17 +7,24 @@ import CommentsSection from "@/components/comments-section";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-interface SubmissionFile {
+interface CodeFile {
   id: string;
   filename: string;
   language: string;
   content: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface Version {
+interface Attachment {
   id: string;
-  version_number: number;
+  filename: string;
+  storage_path: string;
+  mime_type: string;
+  file_size: number | null;
   created_at: string;
+  updated_at: string;
+  downloadUrl?: string | null;
 }
 
 interface Submission {
@@ -87,10 +94,10 @@ const mapLanguageToPrism = (lang?: string) => {
 
 export default function SubmissionPage() {
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const [versions, setVersions] = useState<Version[]>([]);
-  const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-  const [files, setFiles] = useState<SubmissionFile[]>([]);
-  const [selectedFile, setSelectedFile] = useState<SubmissionFile | null>(null);
+  const [codeFiles, setCodeFiles] = useState<CodeFile[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [selectedCodeFile, setSelectedCodeFile] = useState<CodeFile | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [isOwner, setIsOwner] = useState(false);
@@ -146,15 +153,16 @@ export default function SubmissionPage() {
         setStudent(data.student);
         setTrack(data.track);
         setIsOwner(data.isOwner);
-        setVersions(data.versions || []);
-        setFiles(data.files || []);
+        setCodeFiles(data.codeFiles || []);
+        setAttachments(data.attachments || []);
 
-        // Set selected version and file
-        if (data.versions && data.versions.length > 0) {
-          setSelectedVersion(data.versions[0]);
-        }
-        if (data.files && data.files.length > 0) {
-          setSelectedFile(data.files[0]);
+        // Set selected file (prefer code file, then attachment)
+        if (data.codeFiles && data.codeFiles.length > 0) {
+          setSelectedCodeFile(data.codeFiles[0]);
+          setSelectedAttachment(null);
+        } else if (data.attachments && data.attachments.length > 0) {
+          setSelectedAttachment(data.attachments[0]);
+          setSelectedCodeFile(null);
         }
       } catch (err) {
         console.error("Error loading submission:", err);
@@ -168,29 +176,11 @@ export default function SubmissionPage() {
     loadSubmission();
   }, [submissionId, router]);
 
-  const handleVersionChange = async (version: Version) => {
-    setSelectedVersion(version);
-
-    try {
-      // Fetch files for the selected version from API route
-      const response = await fetch(`/api/submission/${submissionId}/files?versionId=${version.id}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to load version files");
-      }
-
-      const data = await response.json();
-      setFiles(data.files || []);
-      
-      if (data.files && data.files.length > 0) {
-        setSelectedFile(data.files[0]);
-      }
-    } catch (err) {
-      console.error("Error loading version files:", err);
-    }
+  const formatFileSize = (bytes: number | null): string => {
+    if (!bytes) return "Unknown size";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   if (loading) {
@@ -279,78 +269,86 @@ export default function SubmissionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div>
-            {/* Versions */}
-            {versions.length > 0 && (
+            {/* Code Files List */}
+            {codeFiles.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-bold text-black mb-3">Versions</h3>
+                <h3 className="font-bold text-black mb-3">Code Files</h3>
                 <div className="space-y-2">
-                  {versions.map((version) => (
-                    <button
-                      key={version.id}
-                      onClick={() => handleVersionChange(version)}
-                      className={`w-full text-left p-2 border border-black text-sm ${
-                        selectedVersion?.id === version.id
-                          ? "bg-black text-white"
-                          : "bg-white text-black hover:bg-gray-100"
-                      }`}
-                    >
-                      <div>v{version.version_number}</div>
-                      <div className="text-xs">
-                        {new Date(version.created_at).toLocaleDateString()}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Files List */}
-            {files.length > 0 && (
-              <div>
-                <h3 className="font-bold text-black mb-3">Files</h3>
-                <div className="space-y-2">
-                  {files.map((file) => (
+                  {codeFiles.map((file) => (
                     <button
                       key={file.id}
-                      onClick={() => setSelectedFile(file)}
+                      onClick={() => {
+                        setSelectedCodeFile(file);
+                        setSelectedAttachment(null);
+                      }}
                       className={`w-full text-left p-2 border border-black text-xs truncate ${
-                        selectedFile?.id === file.id
+                        selectedCodeFile?.id === file.id
                           ? "bg-black text-white"
                           : "bg-white text-black hover:bg-gray-100"
                       }`}
                       title={file.filename}
                     >
-                      {file.filename}
+                      📄 {file.filename}
                     </button>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Attachments List */}
+            {attachments.length > 0 && (
+              <div>
+                <h3 className="font-bold text-black mb-3">Attachments</h3>
+                <div className="space-y-2">
+                  {attachments.map((attachment) => (
+                    <button
+                      key={attachment.id}
+                      onClick={() => {
+                        setSelectedAttachment(attachment);
+                        setSelectedCodeFile(null);
+                      }}
+                      className={`w-full text-left p-2 border border-black text-xs truncate ${
+                        selectedAttachment?.id === attachment.id
+                          ? "bg-black text-white"
+                          : "bg-white text-black hover:bg-gray-100"
+                      }`}
+                      title={attachment.filename}
+                    >
+                      📎 {attachment.filename}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {codeFiles.length === 0 && attachments.length === 0 && (
+              <div className="text-gray-500 text-sm">No files</div>
+            )}
           </div>
 
-          {/* Code Viewer + Comments */}
+          {/* Code Viewer + Attachments + Comments */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Code Viewer */}
-            {selectedFile ? (
+            {/* Code File Viewer */}
+            {selectedCodeFile ? (
               <div className="border border-black">
                 {/* File Header */}
                 <div className="bg-gray-100 border-b border-black p-3 flex justify-between items-center">
                   <div>
-                    <p className="font-semibold text-black">{selectedFile.filename}</p>
+                    <p className="font-semibold text-black">{selectedCodeFile.filename}</p>
                     <span
                       className={`inline-block mt-2 px-2 py-1 text-xs font-semibold rounded ${
-                        languageColors[selectedFile.language] ||
+                        languageColors[selectedCodeFile.language] ||
                         languageColors.text
                       }`}
                     >
-                      {selectedFile.language.toUpperCase()}
+                      {selectedCodeFile.language.toUpperCase()}
                     </span>
                   </div>
                   {isOwner && (
                     <button
                       onClick={() => {
                         // Copy to clipboard
-                        navigator.clipboard.writeText(selectedFile.content);
+                        navigator.clipboard.writeText(selectedCodeFile.content);
                       }}
                       className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-200"
                     >
@@ -362,7 +360,7 @@ export default function SubmissionPage() {
                 {/* Code Content */}
                 <pre className="p-0 bg-gray-50 overflow-x-auto text-xs leading-relaxed">
                   <SyntaxHighlighter
-                    language={mapLanguageToPrism(selectedFile.language)}
+                    language={mapLanguageToPrism(selectedCodeFile.language)}
                     style={oneLight}
                     PreTag="div"
                     showLineNumbers={true}
@@ -370,12 +368,55 @@ export default function SubmissionPage() {
                     customStyle={{ margin: 0, background: 'transparent' }}
                     className="!p-4 text-xs leading-relaxed"
                   >
-                    {selectedFile.content}
+                    {selectedCodeFile.content}
                   </SyntaxHighlighter>
                 </pre>
               </div>
+            ) : selectedAttachment ? (
+              <div className="border border-black">
+                {/* Attachment Header */}
+                <div className="bg-gray-100 border-b border-black p-3 flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-black">{selectedAttachment.filename}</p>
+                    <div className="mt-2 flex gap-2 items-center">
+                      <span className="text-xs text-gray-600">
+                        {selectedAttachment.mime_type}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        • {formatFileSize(selectedAttachment.file_size)}
+                      </span>
+                    </div>
+                  </div>
+                  {selectedAttachment.downloadUrl ? (
+                    <a
+                      href={selectedAttachment.downloadUrl}
+                      download={selectedAttachment.filename}
+                      className="px-4 py-2 text-xs border border-black bg-white text-black hover:bg-gray-200 font-semibold"
+                    >
+                      Download
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      className="px-4 py-2 text-xs border border-gray-300 bg-gray-100 text-gray-400 font-semibold cursor-not-allowed"
+                    >
+                      Download Unavailable
+                    </button>
+                  )}
+                </div>
+
+                {/* Attachment Info */}
+                <div className="p-6 bg-gray-50">
+                  <p className="text-gray-600 text-sm">
+                    This file is stored in storage. Click the download button to retrieve it.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Uploaded: {new Date(selectedAttachment.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
             ) : (
-              <p className="text-gray-600">No files in this version</p>
+              <p className="text-gray-600">No file selected</p>
             )}
 
             {/* Comments Section */}
