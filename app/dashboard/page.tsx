@@ -223,6 +223,13 @@ export default function DashboardPage() {
   const [labsByCourse, setLabsByCourse] = useState<Map<string, Lab[]>>(new Map());
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [selectedLabId, setSelectedLabId] = useState<string>("");
+  const [suggestedLabs, setSuggestedLabs] = useState<Array<{
+    lab_id: string;
+    lab_number: number;
+    lab_title: string;
+    course_id: string;
+    course_name: string;
+  }>>([]);
 
   // Refs
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -286,6 +293,7 @@ export default function DashboardPage() {
         setCourses(data.courses || []);
         setCoursesWithSubmissions(data.coursesWithSubmissions || []);
         setRecentSubmissions(data.recentSubmissions || []);
+        setSuggestedLabs(data.suggestedLabs || []);
 
         // Fetch labs data for submission form
         const labsResponse = await fetch("/api/labs", {
@@ -350,6 +358,25 @@ export default function DashboardPage() {
                   Please ensure you have <span className="font-bold">completed</span> the lab and had it <span className="font-bold">reviewed</span> by the <span className="font-bold">instructor</span> before uploading. Do not upload random files.
                 </p>
               </div>
+
+              {/* Suggested Labs */}
+              {suggestedLabs.length > 0 && (
+                <div className="mb-4 flex items-center gap-2 flex-wrap">
+                  <p className="text-xs text-gray-600">Suggested Labs:</p>
+                  {suggestedLabs.map((suggestion) => (
+                    <button
+                      key={suggestion.lab_id}
+                      onClick={() => {
+                        setSelectedCourseId(suggestion.course_id);
+                        setSelectedLabId(suggestion.lab_id);
+                      }}
+                      className="px-3 py-1.5 text-xs border border-gray-300 bg-white hover:bg-gray-50 hover:border-black transition-colors rounded"
+                    >
+                      {suggestion.course_name} • Lab {suggestion.lab_number}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Course and Lab Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

@@ -126,12 +126,47 @@ export async function GET(request: NextRequest) {
     // Sort by most recent activity (descending)
     coursesWithSubmissions.sort((a: any, b: any) => b.mostRecentDate - a.mostRecentDate);
 
+    // Get suggested labs (labs with recent submissions from others that user hasn't submitted to)
+    const suggestedLabs: any[] = [];
+    const seenLabIds = new Set<string>();
+    
+    // Get unique labs from recent submissions that user hasn't submitted to
+    for (const submission of submissionsWithAccess) {
+      const labId = submission.lab_id;
+      const courseId = submission.labs?.course_id;
+      
+      // Skip if user already submitted to this lab
+      if (solvedLabIds.has(labId)) continue;
+      
+      // Skip if we've already added this lab
+      if (seenLabIds.has(labId)) continue;
+      
+      // Skip if submission is from the user themselves
+      if (submission.student_id === studentId) continue;
+      
+      if (labId && courseId && submission.labs) {
+        seenLabIds.add(labId);
+        suggestedLabs.push({
+          lab_id: labId,
+          lab_number: submission.labs.lab_number,
+          lab_title: submission.labs.title,
+          course_id: courseId,
+          course_name: submission.labs.courses?.name,
+          latest_submission_date: submission.created_at,
+        });
+        
+        // Stop at 3 suggestions
+        if (suggestedLabs.length >= 3) break;
+      }
+    }
+
     return NextResponse.json({
       student: studentData,
       track: studentData.tracks,
       courses: coursesWithSubmissions.map(({ submissions, mostRecentDate, ...course }: any) => course),
       coursesWithSubmissions: coursesWithSubmissions.map(({ mostRecentDate, ...course }: any) => course),
       recentSubmissions: submissionsWithAccess,
+      suggestedLabs: suggestedLabs.slice(0, 3),
     });
   } catch (error) {
     console.error("Error in dashboard API:", error);
