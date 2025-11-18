@@ -389,13 +389,21 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
       const items = e.clipboardData?.items;
       if (!items) return;
 
-      // Check for files first
+      // Don't interfere if user is pasting into the textarea itself (let normal paste behavior happen)
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT')) {
+        return;
+      }
+
+      // Check for images first (clipboard images)
       const filesToAdd: File[] = [];
       let hasText = false;
       
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (item.kind === 'file') {
+        
+        // Check for image files (from clipboard)
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
             filesToAdd.push(file);
@@ -405,17 +413,33 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
         }
       }
 
-      // If files found, add them
+      // If images found, add them as attachments
       if (filesToAdd.length > 0) {
         e.preventDefault();
         addFiles(filesToAdd);
-      } else if (hasText && !showPasteArea) {
-        // Show paste area if text is pasted and area is not visible
+      } else if (hasText) {
+        // If text is pasted, open text area and paste text directly
         e.preventDefault();
-        setShowPasteArea(true);
-        // Focus the textarea after a brief delay to allow it to render
+        
+        // Get text content synchronously from clipboard
+        const textContent = e.clipboardData?.getData('text/plain') || '';
+        
+        // Open paste area if not already open
+        if (!showPasteArea) {
+          setShowPasteArea(true);
+        }
+        
+        // Wait a bit for textarea to be available, then set the text
         setTimeout(() => {
-          pasteTextareaRef.current?.focus();
+          if (textContent) {
+            setPastedContent(textContent);
+            pasteTextareaRef.current?.focus();
+            // Move cursor to end
+            if (pasteTextareaRef.current) {
+              const textarea = pasteTextareaRef.current;
+              textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }
+          }
         }, 10);
       }
     };
@@ -424,15 +448,10 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     return () => window.removeEventListener('paste', handlePaste);
   }, [showPasteArea]);
 
-  // Handle text paste in textarea
+  // Handle text paste in textarea - let normal paste behavior happen
   const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pastedText = e.clipboardData.getData('text');
-    if (pastedText && !pastedContent) {
-      // Capture the paste if textarea is empty
-      setPastedContent(pastedText);
-      setPastedFileName("");
-    }
-    // Otherwise, let normal paste behavior happen (user is editing)
+    // Normal paste behavior is allowed - React will handle it automatically
+    // We don't need to do anything special here
   };
 
   // Cancel paste area
