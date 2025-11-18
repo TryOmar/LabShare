@@ -265,7 +265,36 @@ interface UploadModalProps {
 }
 
 function UploadModal({ labId, onClose }: UploadModalProps) {
-  const [title, setTitle] = useState("My Solution");
+  // Array of 20 random solution name variations
+  const randomSolutionNames = [
+    "My Solution",
+    "My Approach",
+    "My Implementation",
+    "Solution",
+    "My Code",
+    "My Work",
+    "Submission",
+    "My Answer",
+    "Solution Attempt",
+    "My Take",
+    "Implementation",
+    "My Version",
+    "Solution Draft",
+    "My Response",
+    "Code Solution",
+    "My Submission",
+    "Solution File",
+    "My Attempt",
+    "Implementation Draft",
+    "My Code Solution"
+  ];
+
+  // Get a random solution name on mount
+  const getRandomSolutionName = () => {
+    return randomSolutionNames[Math.floor(Math.random() * randomSolutionNames.length)];
+  };
+
+  const [title, setTitle] = useState(getRandomSolutionName());
   const [pastedContent, setPastedContent] = useState("");
   const [pastedFileName, setPastedFileName] = useState("");
   const [language, setLanguage] = useState("javascript");
@@ -277,6 +306,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   const [showPasteArea, setShowPasteArea] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const pasteTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = React.useRef<HTMLInputElement>(null);
 
   const detectedLanguages: Record<string, string> = {
     ".js": "javascript",
@@ -525,10 +555,18 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     setPastedCodeFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Handle backdrop click - only close if clicking directly on backdrop, not modal content
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking directly on the backdrop (not on modal content)
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div 
         className="bg-white border border-black p-6 max-w-lg w-full"
@@ -541,9 +579,13 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
           <div>
             <label className="block text-black font-semibold mb-2">Solution Name</label>
             <input
+              ref={titleInputRef}
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               className="w-full px-3 py-2 border border-black bg-white text-black"
               required
             />
