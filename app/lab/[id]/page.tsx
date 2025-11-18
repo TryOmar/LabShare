@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Navigation from "@/components/navigation";
+import { detectLanguage } from "@/lib/language-detection";
 
 interface Lab {
   id: string;
@@ -297,7 +298,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   const [title, setTitle] = useState(getRandomSolutionName());
   const [pastedContent, setPastedContent] = useState("");
   const [pastedFileName, setPastedFileName] = useState("");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("text");
   const [files, setFiles] = useState<File[]>([]);
   const [pastedCodeFiles, setPastedCodeFiles] = useState<Array<{ filename: string; language: string; content: string }>>([]);
   const [loading, setLoading] = useState(false);
@@ -433,6 +434,9 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
         setTimeout(() => {
           if (textContent) {
             setPastedContent(textContent);
+            // Auto-detect language from pasted content
+            const detectedLang = detectLanguage(textContent);
+            setLanguage(detectedLang);
             pasteTextareaRef.current?.focus();
             // Move cursor to end
             if (pasteTextareaRef.current) {
@@ -673,7 +677,15 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                   <textarea
                     ref={pasteTextareaRef}
                     value={pastedContent}
-                    onChange={(e) => setPastedContent(e.target.value)}
+                    onChange={(e) => {
+                      const newContent = e.target.value;
+                      setPastedContent(newContent);
+                      // Auto-detect language as user types/pastes
+                      if (newContent.trim().length > 10) {
+                        const detectedLang = detectLanguage(newContent);
+                        setLanguage(detectedLang);
+                      }
+                    }}
                     onPaste={handleTextareaPaste}
                     placeholder="Paste code here (Ctrl+V)..."
                     rows={4}
@@ -693,11 +705,14 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                         onChange={(e) => setLanguage(e.target.value)}
                         className="px-3 py-2 border border-black bg-white text-black text-sm"
                       >
-                        {Object.entries(detectedLanguages).map(([ext, lang]) => (
-                          <option key={ext} value={lang}>
-                            {lang}
-                          </option>
-                        ))}
+                        <option value="text">text</option>
+                        {Object.entries(detectedLanguages)
+                          .filter(([ext, lang]) => lang !== "text") // Remove duplicate "text"
+                          .map(([ext, lang]) => (
+                            <option key={ext} value={lang}>
+                              {lang}
+                            </option>
+                          ))}
                       </select>
                       <button
                         type="button"
