@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import Navigation from "@/components/navigation";
 import CommentsSection from "@/components/comments-section";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -453,11 +454,11 @@ export default function SubmissionPage() {
                     }
 
                     // Show success message and redirect to labs page
-                    alert("Submission deleted successfully!");
+                    toast.success("Submission deleted successfully!");
                     router.push("/labs");
                   } catch (err) {
                     console.error("Error deleting submission:", err);
-                    alert("Failed to delete submission. Please try again.");
+                    toast.error("Failed to delete submission. Please try again.");
                   }
                 }
               }}
