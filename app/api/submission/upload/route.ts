@@ -22,6 +22,15 @@ export async function POST(request: NextRequest) {
     }
     const authenticatedStudentId = authResult.studentId;
 
+    // Check if terms are accepted
+    const termsAccepted = request.cookies.get("termsAccepted")?.value === "true";
+    if (!termsAccepted) {
+      return NextResponse.json(
+        { error: "You must accept the terms and conditions before submitting" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { labId, title, files } = body;
 
@@ -241,6 +250,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate that at least one file (code or attachment) was successfully inserted
+    const totalFilesInserted = codeFiles.length + attachmentsToInsert.length;
+    if (totalFilesInserted === 0) {
+      // Check if this submission has any existing files
+      const { data: existingCodeFiles } = await supabase
+        .from("submission_code")
+        .select("id")
+        .eq("submission_id", submission.id)
+        .limit(1);
+      
+      const { data: existingAttachments } = await supabase
+        .from("submission_attachments")
+        .select("id")
+        .eq("submission_id", submission.id)
+        .limit(1);
+
+      // If submission has no existing files and no new files were added, delete it
+      // (to prevent empty submissions from unlocking labs)
+      if ((!existingCodeFiles || existingCodeFiles.length === 0) && 
+          (!existingAttachments || existingAttachments.length === 0)) {
+        await supabase
+          .from("submissions")
+          .delete()
+          .eq("id", submission.id);
+      }
+      
+      return NextResponse.json(
+        { error: "At least one file (code file or attachment) must be successfully uploaded" },
+        { status: 400 }
+      );
+    }
+
+    // Only unlock lab if files were successfully inserted
     // Unlock lab for this student (ignore if already exists)
     const { error: unlockError } = await supabase
       .from("lab_unlocks")

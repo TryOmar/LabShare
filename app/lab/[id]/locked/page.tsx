@@ -35,6 +35,34 @@ export default function LockedLabPage() {
   const params = useParams();
   const labId = params.id as string;
 
+  // Store referrer when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const referrer = document.referrer;
+      const currentPath = window.location.pathname;
+      
+      // Always try to get a valid referrer
+      if (referrer && referrer.includes(window.location.origin)) {
+        try {
+          const referrerPath = new URL(referrer).pathname;
+          // Only store if referrer is different from current page
+          if (referrerPath !== currentPath && referrerPath !== `/lab/${labId}`) {
+            sessionStorage.setItem('lockedLabPageReferrer', referrerPath);
+          } else {
+            // If referrer is same as current page, default to dashboard
+            sessionStorage.setItem('lockedLabPageReferrer', '/dashboard');
+          }
+        } catch (e) {
+          // If URL parsing fails, default to dashboard
+          sessionStorage.setItem('lockedLabPageReferrer', '/dashboard');
+        }
+      } else {
+        // No referrer or external referrer - always default to dashboard
+        sessionStorage.setItem('lockedLabPageReferrer', '/dashboard');
+      }
+    }
+  }, [labId]);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -173,10 +201,34 @@ export default function LockedLabPage() {
               Continue
             </button>
             <button
-              onClick={() => router.push("/labs")}
+              onClick={() => {
+                // Try to go back in browser history first
+                if (typeof window !== 'undefined' && window.history.length > 1) {
+                  router.back();
+                  // Fallback: if still on same page after a moment, use referrer or default
+                  setTimeout(() => {
+                    if (window.location.pathname === `/lab/${labId}/locked`) {
+                      const referrer = sessionStorage.getItem('lockedLabPageReferrer');
+                      if (referrer && referrer.startsWith('/') && referrer !== `/lab/${labId}/locked` && referrer !== `/lab/${labId}`) {
+                        router.push(referrer);
+                      } else {
+                        router.push('/dashboard');
+                      }
+                    }
+                  }, 100);
+                } else {
+                  // No history, use referrer or default to dashboard
+                  const referrer = sessionStorage.getItem('lockedLabPageReferrer');
+                  if (referrer && referrer.startsWith('/') && referrer !== `/lab/${labId}/locked` && referrer !== `/lab/${labId}`) {
+                    router.push(referrer);
+                  } else {
+                    router.push('/dashboard');
+                  }
+                }
+              }}
               className="px-6 py-3 border border-black text-black font-semibold hover:bg-gray-50"
             >
-              Back to Labs
+              Back
             </button>
           </div>
         </div>
