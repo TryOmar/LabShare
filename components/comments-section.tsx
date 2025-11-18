@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/utils";
 
 interface Comment {
   id: string;
@@ -157,8 +158,7 @@ export default function CommentsSection({
                     {comment.students?.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {new Date(comment.created_at).toLocaleDateString()}{" "}
-                    {new Date(comment.created_at).toLocaleTimeString()}
+                    {formatDateTime(comment.created_at)}
                   </p>
                 </div>
                 {comment.student_id === studentId && (
