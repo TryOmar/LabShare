@@ -47,6 +47,34 @@ export default function LabPage() {
   const params = useParams();
   const labId = params.id as string;
 
+  // Store referrer when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const referrer = document.referrer;
+      const currentPath = window.location.pathname;
+      
+      // Always try to get a valid referrer
+      if (referrer && referrer.includes(window.location.origin)) {
+        try {
+          const referrerPath = new URL(referrer).pathname;
+          // Only store if referrer is different from current page
+          if (referrerPath !== currentPath && referrerPath !== `/lab/${labId}`) {
+            sessionStorage.setItem('labPageReferrer', referrerPath);
+          } else {
+            // If referrer is same as current page, default to dashboard
+            sessionStorage.setItem('labPageReferrer', '/dashboard');
+          }
+        } catch (e) {
+          // If URL parsing fails, default to dashboard
+          sessionStorage.setItem('labPageReferrer', '/dashboard');
+        }
+      } else {
+        // No referrer or external referrer - always default to dashboard
+        sessionStorage.setItem('labPageReferrer', '/dashboard');
+      }
+    }
+  }, [labId]);
+
   useEffect(() => {
     // Check if upload=true is in query params
     const searchParams = new URLSearchParams(window.location.search);
@@ -207,10 +235,24 @@ export default function LabPage() {
         {showUploadModal && (
           <UploadModal
             labId={labId}
-            onClose={() => {
+            onClose={(shouldNavigateBack = false) => {
               setShowUploadModal(false);
-              // Reload the page to refresh lab data and make it accessible
-              window.location.href = `/lab/${labId}`;
+              if (shouldNavigateBack) {
+                // Navigate back to previous page or dashboard when canceling
+                const referrer = sessionStorage.getItem('labPageReferrer');
+                const currentPath = window.location.pathname;
+                
+                // Check if we have a valid referrer that's different from current page
+                if (referrer && referrer !== currentPath && referrer.startsWith('/') && referrer !== `/lab/${labId}`) {
+                  router.push(referrer);
+                } else {
+                  // Default to dashboard
+                  router.push('/dashboard');
+                }
+              } else {
+                // After successful upload, reload the page to refresh lab data
+                window.location.href = `/lab/${labId}`;
+              }
             }}
           />
         )}
@@ -262,7 +304,7 @@ export default function LabPage() {
 
 interface UploadModalProps {
   labId: string;
-  onClose: () => void;
+  onClose: (shouldNavigateBack?: boolean) => void;
 }
 
 function UploadModal({ labId, onClose }: UploadModalProps) {
@@ -304,10 +346,12 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
   const [showPasteArea, setShowPasteArea] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const pasteTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const titleInputRef = React.useRef<HTMLInputElement>(null);
+  const dragCounterRef = React.useRef(0);
 
   const detectedLanguages: Record<string, string> = {
     ".js": "javascript",
@@ -355,7 +399,61 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     }
   };
 
-  // Drag and drop handlers
+  // Global drag handlers for page-level drag detection
+  React.useEffect(() => {
+    const handleGlobalDragEnter = (e: DragEvent) => {
+      // Only show overlay if dragging files (not text/elements)
+      if (e.dataTransfer?.types.includes('Files')) {
+        dragCounterRef.current++;
+        if (dragCounterRef.current === 1) {
+          setIsDraggingOverPage(true);
+        }
+      }
+    };
+
+    const handleGlobalDragLeave = (e: DragEvent) => {
+      // Only decrement if we're actually leaving the document
+      // Check if we're leaving to a point outside the viewport
+      if (e.clientX === 0 && e.clientY === 0) {
+        dragCounterRef.current = 0;
+        setIsDraggingOverPage(false);
+      } else {
+        dragCounterRef.current--;
+        if (dragCounterRef.current <= 0) {
+          dragCounterRef.current = 0;
+          setIsDraggingOverPage(false);
+        }
+      }
+    };
+
+    const handleGlobalDragOver = (e: DragEvent) => {
+      // Only prevent default if dragging files
+      if (e.dataTransfer?.types.includes('Files')) {
+        e.preventDefault();
+      }
+    };
+
+    const handleGlobalDrop = (e: DragEvent) => {
+      // Reset counter when files are dropped anywhere
+      dragCounterRef.current = 0;
+      setIsDraggingOverPage(false);
+    };
+
+    // Add event listeners to document
+    document.addEventListener('dragenter', handleGlobalDragEnter);
+    document.addEventListener('dragleave', handleGlobalDragLeave);
+    document.addEventListener('dragover', handleGlobalDragOver);
+    document.addEventListener('drop', handleGlobalDrop);
+
+    return () => {
+      document.removeEventListener('dragenter', handleGlobalDragEnter);
+      document.removeEventListener('dragleave', handleGlobalDragLeave);
+      document.removeEventListener('dragover', handleGlobalDragOver);
+      document.removeEventListener('drop', handleGlobalDrop);
+    };
+  }, []);
+
+  // Drag and drop handlers for the drop zone
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -365,7 +463,14 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    // Only set dragging to false if we're actually leaving the drop zone
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setIsDragging(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -377,6 +482,8 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+    setIsDraggingOverPage(false);
+    dragCounterRef.current = 0;
 
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
@@ -581,23 +688,55 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   // Handle backdrop click - only close if clicking directly on backdrop, not modal content
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only close if clicking directly on the backdrop (not on modal content)
-    if (e.target === e.currentTarget) {
+    // Don't close if user has text selected (they might be selecting text in an input)
+    const selection = window.getSelection();
+    const hasSelection = selection && selection.toString().length > 0;
+    
+    if (e.target === e.currentTarget && !hasSelection) {
       onClose();
     }
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={handleBackdropClick}
-    >
+    <>
+      {/* Global drag overlay - appears when dragging files anywhere on the page */}
+      {isDraggingOverPage && (
+        <div 
+          className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md z-[60] flex items-center justify-center pointer-events-none animate-in fade-in duration-200"
+        >
+          <div className="bg-white border-4 border-black border-dashed p-12 max-w-2xl mx-4 shadow-2xl transform transition-all duration-200 scale-105 animate-in zoom-in-95 duration-200">
+            <div className="text-center">
+              <svg 
+                className="mx-auto h-16 w-16 text-black mb-4 animate-bounce" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                />
+              </svg>
+              <h3 className="text-2xl font-bold text-black mb-2">Drop files to upload</h3>
+              <p className="text-gray-600">Release to add files to your submission</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div 
-        className="bg-white border border-black p-6 max-w-lg w-full"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4"
+        onClick={handleBackdropClick}
       >
+        <div 
+          className="bg-white border border-black p-6 max-w-lg w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
         <h2 className="text-2xl font-bold text-black mb-4">Upload Solution</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-4">
           {/* Title */}
           <div>
             <label className="block text-black font-semibold mb-2">Solution Name</label>
@@ -609,6 +748,10 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               onClick={(e) => e.stopPropagation()}
               onFocus={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onMouseMove={(e) => e.stopPropagation()}
+              onSelect={(e) => e.stopPropagation()}
+              onDragStart={(e) => e.stopPropagation()}
               className="w-full px-3 py-2 border border-black bg-white text-black"
               required
             />
@@ -622,35 +765,76 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed p-4 ${
-                isDragging ? 'border-black bg-gray-100' : 'border-black bg-white'
+              className={`border-2 border-dashed p-8 transition-all duration-200 ${
+                isDragging 
+                  ? 'border-black bg-gray-100 scale-105 shadow-lg' 
+                  : 'border-black bg-white hover:bg-gray-50'
               }`}
             >
               <div className="text-center">
-                <p className="text-sm text-black mb-1">
-                  Drag files here or{' '}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="underline"
-                  >
-                    browse
-                  </button>
-                  {' '}or{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPasteArea(true);
-                      setTimeout(() => pasteTextareaRef.current?.focus(), 10);
-                    }}
-                    className="underline"
-                  >
-                    paste code
-                  </button>
-                </p>
-                <p className="text-xs text-gray-600">
-                  Press Ctrl+V to paste files or code
-                </p>
+                {isDragging ? (
+                  <>
+                    <svg 
+                      className="mx-auto h-12 w-12 text-black mb-3 animate-pulse" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                      />
+                    </svg>
+                    <p className="text-lg font-semibold text-black mb-1">
+                      Drop files here
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Release to upload
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <svg 
+                      className="mx-auto h-10 w-10 text-gray-400 mb-3" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                      />
+                    </svg>
+                    <p className="text-sm text-black mb-2">
+                      <span className="font-semibold">Drag files here</span> or{' '}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-black hover:text-gray-700 underline font-medium"
+                      >
+                        browse
+                      </button>
+                      {' '}or{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPasteArea(true);
+                          setTimeout(() => pasteTextareaRef.current?.focus(), 10);
+                        }}
+                        className="text-black hover:text-gray-700 underline font-medium"
+                      >
+                        paste code
+                      </button>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Press Ctrl+V to paste files or code
+                    </p>
+                  </>
+                )}
               </div>
               <input
                 ref={fileInputRef}
@@ -776,7 +960,16 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
             </div>
           )}
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && (
+            <div>
+              <p className="text-red-600 text-sm">{error}</p>
+              {error.toLowerCase().includes('mime type') && error.toLowerCase().includes('not supported') && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">report it</a>.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Buttons */}
           <div className="flex gap-3 pt-2">
@@ -789,7 +982,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => onClose(true)}
               className="flex-1 border border-black text-black font-semibold py-2 hover:bg-gray-100"
             >
               Cancel
@@ -798,5 +991,6 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
         </form>
       </div>
     </div>
+    </>
   );
 }

@@ -517,7 +517,16 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
             </div>
           )}
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && (
+            <div>
+              <p className="text-red-600 text-sm">{error}</p>
+              {error.toLowerCase().includes('mime type') && error.toLowerCase().includes('not supported') && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">report it</a>.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
