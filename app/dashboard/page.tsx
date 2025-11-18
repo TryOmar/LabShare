@@ -98,23 +98,23 @@ const CourseCard = ({
       {/* Course Header */}
       <div
         onClick={() => router.push(`/labs?course=${course.id}`)}
-        className="border-b border-black p-4 hover:bg-gray-50 cursor-pointer"
+        className="border-b border-black p-3 sm:p-4 hover:bg-gray-50 cursor-pointer"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-lg text-black flex-1 min-w-0 truncate">{course.name}</h3>
+          <h3 className="font-semibold text-sm sm:text-lg text-black flex-1 min-w-0 truncate">{course.name}</h3>
           <span className="text-xs text-gray-600 hover:text-black whitespace-nowrap flex-shrink-0">All Labs →</span>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {recentSubmissions.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-gray-600">Recent Uploads</span>
               <span className="text-xs text-gray-500">{submissions.length} total</span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {recentSubmissions.map((submission) => {
                 const isLocked = !submission.hasAccess;
                 const labNumber = submission.labs?.lab_number;
@@ -123,7 +123,7 @@ const CourseCard = ({
                 return (
                   <div
                     key={submission.id}
-                    className={`p-3 border border-black ${
+                    className={`p-2 sm:p-3 border border-black ${
                       isLocked
                         ? "bg-gray-50 opacity-60"
                         : "bg-white hover:bg-gray-50"
@@ -131,8 +131,8 @@ const CourseCard = ({
                   >
                     {/* Lab Number and Title */}
                     <div className="mb-2 flex items-center gap-2">
-                      <h4 className={`font-semibold text-sm flex-1 ${isLocked ? "text-gray-500" : "text-black"}`}>
-                        {labTitle} — {submission.title}
+                      <h4 className={`font-semibold text-xs sm:text-sm flex-1 ${isLocked ? "text-gray-500" : "text-black"} break-words`}>
+                        <span className="hidden sm:inline">{labTitle} — </span>{submission.title}
                       </h4>
                       {isLocked && (
                         <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,10 +147,10 @@ const CourseCard = ({
                     </p>
 
                     {/* Views and Timestamp */}
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2 sm:mb-3 flex-wrap">
                       <span>{submission.view_count} views</span>
                       <span>•</span>
-                      <span>{formatUploadTimestamp(submission.created_at)}</span>
+                      <span className="break-words">{formatUploadTimestamp(submission.created_at)}</span>
                     </div>
 
                     {/* Action Button */}
@@ -165,7 +165,7 @@ const CourseCard = ({
                           router.push(`/submission/${submission.id}`);
                         }
                       }}
-                      className={`w-full py-2.5 px-3 text-sm font-semibold border-2 transition-all ${
+                      className={`w-full py-2 sm:py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-semibold border-2 transition-all ${
                         isLocked
                           ? "bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 shadow-md"
                           : "bg-black text-white border-black hover:bg-gray-800"
@@ -193,8 +193,8 @@ const CourseCard = ({
             )}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-sm text-gray-500 mb-2">No uploads yet</p>
+          <div className="text-center py-6 sm:py-8">
+            <p className="text-xs sm:text-sm text-gray-500 mb-2">No uploads yet</p>
             <button
               onClick={() => router.push(`/labs?course=${course.id}`)}
               className="text-xs text-gray-600 hover:text-black underline"
@@ -333,28 +333,28 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
-      <div className="flex-1 p-6 w-full">
+      <div className="flex-1 p-4 sm:p-6 w-full">
         {/* Welcome Section */}
-        <div className="mb-8 px-4">
-          <h1 className="text-3xl font-bold text-black mb-2">
+        <div className="mb-6 sm:mb-8 px-2 sm:px-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">
             Welcome, {student?.name}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600 break-words">
             {track?.name} • {student?.email}
           </p>
         </div>
 
         {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start px-2 sm:px-4">
           {/* Main Content */}
           <div className="lg:col-span-2 w-full">
             {/* Submit Work Section */}
-            <div className="mb-8 w-full border border-black p-6 bg-white">
-              <h2 className="text-xl font-bold text-black mb-4">Submit Your Lab</h2>
+            <div className="mb-6 sm:mb-8 w-full border border-black p-4 sm:p-6 bg-white">
+              <h2 className="text-lg sm:text-xl font-bold text-black mb-4">Submit Your Lab</h2>
               
               {/* Instructions */}
-              <div className="mb-6 p-4 bg-gray-50 border border-gray-300">
-                <p className="text-sm text-gray-700 leading-relaxed">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 border border-gray-300">
+                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                   Please ensure you have <span className="font-bold">completed</span> the lab and had it <span className="font-bold">reviewed</span> by the <span className="font-bold">instructor</span> before uploading. Do not upload random files.
                 </p>
               </div>
@@ -370,19 +370,19 @@ export default function DashboardPage() {
                         setSelectedCourseId(suggestion.course_id);
                         setSelectedLabId(suggestion.lab_id);
                       }}
-                      className="px-3 py-1.5 text-xs border border-gray-300 bg-white hover:bg-gray-50 hover:border-black transition-colors rounded"
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs border border-gray-300 bg-white hover:bg-gray-50 hover:border-black transition-colors rounded"
                     >
-                      {suggestion.course_name} • Lab {suggestion.lab_number}
+                      <span className="hidden sm:inline">{suggestion.course_name} • </span>Lab {suggestion.lab_number}
                     </button>
                   ))}
                 </div>
               )}
 
               {/* Course and Lab Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                 {/* Course Selector */}
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-black mb-2">
                     Select Course
                   </label>
                   <select
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                       setSelectedCourseId(e.target.value);
                       setSelectedLabId(""); // Reset lab when course changes
                     }}
-                    className="w-full p-3 border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                    className="w-full p-2 sm:p-3 text-sm sm:text-base border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
                   >
                     <option value="">Choose a course...</option>
                     {courses.map((course) => (
@@ -404,14 +404,14 @@ export default function DashboardPage() {
 
                 {/* Lab Selector */}
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-black mb-2">
                     Select Lab
                   </label>
                   <select
                     value={selectedLabId}
                     onChange={(e) => setSelectedLabId(e.target.value)}
                     disabled={!selectedCourseId}
-                    className="w-full p-3 border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    className="w-full p-2 sm:p-3 text-sm sm:text-base border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                   >
                     <option value="">Choose a lab...</option>
                     {selectedCourseId && labsByCourse.get(selectedCourseId)?.map((lab) => (
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                   }
                 }}
                 disabled={!selectedLabId}
-                className={`w-full py-3 px-6 font-semibold border-2 transition-all ${
+                className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base font-semibold border-2 transition-all ${
                   selectedLabId
                     ? "bg-black text-white border-black hover:bg-gray-800"
                     : "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
@@ -442,11 +442,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Courses Section */}
-            <div ref={coursesBoxRef} className="mb-8 w-full border border-black p-6 bg-white">
-              <h2 className="text-xl font-bold text-black mb-6">Recent Courses</h2>
+            <div ref={coursesBoxRef} className="mb-6 sm:mb-8 w-full border border-black p-4 sm:p-6 bg-white">
+              <h2 className="text-lg sm:text-xl font-bold text-black mb-4 sm:mb-6">Recent Courses</h2>
               
               {coursesWithSubmissions.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {coursesWithSubmissions.map((course) => (
                     <CourseCard key={course.id} course={course} router={router} />
                   ))}
@@ -462,97 +462,97 @@ export default function DashboardPage() {
 
           {/* Sidebar */}
           <div ref={sidebarRef} className="lg:col-span-1">
-            <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Profile</h3>
-              <div className="space-y-2 text-sm">
+            <div className="border border-black p-3 sm:p-4 mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Profile</h3>
+              <div className="space-y-2 text-xs sm:text-sm">
                 <p>
                   <span className="font-semibold text-black">Name:</span>
                   <br />
-                  <span className="text-gray-600">{student?.name}</span>
+                  <span className="text-gray-600 break-words">{student?.name}</span>
                 </p>
                 <p>
                   <span className="font-semibold text-black">Email:</span>
                   <br />
-                  <span className="text-gray-600">{student?.email}</span>
+                  <span className="text-gray-600 break-all">{student?.email}</span>
                 </p>
                 <p>
                   <span className="font-semibold text-black">Track:</span>
                   <br />
-                  <span className="text-gray-600">{track?.name}</span>
+                  <span className="text-gray-600 break-words">{track?.name}</span>
                 </p>
               </div>
             </div>
             {/* 1. Repository */}
-            <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Repository</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="border border-black p-3 sm:p-4 mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Repository</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Explore the LabShare codebase, architecture, and project structure. See how the platform works and track development progress.
               </p>
               <a
                 href="https://github.com/TryOmar/LabShare"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
+                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
                 Go to Repo
               </a>
             </div>
 
             {/* 2. Contribute */}
-            <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Contribute</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="border border-black p-3 sm:p-4 mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Contribute</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Share feature ideas, improvements, or code contributions. Get publicly credited in the Last Updates section for your work.
               </p>
               <a
                 href="https://github.com/TryOmar/LabShare/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
+                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
                 Contribute on GitHub
               </a>
             </div>
 
             {/* 3. Report */}
-            <div className="border border-black p-4 mb-4">
-              <h3 className="font-bold text-black mb-4">Report</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="border border-black p-3 sm:p-4 mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Report</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Found a bug or have feedback? Submit reports anonymously or with contact info. No coding required.
               </p>
               <a
                 href="https://forms.gle/25mEvcjTPrhA6THf9"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
+                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm bg-black text-white font-semibold text-center hover:bg-gray-800"
               >
                 Submit Report
               </a>
             </div>
             <Dialog>
               <DialogTrigger asChild>
-                <div className="border border-black p-4 mt-4 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <h3 className="font-bold text-black mb-4">Last Updates</h3>
-                  <div className="space-y-3 mb-4">
+                <div className="border border-black p-3 sm:p-4 mt-3 sm:mt-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <h3 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Last Updates</h3>
+                  <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
                     <LastUpdates showTitle={false} maxItems={5} />
                   </div>
-                  <div className="pt-3 border-t border-gray-200">
+                  <div className="pt-2 sm:pt-3 border-t border-gray-200">
                     <p className="text-xs text-gray-600 text-center mb-2">
                       Click to view all updates
                     </p>
                     <Link
                       href="/last-updates"
                       onClick={(e) => e.stopPropagation()}
-                      className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800 text-sm"
+                      className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm bg-black text-white font-semibold text-center hover:bg-gray-800"
                     >
                       View Full Changelog
                     </Link>
                   </div>
                 </div>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto mx-4">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold text-black">
+                  <DialogTitle className="text-xl sm:text-2xl font-bold text-black">
                     Last Updates
                   </DialogTitle>
                 </DialogHeader>

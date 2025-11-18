@@ -202,29 +202,29 @@ export default function LabPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
-      <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         {/* Lab Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2 break-words">
             Lab {lab?.lab_number}: {lab?.title}
           </h1>
           {lab?.description && (
-            <p className="text-gray-600">{lab.description}</p>
+            <p className="text-sm sm:text-base text-gray-600 break-words">{lab.description}</p>
           )}
         </div>
 
         {/* Action Bar */}
-        <div className="mb-6 flex gap-3">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="px-6 py-2 bg-black text-white font-semibold hover:bg-gray-800"
+            className="px-4 sm:px-6 py-2 text-sm sm:text-base bg-black text-white font-semibold hover:bg-gray-800"
           >
             {userSubmission ? "Edit Submission" : "Upload Solution"}
           </button>
           {userSubmission && (
             <button
               onClick={() => router.push(`/submission/${userSubmission.id}`)}
-              className="px-6 py-2 border border-black text-black font-semibold hover:bg-gray-50"
+              className="px-4 sm:px-6 py-2 text-sm sm:text-base border border-black text-black font-semibold hover:bg-gray-50"
             >
               View My Solution
             </button>
@@ -259,33 +259,33 @@ export default function LabPage() {
 
         {/* Submissions List */}
         <div>
-          <h2 className="text-xl font-bold text-black mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">
             Solutions ({submissions.length})
           </h2>
           {submissions.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {submissions.map((submission) => (
                 <div
                   key={submission.id}
                   onClick={() => router.push(`/submission/${submission.id}`)}
-                  className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
+                  className="border border-black p-3 sm:p-4 hover:bg-gray-50 cursor-pointer"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-black">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base text-black break-words">
                         {submission.title}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">
                         by {submission.students?.name}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {submission.students?.id === student?.id && (
-                        <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
+                        <span className="text-xs bg-gray-100 px-2 py-1 border border-black whitespace-nowrap">
                           Your Solution
                         </span>
                       )}
-                      <span className="text-xs bg-gray-100 px-2 py-1 border border-black">
+                      <span className="text-xs bg-gray-100 px-2 py-1 border border-black whitespace-nowrap">
                         {submission.view_count} {submission.view_count === 1 ? 'view' : 'views'}
                       </span>
                     </div>
@@ -294,7 +294,7 @@ export default function LabPage() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">No solutions uploaded yet</p>
+            <p className="text-sm sm:text-base text-gray-600">No solutions uploaded yet</p>
           )}
         </div>
       </div>
@@ -744,27 +744,27 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
                 />
               </svg>
-              <h3 className="text-2xl font-bold text-black mb-2">Drop files to upload</h3>
-              <p className="text-gray-600">Release to add files to your submission</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-black mb-2">Drop files to upload</h3>
+              <p className="text-sm sm:text-base text-gray-600">Release to add files to your submission</p>
             </div>
           </div>
         </div>
       )}
 
       <div 
-        className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-white border border-black p-6 max-w-lg w-full"
+          className="bg-white border border-black p-4 sm:p-6 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-        <h2 className="text-2xl font-bold text-black mb-4">Upload Solution</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-black mb-3 sm:mb-4">Upload Solution</h2>
 
-        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-4">
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-3 sm:space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-black font-semibold mb-2">Solution Name</label>
+            <label className="block text-sm sm:text-base text-black font-semibold mb-2">Solution Name</label>
             <input
               ref={titleInputRef}
               type="text"
@@ -777,20 +777,20 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               onMouseMove={(e) => e.stopPropagation()}
               onSelect={(e) => e.stopPropagation()}
               onDragStart={(e) => e.stopPropagation()}
-              className="w-full px-3 py-2 border border-black bg-white text-black"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
               required
             />
           </div>
 
           {/* Combined Upload & Paste Box */}
           <div>
-            <label className="block text-black font-semibold mb-2">Files & Code</label>
+            <label className="block text-sm sm:text-base text-black font-semibold mb-2">Files & Code</label>
             <div
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed p-8 transition-all duration-200 ${
+              className={`border-2 border-dashed p-4 sm:p-6 lg:p-8 transition-all duration-200 ${
                 isDragging 
                   ? 'border-black bg-gray-100 scale-105 shadow-lg' 
                   : 'border-black bg-white hover:bg-gray-50'
@@ -997,18 +997,18 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
           )}
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
             <button
               type="submit"
               disabled={loading || (files.length === 0 && pastedCodeFiles.length === 0)}
-              className="flex-1 bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
+              className="flex-1 bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? "Uploading..." : "Upload"}
             </button>
             <button
               type="button"
               onClick={() => onClose(true)}
-              className="flex-1 border border-black text-black font-semibold py-2 hover:bg-gray-100"
+              className="flex-1 border border-black text-black font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-100"
             >
               Cancel
             </button>
