@@ -218,6 +218,11 @@ export default function DashboardPage() {
   const [coursesWithSubmissions, setCoursesWithSubmissions] = useState<Course[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Submission form state
+  const [labsByCourse, setLabsByCourse] = useState<Map<string, Lab[]>>(new Map());
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [selectedLabId, setSelectedLabId] = useState<string>("");
 
   // Refs
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -281,6 +286,21 @@ export default function DashboardPage() {
         setCourses(data.courses || []);
         setCoursesWithSubmissions(data.coursesWithSubmissions || []);
         setRecentSubmissions(data.recentSubmissions || []);
+
+        // Fetch labs data for submission form
+        const labsResponse = await fetch("/api/labs", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (labsResponse.ok) {
+          const labsData = await labsResponse.json();
+          const labsMap = new Map<string, Lab[]>();
+          Object.entries(labsData.labsByCourse || {}).forEach(([courseId, labsList]) => {
+            labsMap.set(courseId, labsList as Lab[]);
+          });
+          setLabsByCourse(labsMap);
+        }
       } catch (err) {
         console.error("Error loading dashboard:", err);
         // On error, redirect to login as a fallback
@@ -320,6 +340,80 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start px-4">
           {/* Main Content */}
           <div className="lg:col-span-2 w-full">
+            {/* Submit Work Section */}
+            <div className="mb-8 w-full border border-black p-6 bg-white">
+              <h2 className="text-xl font-bold text-black mb-4">Submit Your Work</h2>
+              
+              {/* Instructions */}
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-300">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Please ensure you have <span className="font-bold">completed</span> the lab and had it <span className="font-bold">reviewed</span> by the <span className="font-bold">instructor</span> before uploading. Do not upload random files.
+                </p>
+              </div>
+
+              {/* Course and Lab Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Course Selector */}
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">
+                    Select Course
+                  </label>
+                  <select
+                    value={selectedCourseId}
+                    onChange={(e) => {
+                      setSelectedCourseId(e.target.value);
+                      setSelectedLabId(""); // Reset lab when course changes
+                    }}
+                    className="w-full p-3 border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="">Choose a course...</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Lab Selector */}
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">
+                    Select Lab
+                  </label>
+                  <select
+                    value={selectedLabId}
+                    onChange={(e) => setSelectedLabId(e.target.value)}
+                    disabled={!selectedCourseId}
+                    className="w-full p-3 border border-black bg-white text-black focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Choose a lab...</option>
+                    {selectedCourseId && labsByCourse.get(selectedCourseId)?.map((lab) => (
+                      <option key={lab.id} value={lab.id}>
+                        Lab {lab.lab_number}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                onClick={() => {
+                  if (selectedLabId) {
+                    router.push(`/lab/${selectedLabId}?upload=true`);
+                  }
+                }}
+                disabled={!selectedLabId}
+                className={`w-full py-3 px-6 font-semibold border-2 transition-all ${
+                  selectedLabId
+                    ? "bg-black text-white border-black hover:bg-gray-800"
+                    : "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
+                }`}
+              >
+                Continue to Upload
+              </button>
+            </div>
+
             {/* Courses Section */}
             <div ref={coursesBoxRef} className="mb-8 w-full border border-black p-6 bg-white">
               <h2 className="text-xl font-bold text-black mb-6">Recent Courses</h2>
