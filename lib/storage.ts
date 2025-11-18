@@ -1,4 +1,3 @@
-import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -86,25 +85,103 @@ export async function getAttachmentDownloadUrl(
 }
 
 /**
- * Delete an attachment from storage
+ * Delete an attachment from storage using SQL function
  * @param filePath - The storage path of the file to delete
  * @returns Success or error
  */
 export async function deleteAttachment(
   filePath: string
 ): Promise<{ success: boolean } | { error: string }> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.rpc('delete_storage_file', {
+      bucket_name: 'submission-attachments',
+      file_path: filePath
+    });
+    
+    if (error) {
+      return { error: error.message };
+    }
+    
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || 'Failed to delete file' };
+  }
+}
 
-  const { error } = await supabase.storage
-    .from('submission-attachments')
-    .remove([filePath]);
-
-  if (error) {
-    console.error('Error deleting file:', error);
-    return { error: error.message };
+/**
+ * Delete specific files from storage by their paths using SQL function
+ * @param filePaths - Array of storage paths to delete
+ * @returns Success or error
+ */
+export async function deleteSubmissionFiles(
+  filePaths: string[]
+): Promise<{ success: boolean } | { error: string }> {
+  if (!filePaths || filePaths.length === 0) {
+    return { success: true };
   }
 
-  return { success: true };
+  try {
+    const supabase = await createClient();
+    
+    // Delete files using SQL function (bypasses RLS)
+    await Promise.all(
+      filePaths.map(filePath =>
+        supabase.rpc('delete_storage_file', {
+          bucket_name: 'submission-attachments',
+          file_path: filePath
+        })
+      )
+    );
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error deleting files:', err);
+    return { error: err.message || 'Failed to delete files' };
+  }
+}
+
+/**
+ * Delete all files in a submission folder from storage using SQL function
+ * @param submissionId - The submission ID
+ * @returns Success or error
+ */
+export async function deleteSubmissionFolder(
+  submissionId: string
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const folderPath = `submissions/${submissionId}`;
+    const supabase = await createClient();
+    
+    // List files in the folder
+    const { data: files, error: listError } = await supabase.storage
+      .from('submission-attachments')
+      .list(folderPath, { limit: 1000 });
+    
+    if (listError) {
+      return { error: listError.message };
+    }
+    
+    if (!files || files.length === 0) {
+      return { success: true };
+    }
+    
+    // Delete all files using SQL function
+    const filePaths = files.map(file => `${folderPath}/${file.name}`);
+    await Promise.all(
+      filePaths.map(filePath =>
+        supabase.rpc('delete_storage_file', {
+          bucket_name: 'submission-attachments',
+          file_path: filePath
+        })
+      )
+    );
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error deleting folder:', err);
+    return { error: err.message || 'Failed to delete folder' };
+  }
 }
 
 /**
