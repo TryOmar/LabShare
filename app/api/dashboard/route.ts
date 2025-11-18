@@ -127,6 +127,8 @@ export async function GET(request: NextRequest) {
     coursesWithSubmissions.sort((a: any, b: any) => b.mostRecentDate - a.mostRecentDate);
 
     // Get suggested labs (labs with recent submissions from others that user hasn't submitted to)
+    // Only include labs from courses in the user's track
+    const courseIdsInTrack = new Set(coursesList.map((c: any) => c.id));
     const suggestedLabs: any[] = [];
     const seenLabIds = new Set<string>();
     
@@ -134,6 +136,9 @@ export async function GET(request: NextRequest) {
     for (const submission of submissionsWithAccess) {
       const labId = submission.lab_id;
       const courseId = submission.labs?.course_id;
+      
+      // Skip if course is not in user's track
+      if (!courseId || !courseIdsInTrack.has(courseId)) continue;
       
       // Skip if user already submitted to this lab
       if (solvedLabIds.has(labId)) continue;
