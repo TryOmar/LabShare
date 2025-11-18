@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "next start",
     "db:migrate": "node scripts/run-migrations.js",
-    "test:upload": "tsx scripts/test-upload.ts"
+    "cleanup:storage": "node scripts/cleanup-orphaned-files.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
