@@ -7,8 +7,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "db:migrate": "node scripts/run-migrations.js",
-    "cleanup:storage": "node scripts/cleanup-orphaned-files.js"
+    "db:migrate": "node scripts/run-migrations.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

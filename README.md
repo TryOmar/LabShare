@@ -16,7 +16,6 @@ A collaborative platform for ITI students to share and view lab solutions. Built
 - **Access Control**: Lab unlocking system - submit your solution to unlock others
 - **Date & Time Display**: All dates show both date and time (hours and minutes)
 - **Server-Side Security**: All database operations validated server-side with proper authorization
-- **Storage Management**: Automatic cleanup of orphaned files with utility scripts
 
 ## 🛠️ Tech Stack
 
@@ -118,7 +117,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 LabShare/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes (server-side)
-│   │   ├── admin/         # Admin endpoints
 │   │   ├── auth/         # Authentication endpoints
 │   │   │   ├── accept-terms/  # Terms acceptance
 │   │   │   ├── check-terms/   # Terms verification
@@ -167,7 +165,6 @@ LabShare/
 │   ├── 002_seed_data.sql
 │   ├── 003_fix_timestamps_utc.sql
 │   ├── 004_remove_versions_separate_code_attachments.sql
-│   ├── cleanup-orphaned-files.js  # Storage cleanup utility
 │   ├── run-migrations.js  # Migration runner
 │   └── README.md         # Migration guide
 ├── data/                  # Static data
@@ -216,9 +213,6 @@ All API routes require authentication via httpOnly cookies (except login/OTP end
 - `POST /api/submission/[id]/comments` - Add a comment
 - `DELETE /api/submission/[id]/comments/[commentId]` - Delete a comment
 
-### Admin
-- `POST /api/admin/cleanup-storage` - Cleanup orphaned storage files (admin only)
-
 ## 📝 Database Schema
 
 ### Core Tables
@@ -255,7 +249,6 @@ The application uses Supabase Storage for file attachments:
 - **Structure**: `submissions/{submissionId}/{filename}`
 - **File Types**: PDFs, images, documents, and other non-code files
 - **Code Files**: Stored directly in database (`submission_code` table) for syntax highlighting
-- **Cleanup**: Use `npm run cleanup:storage` to remove orphaned files
 
 ## 🚀 Deployment
 
@@ -283,7 +276,6 @@ Make sure to set all environment variables in your deployment platform:
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run db:migrate` - Run database migrations
-- `npm run cleanup:storage` - Cleanup orphaned storage files
 
 ## 🔄 Migration History
 
