@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
-import { getAttachmentDownloadUrl } from "@/lib/storage";
+import { getAttachmentDownloadUrl, deleteSubmissionFolder, deleteSubmissionFiles } from "@/lib/storage";
 
 /**
  * GET /api/submission/[id]
@@ -180,7 +180,22 @@ export async function DELETE(
       );
     }
 
+    // Delete all files from storage
+    const { data: attachments } = await supabase
+      .from("submission_attachments")
+      .select("storage_path")
+      .eq("submission_id", submissionId);
+
+    if (attachments && attachments.length > 0) {
+      const filePaths = attachments.map(a => a.storage_path);
+      await deleteSubmissionFiles(filePaths);
+    } else {
+      // Delete folder in case of orphaned files
+      await deleteSubmissionFolder(submissionId);
+    }
+
     // Delete submission using database function (bypasses RLS)
+    // This will cascade delete submission_code, submission_attachments, and comments
     // Ownership is already verified above, so this is safe
     const { error: deleteError } = await supabase.rpc('delete_submission', {
       submission_id: submissionId
