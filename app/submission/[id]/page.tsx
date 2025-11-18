@@ -452,7 +452,9 @@ export default function SubmissionPage() {
                       throw new Error("Failed to delete submission");
                     }
 
-                    router.back();
+                    // Show success message and redirect to labs page
+                    alert("Submission deleted successfully!");
+                    router.push("/labs");
                   } catch (err) {
                     console.error("Error deleting submission:", err);
                     alert("Failed to delete submission. Please try again.");
