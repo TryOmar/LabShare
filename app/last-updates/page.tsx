@@ -70,7 +70,7 @@ export default function LastUpdatesPage() {
               View Repo
             </a>
             <a
-              href="https://github.com/TryOmar/LabShare/issues"
+              href="https://github.com/TryOmar/LabShare/issues/new"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 px-3 py-1.5 border border-black text-black text-xs font-semibold text-center hover:bg-gray-100"
