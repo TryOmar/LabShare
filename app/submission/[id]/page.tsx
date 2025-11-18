@@ -346,17 +346,17 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={handleBackdropClick}
-    >
       <div 
-        className="bg-white border border-black p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
+        onClick={handleBackdropClick}
       >
-        <h2 className="text-2xl font-bold text-black mb-4">Add Files</h2>
+        <div 
+          className="bg-white border border-black p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto my-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+        <h2 className="text-xl sm:text-2xl font-bold text-black mb-3 sm:mb-4">Add Files</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
             <label className="block text-black font-semibold mb-2">Files & Code</label>
             <div
@@ -973,20 +973,20 @@ export default function SubmissionPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
-      <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h1 className="text-3xl font-bold text-black">{submission?.title}</h1>
-              <p className="text-gray-600 mt-1">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-black break-words">{submission?.title}</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">
                 by {submission?.students?.name}
               </p>
             </div>
             {isOwner && (
               <button
                 onClick={() => router.back()}
-                className="px-4 py-2 border border-black text-black font-semibold hover:bg-gray-100"
+                className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-black text-black font-semibold hover:bg-gray-100 whitespace-nowrap flex-shrink-0"
               >
                 Back
               </button>
@@ -994,13 +994,13 @@ export default function SubmissionPage() {
           </div>
 
           {/* Metadata */}
-          <div className="flex gap-4 text-sm text-gray-600 mt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 flex-wrap">
             <span>{submission?.view_count} views</span>
-            <span>
+            <span className="break-words">
               Created: {submission?.created_at && formatDateTime(submission.created_at)}
             </span>
             {isOwner && (
-              <span>
+              <span className="break-words">
                 Last edited: {submission?.updated_at && formatDateTime(submission.updated_at)}
               </span>
             )}
@@ -1008,7 +1008,7 @@ export default function SubmissionPage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Sidebar */}
           <div>
             {/* Add Files Button - Single button above both sections */}

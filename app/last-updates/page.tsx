@@ -33,34 +33,34 @@ export default function LastUpdatesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <div className="flex-1 p-6 max-w-4xl mx-auto w-full">
+      <div className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-black">Last Updates</h1>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-black">Last Updates</h1>
             <Link
               href="/dashboard"
-              className="text-black hover:underline text-sm font-semibold"
+              className="text-sm sm:text-base text-black hover:underline font-semibold whitespace-nowrap"
             >
               ← Back to Dashboard
             </Link>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             A chronological list of recent features and improvements to LabShare.
           </p>
         </div>
 
         {/* Updates List */}
-        <div className="border border-black p-6 mb-6">
+        <div className="border border-black p-4 sm:p-6 mb-4 sm:mb-6">
           <LastUpdates showTitle={false} />
         </div>
 
         {/* Call to Action */}
-        <div className="border border-black p-4 bg-gray-50">
-          <p className="text-xs text-gray-700 mb-3">
+        <div className="border border-black p-3 sm:p-4 bg-gray-50">
+          <p className="text-xs text-gray-700 mb-2 sm:mb-3">
             Want to see your name here? Contribute and get credited in Last Updates.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <a
               href="https://github.com/TryOmar/LabShare"
               target="_blank"

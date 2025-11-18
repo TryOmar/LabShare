@@ -146,13 +146,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
+    <div className="flex items-center justify-center min-h-screen bg-white p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="bg-white border border-black p-8">
-          <h1 className="text-2xl font-bold mb-4 text-black">
+        <div className="bg-white border border-black p-4 sm:p-6 lg:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-black">
             Lab Sharing
           </h1>
-          <p className="text-sm text-gray-700 mb-6 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6 leading-relaxed">
             A collaborative learning platform where students share lab solutions, learn from each other, 
             and provide constructive feedback. Complete your labs, review with your instructor, then 
             explore peer solutions to enhance your understanding.
@@ -160,8 +160,8 @@ export default function LoginPage() {
 
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit}>
-              <div className="mb-4">
-                <label className="block text-black font-semibold mb-2">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-sm sm:text-base text-black font-semibold mb-2">
                   ITI Email
                 </label>
                 <input
@@ -169,23 +169,23 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@iti.edu.eg"
-                  className="w-full px-3 py-2 border border-black bg-white text-black"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
                   required
                 />
               </div>
               {error && (
-                <div className="mb-4">
-                  <p className="text-red-600 mb-2">{error}</p>
+                <div className="mb-3 sm:mb-4">
+                  <p className="text-xs sm:text-sm text-red-600 mb-2">{error}</p>
                   {error === "Email not found in student database" && (
-                    <div className="bg-gray-50 border border-gray-300 p-4 text-sm text-gray-700">
-                      <p className="mb-3">
+                    <div className="bg-gray-50 border border-gray-300 p-3 sm:p-4 text-xs sm:text-sm text-gray-700">
+                      <p className="mb-2 sm:mb-3">
                         Email not registered. Submit your ITI email through our form to request access.
                       </p>
                       <a
                         href="https://forms.gle/yUSfPU1Vo4aHQKud7"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 underline font-semibold"
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold break-words"
                       >
                         Submit Email Registration Form →
                       </a>
@@ -196,15 +196,15 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
+                className="w-full bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
               >
                 {loading ? "Sending code..." : "Send Login Code"}
               </button>
             </form>
           ) : (
             <form onSubmit={handleCodeSubmit}>
-              <div className="mb-4">
-                <label className="block text-black font-semibold mb-2">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-sm sm:text-base text-black font-semibold mb-2">
                   Enter Code
                 </label>
                 <input
@@ -213,15 +213,15 @@ export default function LoginPage() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full px-3 py-2 border border-black bg-white text-black text-center text-2xl tracking-widest"
+                  className="w-full px-3 py-2 border border-black bg-white text-black text-center text-xl sm:text-2xl tracking-widest"
                   required
                 />
               </div>
-              {error && <p className="text-red-600 mb-4">{error}</p>}
+              {error && <p className="text-xs sm:text-sm text-red-600 mb-3 sm:mb-4">{error}</p>}
               <button
                 type="submit"
                 disabled={loading || code.length !== 6}
-                className="w-full bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
+                className="w-full bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify Code"}
               </button>
@@ -232,7 +232,7 @@ export default function LoginPage() {
                   setCode("");
                   setError("");
                 }}
-                className="w-full mt-2 text-black underline"
+                className="w-full mt-2 text-sm sm:text-base text-black underline"
               >
                 Back
               </button>

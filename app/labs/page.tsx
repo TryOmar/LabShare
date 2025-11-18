@@ -106,13 +106,13 @@ export default function LabsPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
-      <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
-        <h1 className="text-3xl font-bold text-black mb-6">Labs</h1>
+      <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold text-black mb-4 sm:mb-6">Labs</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Courses Sidebar */}
           <div>
-            <h2 className="font-bold text-black mb-4">Courses</h2>
+            <h2 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Courses</h2>
             <div className="space-y-2">
               {courses.map((course) => (
                 <button
@@ -121,13 +121,13 @@ export default function LabsPage() {
                     setSelectedCourse(course.id);
                     router.replace(`/labs?course=${course.id}`);
                   }}
-                  className={`w-full text-left p-3 border border-black ${
+                  className={`w-full text-left p-2 sm:p-3 border border-black text-xs sm:text-sm ${
                     selectedCourse === course.id
                       ? "bg-black text-white"
                       : "bg-white text-black hover:bg-gray-100"
                   }`}
                 >
-                  <p className="font-semibold text-sm">{course.name}</p>
+                  <p className="font-semibold break-words">{course.name}</p>
                 </button>
               ))}
             </div>
@@ -136,7 +136,7 @@ export default function LabsPage() {
           {/* Labs List */}
           <div className="lg:col-span-3">
             {selectedLabs && selectedLabs.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {selectedLabs.map((lab) => {
                   const isLocked = !lab.hasSubmission;
                   return (
@@ -149,22 +149,22 @@ export default function LabsPage() {
                           router.push(`/lab/${lab.id}/locked`);
                         }
                       }}
-                        className={`border border-black p-4 relative ${
+                        className={`border border-black p-3 sm:p-4 relative ${
                         isLocked
                           ? "bg-gray-100 opacity-60 cursor-pointer"
                           : "hover:bg-gray-50 cursor-pointer"
                       }`}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className={`font-semibold ${isLocked ? "text-gray-500" : "text-black"}`}>
+                      <div className="flex justify-between items-start gap-2 sm:gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className={`font-semibold text-sm sm:text-base ${isLocked ? "text-gray-500" : "text-black"} break-words`}>
                               Lab {lab.lab_number}: {lab.title}
                             </h3>
                             {isLocked && (
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-gray-600 flex-shrink-0"
+                                className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -179,12 +179,12 @@ export default function LabsPage() {
                             )}
                           </div>
                           {lab.description && (
-                            <p className={`text-sm mt-1 ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
+                            <p className={`text-xs sm:text-sm mt-1 ${isLocked ? "text-gray-400" : "text-gray-600"} break-words`}>
                               {lab.description}
                             </p>
                           )}
                         </div>
-                        <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 ${
+                        <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 whitespace-nowrap ${
                           isLocked ? "bg-gray-200 text-gray-500" : "bg-gray-100"
                         }`}>
                           Lab {lab.lab_number}
@@ -195,7 +195,7 @@ export default function LabsPage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-600">No labs available for this course</p>
+              <p className="text-sm sm:text-base text-gray-600">No labs available for this course</p>
             )}
           </div>
         </div>
