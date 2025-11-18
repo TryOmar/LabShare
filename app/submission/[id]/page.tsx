@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import CommentsSection from "@/components/comments-section";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { formatDateTime } from "@/lib/utils";
 
 interface CodeFile {
   id: string;
@@ -256,11 +257,11 @@ export default function SubmissionPage() {
           <div className="flex gap-4 text-sm text-gray-600 mt-4">
             <span>{submission?.view_count} views</span>
             <span>
-              Created: {submission?.created_at && new Date(submission.created_at).toLocaleDateString()}
+              Created: {submission?.created_at && formatDateTime(submission.created_at)}
             </span>
             {isOwner && (
               <span>
-                Last edited: {submission?.updated_at && new Date(submission.updated_at).toLocaleDateString()}
+                Last edited: {submission?.updated_at && formatDateTime(submission.updated_at)}
               </span>
             )}
           </div>
@@ -412,7 +413,7 @@ export default function SubmissionPage() {
                     This file is stored in storage. Click the download button to retrieve it.
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Uploaded: {new Date(selectedAttachment.created_at).toLocaleString()}
+                    Uploaded: {formatDateTime(selectedAttachment.created_at)}
                   </p>
                 </div>
               </div>

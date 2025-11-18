@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import Navigation from "@/components/navigation";
 import LastUpdates from "@/components/last-updates";
+import { formatDateTime } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -253,7 +254,7 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         <p className={`text-xs mt-2 ${isLocked ? "text-gray-400" : "text-gray-500"}`}>
-                          {new Date(submission.created_at).toLocaleDateString()}
+                          {formatDateTime(submission.created_at)}
                         </p>
                       </div>
                     );
