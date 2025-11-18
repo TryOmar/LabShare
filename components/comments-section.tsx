@@ -19,12 +19,14 @@ interface CommentsSectionProps {
   submissionId: string;
   studentId: string;
   studentName: string;
+  refreshKey?: number; // When this changes, reload comments
 }
 
 export default function CommentsSection({
   submissionId,
   studentId,
   studentName,
+  refreshKey,
 }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -33,7 +35,7 @@ export default function CommentsSection({
 
   useEffect(() => {
     loadComments();
-  }, [submissionId]);
+  }, [submissionId, refreshKey]);
 
   const loadComments = async () => {
     try {
