@@ -310,7 +310,7 @@ export default function DashboardPage() {
                 Share feature ideas, improvements, or code contributions. Get publicly credited in the Last Updates section for your work.
               </p>
               <a
-                href="https://github.com/TryOmar/LabShare/issues"
+                href="https://github.com/TryOmar/LabShare/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-2 bg-black text-white font-semibold text-center hover:bg-gray-800"
