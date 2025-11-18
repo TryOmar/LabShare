@@ -56,7 +56,6 @@ export async function GET(
       .select("*")
       .eq("lab_id", labId)
       .eq("student_id", studentId)
-      .eq("is_deleted", false)
       .single();
 
     // Check if this is an upload request (allows access for uploading)
@@ -83,8 +82,7 @@ export async function GET(
     let submissionsQuery = supabase
       .from("submissions")
       .select("*, students(id, name, email)")
-      .eq("lab_id", labId)
-      .eq("is_deleted", false);
+      .eq("lab_id", labId);
 
     // If not unlocked and hasn't submitted, show only own (unless it's an upload request)
     if (!labUnlock && !userSubmissionData && !isUploadRequest) {

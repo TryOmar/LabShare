@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth";
 
 /**
  * DELETE /api/submission/[id]/comments/[commentId]
- * Deletes a comment (soft delete - sets is_deleted to true).
+ * Deletes a comment permanently.
  * Only the owner can delete their comment.
  */
 export async function DELETE(
@@ -44,16 +44,19 @@ export async function DELETE(
       );
     }
 
-    // Soft delete
-    const { error: deleteError } = await supabase
-      .from("comments")
-      .update({ is_deleted: true })
-      .eq("id", commentId);
+    // Delete comment using database function (bypasses RLS)
+    // Ownership is already verified above, so this is safe
+    const { error: deleteError } = await supabase.rpc('delete_comment', {
+      comment_id: commentId
+    });
 
     if (deleteError) {
       console.error("Error deleting comment:", deleteError);
       return NextResponse.json(
-        { error: "Failed to delete comment" },
+        { 
+          error: "Failed to delete comment",
+          details: deleteError.message 
+        },
         { status: 500 }
       );
     }

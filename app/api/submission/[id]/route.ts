@@ -60,7 +60,6 @@ export async function GET(
         .select("id")
         .eq("lab_id", submissionData.lab_id)
         .eq("student_id", studentId)
-        .eq("is_deleted", false)
         .single();
 
       if (!userSubmission) {
@@ -141,7 +140,7 @@ export async function GET(
 
 /**
  * DELETE /api/submission/[id]
- * Deletes a submission (soft delete - sets is_deleted to true).
+ * Deletes a submission permanently.
  * Only the owner can delete their submission.
  */
 export async function DELETE(
@@ -181,11 +180,11 @@ export async function DELETE(
       );
     }
 
-    // Soft delete
-    const { error: deleteError } = await supabase
-      .from("submissions")
-      .update({ is_deleted: true })
-      .eq("id", submissionId);
+    // Delete submission using database function (bypasses RLS)
+    // Ownership is already verified above, so this is safe
+    const { error: deleteError } = await supabase.rpc('delete_submission', {
+      submission_id: submissionId
+    });
 
     if (deleteError) {
       console.error("Error deleting submission:", deleteError);

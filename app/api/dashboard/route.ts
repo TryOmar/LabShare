@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
         students(id, name, email),
         labs(id, lab_number, title, course_id, courses(id, name))
       `)
-      .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -82,8 +81,7 @@ export async function GET(request: NextRequest) {
     const { data: userSubmissions } = await supabase
       .from("submissions")
       .select("lab_id")
-      .eq("student_id", studentId)
-      .eq("is_deleted", false);
+      .eq("student_id", studentId);
 
     const solvedLabIds = new Set(
       (userSubmissions || []).map((s: any) => s.lab_id)

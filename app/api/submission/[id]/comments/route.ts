@@ -25,7 +25,6 @@ export async function GET(
       .from("comments")
       .select("*, students(id, name)")
       .eq("submission_id", submissionId)
-      .eq("is_deleted", false)
       .order("created_at", { ascending: true });
 
     if (commentsError) {

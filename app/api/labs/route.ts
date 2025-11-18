@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
           .from("submissions")
           .select("lab_id")
           .eq("student_id", studentId)
-          .eq("is_deleted", false)
           .in("lab_id", labIds);
 
         const submittedLabIds = new Set(

@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS submissions (
   view_count INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT now(),
   updated_at TIMESTAMP DEFAULT now(),
-  is_deleted BOOLEAN DEFAULT FALSE,
   UNIQUE(student_id, lab_id)
 );
 
@@ -99,8 +98,7 @@ CREATE TABLE IF NOT EXISTS comments (
   student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now(),
-  is_deleted BOOLEAN DEFAULT FALSE
+  updated_at TIMESTAMP DEFAULT now()
 );
 
 -- Create lab_unlocks table
@@ -146,7 +144,7 @@ CREATE POLICY "auth_codes_insert" ON auth_codes FOR INSERT WITH CHECK (true);
 CREATE POLICY "auth_codes_select" ON auth_codes FOR SELECT USING (true);
 
 -- Policies for submissions (anyone can read, only owner can edit/delete)
-CREATE POLICY "submissions_select_all" ON submissions FOR SELECT USING (is_deleted = FALSE);
+CREATE POLICY "submissions_select_all" ON submissions FOR SELECT USING (true);
 CREATE POLICY "submissions_insert_own" ON submissions FOR INSERT WITH CHECK (true);
 CREATE POLICY "submissions_update_own" ON submissions FOR UPDATE USING (true);
 CREATE POLICY "submissions_delete_own" ON submissions FOR DELETE USING (true);
@@ -160,7 +158,7 @@ CREATE POLICY "submission_attachments_select_all" ON submission_attachments FOR 
 CREATE POLICY "submission_attachments_insert_own" ON submission_attachments FOR INSERT WITH CHECK (true);
 
 -- Policies for comments (anyone can read and write)
-CREATE POLICY "comments_select_all" ON comments FOR SELECT USING (is_deleted = FALSE);
+CREATE POLICY "comments_select_all" ON comments FOR SELECT USING (true);
 CREATE POLICY "comments_insert_any" ON comments FOR INSERT WITH CHECK (true);
 CREATE POLICY "comments_update_own" ON comments FOR UPDATE USING (true);
 CREATE POLICY "comments_delete_own" ON comments FOR DELETE USING (true);
