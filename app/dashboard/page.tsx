@@ -350,7 +350,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 w-full">
             {/* Submit Work Section */}
             <div className="mb-8 w-full border border-black p-6 bg-white">
-              <h2 className="text-xl font-bold text-black mb-4">Submit Your Work</h2>
+              <h2 className="text-xl font-bold text-black mb-4">Submit Your Lab</h2>
               
               {/* Instructions */}
               <div className="mb-6 p-4 bg-gray-50 border border-gray-300">
