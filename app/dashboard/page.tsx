@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import Navigation from "@/components/navigation";
 import LastUpdates from "@/components/last-updates";
 import { formatDateTime } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ interface Course {
   id: string;
   name: string;
   description: string;
+  submissions?: Submission[];
 }
 
 interface Lab {
@@ -64,13 +66,180 @@ interface Submission {
   hasAccess?: boolean;
 }
 
+// Format timestamp as "Nov 18, 2025 — 5:17 PM"
+const formatUploadTimestamp = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateStr = dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const timeStr = dateObj.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${dateStr} — ${timeStr}`;
+};
+
+// Course Card Component
+const CourseCard = ({ 
+  course, 
+  router 
+}: { 
+  course: Course; 
+  router: { push: (path: string) => void };
+}) => {
+  const submissions = course.submissions || [];
+  const recentSubmissions = submissions.slice(0, 3);
+
+  return (
+    <div className="border border-black bg-white hover:shadow-lg transition-shadow">
+      {/* Course Header */}
+      <div
+        onClick={() => router.push(`/labs?course=${course.id}`)}
+        className="border-b border-black p-4 hover:bg-gray-50 cursor-pointer"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold text-lg text-black flex-1 min-w-0 truncate">{course.name}</h3>
+          <span className="text-xs text-gray-600 hover:text-black whitespace-nowrap flex-shrink-0">All Labs →</span>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="p-4">
+        {recentSubmissions.length > 0 ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-600">Recent Uploads</span>
+              <span className="text-xs text-gray-500">{submissions.length} total</span>
+            </div>
+            <div className="space-y-3">
+              {recentSubmissions.map((submission) => {
+                const isLocked = !submission.hasAccess;
+                const labNumber = submission.labs?.lab_number;
+                const labTitle = labNumber ? `Lab ${labNumber}` : 'Lab';
+
+                return (
+                  <div
+                    key={submission.id}
+                    className={`p-3 border border-black ${
+                      isLocked
+                        ? "bg-gray-50 opacity-60"
+                        : "bg-white hover:bg-gray-50"
+                    }`}
+                  >
+                    {/* Lab Number and Title */}
+                    <div className="mb-2 flex items-center gap-2">
+                      <h4 className={`font-semibold text-sm flex-1 ${isLocked ? "text-gray-500" : "text-black"}`}>
+                        {labTitle} — {submission.title}
+                      </h4>
+                      {isLocked && (
+                        <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Uploader Name */}
+                    <p className={`text-xs mb-2 ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
+                      by {submission.students?.name}
+                    </p>
+
+                    {/* Views and Timestamp */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                      <span>{submission.view_count} views</span>
+                      <span>•</span>
+                      <span>{formatUploadTimestamp(submission.created_at)}</span>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isLocked) {
+                          // Redirect to locked lab page that explains they need to finish with instructor
+                          router.push(`/lab/${submission.lab_id}/locked`);
+                        } else {
+                          // Open submission viewer
+                          router.push(`/submission/${submission.id}`);
+                        }
+                      }}
+                      className={`w-full py-2.5 px-3 text-sm font-semibold border-2 transition-all ${
+                        isLocked
+                          ? "bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800 shadow-md"
+                          : "bg-black text-white border-black hover:bg-gray-800"
+                      }`}
+                    >
+                      {isLocked 
+                        ? (labNumber ? `Submit Lab ${labNumber} to Unlock` : 'Submit to Unlock')
+                        : 'View Submission'
+                      }
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {submissions.length > 3 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/labs?course=${course.id}`);
+                }}
+                className="w-full text-xs text-center text-gray-600 hover:text-black py-2 border-t border-gray-200"
+              >
+                View all {submissions.length} uploads →
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500 mb-2">No uploads yet</p>
+            <button
+              onClick={() => router.push(`/labs?course=${course.id}`)}
+              className="text-xs text-gray-600 hover:text-black underline"
+            >
+              View Labs
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function DashboardPage() {
+  const router = useRouter();
+  
+  // State
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesWithSubmissions, setCoursesWithSubmissions] = useState<Course[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+
+  // Refs
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const coursesBoxRef = useRef<HTMLDivElement>(null);
+
+  // Match courses box height with sidebar
+  useEffect(() => {
+    const matchHeights = () => {
+      if (sidebarRef.current && coursesBoxRef.current) {
+        coursesBoxRef.current.style.minHeight = `${sidebarRef.current.offsetHeight}px`;
+      }
+    };
+
+    matchHeights();
+    window.addEventListener('resize', matchHeights);
+    const timeout = setTimeout(matchHeights, 100);
+    
+    return () => {
+      window.removeEventListener('resize', matchHeights);
+      clearTimeout(timeout);
+    };
+  }, [coursesWithSubmissions.length]);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -110,6 +279,7 @@ export default function DashboardPage() {
         setStudent(data.student);
         setTrack(data.track);
         setCourses(data.courses || []);
+        setCoursesWithSubmissions(data.coursesWithSubmissions || []);
         setRecentSubmissions(data.recentSubmissions || []);
       } catch (err) {
         console.error("Error loading dashboard:", err);
@@ -135,9 +305,9 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
-      <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 p-6 w-full">
         {/* Welcome Section */}
-        <div className="mb-8">
+        <div className="mb-8 px-4">
           <h1 className="text-3xl font-bold text-black mb-2">
             Welcome, {student?.name}
           </h1>
@@ -147,127 +317,30 @@ export default function DashboardPage() {
         </div>
 
         {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start px-4">
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 w-full">
             {/* Courses Section */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-black mb-4">Your Courses</h2>
-              <div className="space-y-2">
-                {courses.length > 0 ? (
-                  courses.map((course) => (
-                    <div
-                      key={course.id}
-                      onClick={() => router.push(`/labs?course=${course.id}`)}
-                      className="border border-black p-4 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <h3 className="font-semibold text-black">
-                        {course.name}
-                      </h3>
-                      {course.description && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {course.description}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-600">No courses available</p>
-                )}
-              </div>
-            </div>
-
-            {/* Recent Submissions */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-black mb-4">
-                Recent Uploads
-              </h2>
-              <div className="space-y-2">
-                {recentSubmissions.length > 0 ? (
-                  recentSubmissions.map((submission) => {
-                    const isUserSubmission = submission.student_id === student?.id;
-                    const isLocked = !submission.hasAccess;
-                    return (
-                      <div
-                        key={submission.id}
-                        onClick={() => {
-                          if (!isLocked) {
-                            router.push(`/submission/${submission.id}`);
-                          }
-                        }}
-                        className={`border border-black p-4 relative ${
-                          isLocked
-                            ? "bg-gray-100 opacity-60 cursor-not-allowed"
-                            : "hover:bg-gray-50 cursor-pointer"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
-                                {submission.labs?.courses?.name && (
-                                  <span className="font-medium">
-                                    {submission.labs.courses.name}
-                                  </span>
-                                )}
-                                {submission.labs && (
-                                  <>
-                                    {submission.labs?.courses?.name && <span>•</span>}
-                                    <span>
-                                      {submission.labs.title.startsWith(`Lab ${submission.labs.lab_number}`) 
-                                        ? submission.labs.title 
-                                        : `Lab ${submission.labs.lab_number}: ${submission.labs.title}`}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className={`font-semibold text-base ${isLocked ? "text-gray-500" : "text-black"}`}>
-                                  {submission.title}
-                                </h3>
-                                {isLocked && (
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 text-gray-600 flex-shrink-0"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-                              <p className={`text-sm ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
-                                by {submission.students?.name}
-                              </p>
-                            </div>
-                          </div>
-                          <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 ${
-                            isLocked ? "bg-gray-200 text-gray-500" : "bg-gray-100"
-                          }`}>
-                            {submission.view_count} views
-                          </span>
-                        </div>
-                        <p className={`text-xs mt-2 ${isLocked ? "text-gray-400" : "text-gray-500"}`}>
-                          {formatDateTime(submission.created_at)}
-                        </p>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-gray-600">No submissions yet</p>
-                )}
-              </div>
+            <div ref={coursesBoxRef} className="mb-8 w-full border border-black p-6 bg-white">
+              <h2 className="text-xl font-bold text-black mb-6">Recent Courses</h2>
+              
+              {coursesWithSubmissions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {coursesWithSubmissions.map((course) => (
+                    <CourseCard key={course.id} course={course} router={router} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-600 mb-2">No courses available</p>
+                  <p className="text-sm text-gray-500">Courses will appear here once assigned</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
+          <div ref={sidebarRef} className="lg:col-span-1">
             <div className="border border-black p-4 mb-4">
               <h3 className="font-bold text-black mb-4">Profile</h3>
               <div className="space-y-2 text-sm">

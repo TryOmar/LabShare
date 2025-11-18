@@ -30,6 +30,7 @@ export default function LockedLabPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
   const router = useRouter();
   const params = useParams();
   const labId = params.id as string;
@@ -132,28 +133,42 @@ export default function LockedLabPage() {
               />
             </svg>
             <h1 className="text-3xl font-bold text-black">
-              Lab {lab?.lab_number}: {lab?.title}
+              Lab {lab?.lab_number} — Locked
             </h1>
           </div>
 
           <div className="mb-8">
             <p className="text-lg text-gray-700 leading-relaxed">
-              You must first complete this lab and have it reviewed by an instructor. 
-              After that, upload your work here to gain access to other students' submissions.
+              You must <span className="font-bold">complete</span> this lab and have it <span className="font-bold">reviewed</span> by the <span className="font-bold">instructor</span> before you can access other students' submissions.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed mt-3">
+              Once you finish and review it, you can upload your work here.
             </p>
           </div>
 
-          {lab?.description && (
-            <div className="mb-8 p-4 bg-white border border-gray-300">
-              <h2 className="font-semibold text-black mb-2">Lab Description:</h2>
-              <p className="text-gray-700">{lab.description}</p>
-            </div>
-          )}
+          <div className="mb-8">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) => setConfirmed(e.target.checked)}
+                className="w-5 h-5 border-2 border-black cursor-pointer"
+              />
+              <span className="text-base text-gray-700">
+                I confirm I've <span className="font-bold">completed</span> and <span className="font-bold">reviewed</span> this lab with the <span className="font-bold">instructor</span>.
+              </span>
+            </label>
+          </div>
 
           <div className="flex gap-4">
             <button
               onClick={handleContinue}
-              className="px-6 py-3 bg-black text-white font-semibold hover:bg-gray-800"
+              disabled={!confirmed}
+              className={`px-6 py-3 font-semibold transition-colors ${
+                confirmed
+                  ? "bg-black text-white hover:bg-gray-800"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
               Continue
             </button>

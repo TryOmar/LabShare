@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       .map((ct: any) => ct.courses)
       .filter(Boolean);
 
-    // Get recent submissions with lab and course information
+    // Get recent submissions with lab and course information (get more to have enough per course)
     const { data: submissionData, error: submissionError } = await supabase
       .from("submissions")
       .select(`
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         labs(id, lab_number, title, course_id, courses(id, name))
       `)
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(100);
 
     if (submissionError) {
       console.error("Error fetching submissions:", submissionError);
@@ -93,10 +93,44 @@ export async function GET(request: NextRequest) {
       hasAccess: submission.student_id === studentId || solvedLabIds.has(submission.lab_id),
     }));
 
+    // Group submissions by course_id
+    const submissionsByCourse: Record<string, any[]> = {};
+    submissionsWithAccess.forEach((submission: any) => {
+      const courseId = submission.labs?.course_id;
+      if (courseId) {
+        if (!submissionsByCourse[courseId]) {
+          submissionsByCourse[courseId] = [];
+        }
+        submissionsByCourse[courseId].push(submission);
+      }
+    });
+
+    // Limit submissions per course to 3 most recent
+    Object.keys(submissionsByCourse).forEach((courseId) => {
+      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(0, 3);
+    });
+
+    // Sort courses by most recent activity (most recent submission date)
+    const coursesWithSubmissions = coursesList.map((course: any) => {
+      const courseSubmissions = submissionsByCourse[course.id] || [];
+      const mostRecentDate = courseSubmissions.length > 0
+        ? new Date(courseSubmissions[0].created_at).getTime()
+        : 0;
+      return {
+        ...course,
+        submissions: courseSubmissions,
+        mostRecentDate,
+      };
+    });
+
+    // Sort by most recent activity (descending)
+    coursesWithSubmissions.sort((a: any, b: any) => b.mostRecentDate - a.mostRecentDate);
+
     return NextResponse.json({
       student: studentData,
       track: studentData.tracks,
-      courses: coursesList,
+      courses: coursesWithSubmissions.map(({ submissions, mostRecentDate, ...course }: any) => course),
+      coursesWithSubmissions: coursesWithSubmissions.map(({ mostRecentDate, ...course }: any) => course),
       recentSubmissions: submissionsWithAccess,
     });
   } catch (error) {
