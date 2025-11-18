@@ -15,101 +15,187 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 async function cleanupOrphanedFiles() {
-  console.log('🧹 Starting cleanup of orphaned storage files...\n');
+  console.log('🧹 Starting cleanup of orphaned files and records...\n');
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const stats = {
+    storageFiles: { total: 0, orphaned: 0, deleted: 0, failed: 0 },
+    codeFiles: { orphaned: 0, deleted: 0, failed: 0 },
+    attachments: { orphaned: 0, deleted: 0, failed: 0 }
+  };
 
-  // Step 1: Get all files from storage
-  console.log('📋 Step 1: Listing all files in storage...');
-  const allStorageFiles = [];
-  
+  // ============================================
+  // PART 1: Clean orphaned storage files
+  // ============================================
+  console.log('📦 PART 1: Cleaning orphaned storage files...\n');
+
   async function listAllFiles(path = '', files = []) {
     const { data, error } = await supabase.storage
       .from('submission-attachments')
       .list(path, { limit: 1000 });
     
-    if (error) {
-      console.error(`Error listing ${path}:`, error.message);
-      return files;
-    }
-    
-    if (!data) return files;
+    if (error || !data) return files;
     
     for (const item of data) {
       const fullPath = path ? `${path}/${item.name}` : item.name;
-      
       if (item.id) {
-        // It's a file
         files.push(fullPath);
       } else {
-        // It's a folder, recurse
         await listAllFiles(fullPath, files);
       }
     }
-    
     return files;
   }
   
   const storageFiles = await listAllFiles();
+  stats.storageFiles.total = storageFiles.length;
   console.log(`   Found ${storageFiles.length} files in storage`);
 
-  // Step 2: Get all storage paths from database
-  console.log('\n📋 Step 2: Getting all storage paths from database...');
-  const { data: dbAttachments, error: dbError } = await supabase
+  const { data: dbAttachments } = await supabase
     .from('submission_attachments')
     .select('storage_path');
-  
-  if (dbError) {
-    console.error('Error fetching database records:', dbError);
-    process.exit(1);
-  }
   
   const dbPaths = new Set((dbAttachments || []).map(a => a.storage_path));
   console.log(`   Found ${dbPaths.size} records in database`);
 
-  // Step 3: Find orphaned files
-  console.log('\n🔍 Step 3: Finding orphaned files...');
   const orphanedFiles = storageFiles.filter(file => !dbPaths.has(file));
-  console.log(`   Found ${orphanedFiles.length} orphaned files`);
-  
-  if (orphanedFiles.length === 0) {
-    console.log('\n✅ No orphaned files found! Storage is clean.');
-    return;
-  }
+  stats.storageFiles.orphaned = orphanedFiles.length;
+  console.log(`   Found ${orphanedFiles.length} orphaned storage files`);
 
-  // Step 4: Delete orphaned files
-  console.log('\n🗑️  Step 4: Deleting orphaned files...');
-  console.log('   Orphaned files:');
-  orphanedFiles.slice(0, 10).forEach(file => console.log(`     - ${file}`));
-  if (orphanedFiles.length > 10) {
-    console.log(`     ... and ${orphanedFiles.length - 10} more`);
-  }
-
-  let deletedCount = 0;
-  let failedCount = 0;
-
-  for (const filePath of orphanedFiles) {
-    const { error } = await supabase.rpc('delete_storage_file', {
-      bucket_name: 'submission-attachments',
-      file_path: filePath
-    });
-    
-    if (error) {
-      console.error(`   ❌ Failed to delete ${filePath}:`, error.message);
-      failedCount++;
-    } else {
-      deletedCount++;
-      if (deletedCount % 10 === 0) {
-        console.log(`   ✅ Deleted ${deletedCount}/${orphanedFiles.length} files...`);
+  if (orphanedFiles.length > 0) {
+    console.log('   Deleting orphaned storage files...');
+    for (const filePath of orphanedFiles) {
+      const { error } = await supabase.rpc('delete_storage_file', {
+        bucket_name: 'submission-attachments',
+        file_path: filePath
+      });
+      
+      if (error) {
+        stats.storageFiles.failed++;
+      } else {
+        stats.storageFiles.deleted++;
       }
     }
   }
 
-  console.log(`\n📊 Cleanup Summary:`);
-  console.log(`   Total orphaned files: ${orphanedFiles.length}`);
-  console.log(`   Successfully deleted: ${deletedCount}`);
-  console.log(`   Failed to delete: ${failedCount}`);
-  console.log(`\n✅ Cleanup complete!`);
+  // ============================================
+  // PART 2: Clean orphaned submission_code records
+  // ============================================
+  console.log('\n📝 PART 2: Cleaning orphaned submission_code records...\n');
+
+  // Get all valid submission IDs first
+  const { data: validSubmissions } = await supabase
+    .from('submissions')
+    .select('id');
+  
+  const validSubmissionIds = new Set((validSubmissions || []).map(s => s.id));
+  console.log(`   Found ${validSubmissionIds.size} valid submissions`);
+
+  // Get all code files and check which are orphaned
+  const { data: allCodeFiles } = await supabase
+    .from('submission_code')
+    .select('id, submission_id');
+
+  const orphanedCode = (allCodeFiles || []).filter(cf => !validSubmissionIds.has(cf.submission_id));
+  stats.codeFiles.orphaned = orphanedCode.length;
+  console.log(`   Found ${orphanedCode.length} orphaned code file records`);
+
+  if (orphanedCode.length > 0) {
+    console.log('   Deleting orphaned code file records...');
+    const codeIds = orphanedCode.map(cf => cf.id);
+    
+    // Delete in batches of 100
+    for (let i = 0; i < codeIds.length; i += 100) {
+      const batch = codeIds.slice(i, i + 100);
+      const { error } = await supabase
+        .from('submission_code')
+        .delete()
+        .in('id', batch);
+      
+      if (error) {
+        stats.codeFiles.failed += batch.length;
+        console.error(`   ❌ Failed to delete batch:`, error.message);
+      } else {
+        stats.codeFiles.deleted += batch.length;
+        if (stats.codeFiles.deleted % 50 === 0) {
+          console.log(`   ✅ Deleted ${stats.codeFiles.deleted}/${orphanedCode.length} code files...`);
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // PART 3: Clean orphaned submission_attachments records
+  // ============================================
+  console.log('\n📎 PART 3: Cleaning orphaned submission_attachments records...\n');
+
+  const { data: allAttachments } = await supabase
+    .from('submission_attachments')
+    .select('id, submission_id, storage_path');
+
+  const orphanedAttachments = (allAttachments || []).filter(
+    att => !validSubmissionIds.has(att.submission_id)
+  );
+  stats.attachments.orphaned = orphanedAttachments.length;
+  console.log(`   Found ${orphanedAttachments.length} orphaned attachment records`);
+
+  if (orphanedAttachments.length > 0) {
+    console.log('   Deleting orphaned attachment records and their storage files...');
+    
+    for (let i = 0; i < orphanedAttachments.length; i++) {
+      const attachment = orphanedAttachments[i];
+      
+      // Delete from storage first
+      if (attachment.storage_path) {
+        await supabase.rpc('delete_storage_file', {
+          bucket_name: 'submission-attachments',
+          file_path: attachment.storage_path
+        });
+      }
+      
+      // Delete database record
+      const { error } = await supabase
+        .from('submission_attachments')
+        .delete()
+        .eq('id', attachment.id);
+      
+      if (error) {
+        stats.attachments.failed++;
+      } else {
+        stats.attachments.deleted++;
+        if (stats.attachments.deleted % 10 === 0) {
+          console.log(`   ✅ Deleted ${stats.attachments.deleted}/${orphanedAttachments.length} attachments...`);
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // SUMMARY
+  // ============================================
+  console.log('\n📊 Cleanup Summary:');
+  console.log('\n   Storage Files:');
+  console.log(`     Total files: ${stats.storageFiles.total}`);
+  console.log(`     Orphaned: ${stats.storageFiles.orphaned}`);
+  console.log(`     Deleted: ${stats.storageFiles.deleted}`);
+  console.log(`     Failed: ${stats.storageFiles.failed}`);
+  
+  console.log('\n   Database Records:');
+  console.log(`     Orphaned code files: ${stats.codeFiles.orphaned}`);
+  console.log(`     Deleted code files: ${stats.codeFiles.deleted}`);
+  console.log(`     Failed code files: ${stats.codeFiles.failed}`);
+  console.log(`     Orphaned attachments: ${stats.attachments.orphaned}`);
+  console.log(`     Deleted attachments: ${stats.attachments.deleted}`);
+  console.log(`     Failed attachments: ${stats.attachments.failed}`);
+
+  const totalOrphaned = stats.storageFiles.orphaned + stats.codeFiles.orphaned + stats.attachments.orphaned;
+  const totalDeleted = stats.storageFiles.deleted + stats.codeFiles.deleted + stats.attachments.deleted;
+
+  if (totalOrphaned === 0) {
+    console.log('\n✅ No orphaned files or records found! Everything is clean.');
+  } else {
+    console.log(`\n✅ Cleanup complete! Deleted ${totalDeleted} orphaned items.`);
+  }
 }
 
 cleanupOrphanedFiles().catch(console.error);
