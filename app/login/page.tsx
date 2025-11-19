@@ -168,7 +168,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@iti.edu.eg"
+                  placeholder="Email you used to register in the ITI"
                   className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
                   required
                 />
