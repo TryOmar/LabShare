@@ -104,12 +104,27 @@ export async function GET(
       );
     }
 
+    // Handle anonymous submissions - hide student info for anonymous submissions (unless user is the owner)
+    const processedSubmissions = (submissionData || []).map((submission: any) => {
+      if (submission.is_anonymous && submission.student_id !== studentId) {
+        return {
+          ...submission,
+          students: {
+            id: '',
+            name: 'Anonymous',
+            email: '',
+          },
+        };
+      }
+      return submission;
+    });
+
     return NextResponse.json({
       lab: labData,
       student: studentData,
       track: studentData.tracks,
       userSubmission: userSubmissionData || null,
-      submissions: submissionData || [],
+      submissions: processedSubmissions,
     });
   } catch (error) {
     console.error("Error in lab API:", error);

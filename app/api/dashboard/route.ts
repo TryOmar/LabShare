@@ -87,11 +87,29 @@ export async function GET(request: NextRequest) {
       (userSubmissions || []).map((s: any) => s.lab_id)
     );
 
-    // Add hasAccess flag to each submission
-    const submissionsWithAccess = (submissionData || []).map((submission: any) => ({
-      ...submission,
-      hasAccess: submission.student_id === studentId || solvedLabIds.has(submission.lab_id),
-    }));
+    // Add hasAccess flag to each submission and handle anonymous display
+    const submissionsWithAccess = (submissionData || []).map((submission: any) => {
+      const isOwner = submission.student_id === studentId;
+      const hasAccess = isOwner || solvedLabIds.has(submission.lab_id);
+      
+      // If submission is anonymous and user is not the owner, hide student info
+      if (submission.is_anonymous && !isOwner) {
+        return {
+          ...submission,
+          hasAccess,
+          students: {
+            id: '',
+            name: 'Anonymous',
+            email: '',
+          },
+        };
+      }
+      
+      return {
+        ...submission,
+        hasAccess,
+      };
+    });
 
     // Group submissions by course_id
     const submissionsByCourse: Record<string, any[]> = {};
