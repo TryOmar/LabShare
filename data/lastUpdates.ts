@@ -11,7 +11,13 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
-    feature: "Storage submission: pasted code and attachments support",
+    feature: "Anonymous Lab Submission and Anonymous Comments",
+    suggestedBy: ["@Mahmoud0-0Salah", "@deiaamohamed"],
+    implementedBy: ["@TryOmar"],
+    date: "17 Nov 2025",
+  },
+  {
+    feature: "Support for code uploads and file attachments in submissions",
     suggestedBy: ["@TryOmar"],
     implementedBy: ["@TryOmar"],
     date: "17 Nov 2025",
