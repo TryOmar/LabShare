@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { processAnonymousContentArray, processAnonymousContent } from "@/lib/anonymity";
 
 /**
  * GET /api/submission/[id]/comments
@@ -39,18 +40,7 @@ export async function GET(
     }
 
     // Hide student info for anonymous comments (unless user is the owner)
-    const processedComments = (commentsData || []).map((comment: any) => {
-      if (comment.is_anonymous && comment.student_id !== currentStudentId) {
-        return {
-          ...comment,
-          students: {
-            id: '',
-            name: 'Anonymous',
-          },
-        };
-      }
-      return comment;
-    });
+    const processedComments = processAnonymousContentArray(commentsData || [], currentStudentId);
 
     return NextResponse.json({
       comments: processedComments,
@@ -115,16 +105,13 @@ export async function POST(
       );
     }
 
-    // If comment is anonymous, hide student info in response (unless user is the owner)
-    if (commentData && commentData.is_anonymous && commentData.student_id !== studentId) {
-      commentData.students = {
-        id: '',
-        name: 'Anonymous',
-      };
-    }
+    // Process anonymous display logic
+    const processedComment = commentData 
+      ? processAnonymousContent(commentData, studentId)
+      : null;
 
     return NextResponse.json({
-      comment: commentData,
+      comment: processedComment,
     });
   } catch (error) {
     console.error("Error in create comment API:", error);

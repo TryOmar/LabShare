@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { processAnonymousContentArray } from "@/lib/anonymity";
 
 /**
  * GET /api/dashboard
@@ -92,28 +93,18 @@ export async function GET(request: NextRequest) {
       const isOwner = submission.student_id === studentId;
       const hasAccess = isOwner || solvedLabIds.has(submission.lab_id);
       
-      // If submission is anonymous and user is not the owner, hide student info
-      if (submission.is_anonymous && !isOwner) {
-        return {
-          ...submission,
-          hasAccess,
-          students: {
-            id: '',
-            name: 'Anonymous',
-            email: '',
-          },
-        };
-      }
-      
       return {
         ...submission,
         hasAccess,
       };
     });
 
+    // Process anonymous display logic
+    const processedSubmissions = processAnonymousContentArray(submissionsWithAccess, studentId);
+
     // Group submissions by course_id
     const submissionsByCourse: Record<string, any[]> = {};
-    submissionsWithAccess.forEach((submission: any) => {
+    processedSubmissions.forEach((submission: any) => {
       const courseId = submission.labs?.course_id;
       if (courseId) {
         if (!submissionsByCourse[courseId]) {
@@ -151,7 +142,7 @@ export async function GET(request: NextRequest) {
     const seenLabIds = new Set<string>();
     
     // Get unique labs from recent submissions that user hasn't submitted to
-    for (const submission of submissionsWithAccess) {
+    for (const submission of processedSubmissions) {
       const labId = submission.lab_id;
       const courseId = submission.labs?.course_id;
       
@@ -188,7 +179,7 @@ export async function GET(request: NextRequest) {
       track: studentData.tracks,
       courses: coursesWithSubmissions.map(({ submissions, mostRecentDate, ...course }: any) => course),
       coursesWithSubmissions: coursesWithSubmissions.map(({ mostRecentDate, ...course }: any) => course),
-      recentSubmissions: submissionsWithAccess,
+      recentSubmissions: processedSubmissions,
       suggestedLabs: suggestedLabs.slice(0, 3),
     });
   } catch (error) {

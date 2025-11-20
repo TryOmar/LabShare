@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { processAnonymousContent } from "@/lib/anonymity";
 
 /**
  * PATCH /api/submission/[id]/comments/[commentId]
@@ -73,16 +74,13 @@ export async function PATCH(
       );
     }
 
-    // If comment is anonymous, hide student info in response (unless user is the owner)
-    if (updatedComment && updatedComment.is_anonymous && updatedComment.student_id !== studentId) {
-      updatedComment.students = {
-        id: '',
-        name: 'Anonymous',
-      };
-    }
+    // Process anonymous display logic
+    const processedComment = updatedComment 
+      ? processAnonymousContent(updatedComment, studentId)
+      : null;
 
     return NextResponse.json({
-      comment: updatedComment,
+      comment: processedComment,
     });
   } catch (error) {
     console.error("Error in update comment API:", error);

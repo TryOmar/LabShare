@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { processAnonymousContentArray } from "@/lib/anonymity";
 
 /**
  * GET /api/lab/[id]
@@ -105,19 +106,7 @@ export async function GET(
     }
 
     // Handle anonymous submissions - hide student info for anonymous submissions (unless user is the owner)
-    const processedSubmissions = (submissionData || []).map((submission: any) => {
-      if (submission.is_anonymous && submission.student_id !== studentId) {
-        return {
-          ...submission,
-          students: {
-            id: '',
-            name: 'Anonymous',
-            email: '',
-          },
-        };
-      }
-      return submission;
-    });
+    const processedSubmissions = processAnonymousContentArray(submissionData || [], studentId);
 
     return NextResponse.json({
       lab: labData,
