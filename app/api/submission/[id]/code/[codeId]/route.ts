@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { getSubmissionAnonymityStatus } from "@/lib/anonymity";
 
 /**
  * Helper function to create auto-log comments for file operations
@@ -24,13 +25,7 @@ async function createAutoLogComment(
 ) {
   try {
     // Get submission's anonymity status - auto-log comments inherit from submission
-    const { data: submission } = await supabase
-      .from("submissions")
-      .select("is_anonymous")
-      .eq("id", submissionId)
-      .single();
-
-    const isAnonymous = submission?.is_anonymous || false;
+    const isAnonymous = await getSubmissionAnonymityStatus(supabase, submissionId);
 
     // Get student name
     const { data: student } = await supabase

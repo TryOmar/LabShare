@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { getAttachmentDownloadUrl, deleteSubmissionFolder, deleteSubmissionFiles } from "@/lib/storage";
+import { processAnonymousContent } from "@/lib/anonymity";
 
 /**
  * GET /api/submission/[id]
@@ -44,30 +45,26 @@ export async function GET(
       .eq("id", submissionId)
       .single();
 
-    // If submission is anonymous and user is not the owner, hide student info
-    if (submissionData && submissionData.is_anonymous && submissionData.student_id !== studentId) {
-      submissionData.students = {
-        id: '',
-        name: 'Anonymous',
-        email: '',
-      };
-    }
+    // Process anonymous display logic
+    const processedSubmission = submissionData 
+      ? processAnonymousContent(submissionData, studentId)
+      : null;
 
-    if (submissionError || !submissionData) {
+    if (submissionError || !processedSubmission) {
       return NextResponse.json(
         { error: "Submission not found" },
         { status: 404 }
       );
     }
 
-    const isOwner = submissionData.student_id === studentId;
+    const isOwner = processedSubmission.student_id === studentId;
 
     // Security check: User must have submitted a solution for this lab to view any submission
     if (!isOwner) {
       const { data: userSubmission } = await supabase
         .from("submissions")
         .select("id")
-        .eq("lab_id", submissionData.lab_id)
+        .eq("lab_id", processedSubmission.lab_id)
         .eq("student_id", studentId)
         .single();
 
@@ -84,7 +81,7 @@ export async function GET(
       await supabase
         .from("submissions")
         .update({
-          view_count: submissionData.view_count + 1,
+          view_count: processedSubmission.view_count + 1,
         })
         .eq("id", submissionId);
     }
@@ -131,7 +128,7 @@ export async function GET(
     );
 
     return NextResponse.json({
-      submission: submissionData,
+      submission: processedSubmission,
       student: studentData,
       track: studentData.tracks,
       isOwner,
@@ -218,17 +215,13 @@ export async function PATCH(
       );
     }
 
-    // If submission is anonymous, hide student info in response
-    if (updatedSubmission && updatedSubmission.is_anonymous) {
-      updatedSubmission.students = {
-        id: '',
-        name: 'Anonymous',
-        email: '',
-      };
-    }
+    // Process anonymous display logic
+    const processedSubmission = updatedSubmission 
+      ? processAnonymousContent(updatedSubmission, studentId)
+      : null;
 
     return NextResponse.json({
-      submission: updatedSubmission,
+      submission: processedSubmission,
     });
   } catch (error) {
     console.error("Error in update submission API:", error);
