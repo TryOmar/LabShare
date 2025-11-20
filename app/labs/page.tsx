@@ -96,36 +96,40 @@ export default function LabsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <p className="text-black">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="spinner h-5 w-5"></div>
+          <p className="text-foreground font-medium">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
-        <h1 className="text-2xl sm:text-3xl font-bold text-black mb-4 sm:mb-6">Labs</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-4 sm:mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Labs</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Courses Sidebar */}
           <div>
-            <h2 className="font-bold text-sm sm:text-base text-black mb-3 sm:mb-4">Courses</h2>
+            <h2 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Courses</h2>
             <div className="space-y-2">
-              {courses.map((course) => (
+              {courses.map((course, index) => (
                 <button
                   key={course.id}
                   onClick={() => {
                     setSelectedCourse(course.id);
                     router.replace(`/labs?course=${course.id}`);
                   }}
-                  className={`w-full text-left p-2 sm:p-3 border border-black text-xs sm:text-sm ${
+                  className={`w-full text-left p-2 sm:p-3 border rounded-lg text-xs sm:text-sm transition-all duration-300 ${
                     selectedCourse === course.id
-                      ? "bg-black text-white"
-                      : "bg-white text-black hover:bg-gray-100"
+                      ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                      : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
                   }`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <p className="font-semibold break-words">{course.name}</p>
                 </button>
@@ -137,7 +141,7 @@ export default function LabsPage() {
           <div className="lg:col-span-3">
             {selectedLabs && selectedLabs.length > 0 ? (
               <div className="space-y-2 sm:space-y-3">
-                {selectedLabs.map((lab) => {
+                {selectedLabs.map((lab, index) => {
                   const isLocked = !lab.hasSubmission;
                   return (
                     <div
@@ -149,22 +153,23 @@ export default function LabsPage() {
                           router.push(`/lab/${lab.id}/locked`);
                         }
                       }}
-                        className={`border border-black p-3 sm:p-4 relative ${
+                      className={`border border-border/50 p-3 sm:p-4 rounded-xl relative cursor-pointer transition-all duration-300 animate-fade-in ${
                         isLocked
-                          ? "bg-gray-100 opacity-60 cursor-pointer"
-                          : "hover:bg-gray-50 cursor-pointer"
+                          ? "bg-muted/30 opacity-60"
+                          : "bg-gradient-card hover:bg-accent/30 hover:border-primary/40 hover:shadow-modern backdrop-blur-sm shadow-modern"
                       }`}
+                      style={{ animationDelay: `${index * 0.05}s` }}
                     >
                       <div className="flex justify-between items-start gap-2 sm:gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`font-semibold text-sm sm:text-base ${isLocked ? "text-gray-500" : "text-black"} break-words`}>
+                            <h3 className={`font-semibold text-sm sm:text-base ${isLocked ? "text-muted-foreground" : "text-foreground"} break-words`}>
                               Lab {lab.lab_number}: {lab.title}
                             </h3>
                             {isLocked && (
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0"
+                                className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -179,13 +184,15 @@ export default function LabsPage() {
                             )}
                           </div>
                           {lab.description && (
-                            <p className={`text-xs sm:text-sm mt-1 ${isLocked ? "text-gray-400" : "text-gray-600"} break-words`}>
+                            <p className={`text-xs sm:text-sm mt-1 ${isLocked ? "text-muted-foreground/60" : "text-muted-foreground"} break-words`}>
                               {lab.description}
                             </p>
                           )}
                         </div>
-                        <span className={`text-xs px-2 py-1 border border-black flex-shrink-0 whitespace-nowrap ${
-                          isLocked ? "bg-gray-200 text-gray-500" : "bg-gray-100"
+                        <span className={`text-xs px-2 py-1 border rounded-lg flex-shrink-0 whitespace-nowrap ${
+                          isLocked 
+                            ? "bg-muted/50 text-muted-foreground border-border/50" 
+                            : "bg-primary/10 text-primary border-primary/30 font-medium"
                         }`}>
                           Lab {lab.lab_number}
                         </span>
@@ -195,7 +202,7 @@ export default function LabsPage() {
                 })}
               </div>
             ) : (
-              <p className="text-sm sm:text-base text-gray-600">No labs available for this course</p>
+              <p className="text-sm sm:text-base text-muted-foreground">No labs available for this course</p>
             )}
           </div>
         </div>

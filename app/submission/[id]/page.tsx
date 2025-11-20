@@ -361,7 +361,7 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-black font-semibold mb-2">Files & Code</label>
+            <label className="block text-foreground font-semibold mb-2">Files & Code</label>
             <div
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
@@ -1146,7 +1146,7 @@ export default function SubmissionPage() {
                                     className={`w-6 h-6 rounded-full flex items-center justify-center ${
                                       selectedCodeFile?.id === file.id
                                         ? "text-white hover:bg-gray-700"
-                                        : "text-black hover:bg-gray-200"
+                                        : "text-foreground hover:bg-accent/50"
                                     }`}
                                     title="Options"
                                     style={{ fontSize: '12px', lineHeight: '1', letterSpacing: '1px' }}
@@ -1275,7 +1275,7 @@ export default function SubmissionPage() {
                                     className={`w-6 h-6 rounded-full flex items-center justify-center ${
                                       selectedAttachment?.id === attachment.id
                                         ? "text-white hover:bg-gray-700"
-                                        : "text-black hover:bg-gray-200"
+                                        : "text-foreground hover:bg-accent/50"
                                     }`}
                                     title="Options"
                                     style={{ fontSize: '12px', lineHeight: '1', letterSpacing: '1px' }}
@@ -1367,7 +1367,7 @@ export default function SubmissionPage() {
                       ) : (
                         // View mode - show filename and language badge
                         <>
-                          <p className="font-semibold text-black">{selectedCodeFile.filename}</p>
+                          <p className="font-semibold text-foreground">{selectedCodeFile.filename}</p>
                           <span
                             className={`inline-block mt-2 px-2 py-1 text-xs font-semibold rounded ${
                               languageColors[selectedCodeFile.language] ||
@@ -1452,12 +1452,12 @@ export default function SubmissionPage() {
                 {/* Attachment Header */}
                 <div className="bg-muted/50 border-b border-border/30 p-3 sm:p-4 flex justify-between items-center rounded-t-xl">
                   <div>
-                    <p className="font-semibold text-black">{selectedAttachment.filename}</p>
+                    <p className="font-semibold text-foreground">{selectedAttachment.filename}</p>
                     <div className="mt-2 flex gap-2 items-center">
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         {selectedAttachment.mime_type}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground/80">
                         • {formatFileSize(selectedAttachment.file_size)}
                       </span>
                     </div>
@@ -1482,10 +1482,10 @@ export default function SubmissionPage() {
 
                 {/* Attachment Info */}
                 <div className="p-6 bg-muted/30">
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     This file is stored in storage. Click the download button to retrieve it.
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-muted-foreground/80 mt-2">
                     Uploaded: {formatDateTime(selectedAttachment.created_at)}
                   </p>
                 </div>

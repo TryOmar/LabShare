@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -154,14 +153,18 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-scale-in">
         <div className="bg-gradient-card border border-border/50 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
           <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <Image 
-              src="/android-chrome-192x192.png" 
-              alt="Lab Sharing Logo" 
-              width={80}
-              height={80}
-              className="h-16 w-16 sm:h-20 sm:w-20 mb-4 object-contain"
-              priority
-            />
+            <div className="h-16 w-16 sm:h-20 sm:w-20 mb-4 flex items-center justify-center">
+              <img 
+                src="/icon.png" 
+                alt="Lab Sharing Logo" 
+                className="h-full w-full object-contain"
+                onError={(e) => {
+                  // Fallback to PNG if SVG fails
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/android-chrome-192x192.png';
+                }}
+              />
+            </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Lab Sharing
             </h1>
@@ -183,7 +186,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@iti.edu.eg"
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
                   required
                 />
               </div>

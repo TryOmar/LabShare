@@ -554,7 +554,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto mx-4 bg-gradient-card border border-border/50 rounded-2xl shadow-modern-xl backdrop-blur-sm">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto mx-4 bg-white border border-border/50 rounded-2xl shadow-modern-xl p-6 sm:p-8">
                 <DialogHeader>
                   <DialogTitle className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                     Last Updates
