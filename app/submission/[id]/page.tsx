@@ -15,6 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface CodeFile {
   id: string;
@@ -44,6 +46,7 @@ interface Submission {
   view_count: number;
   created_at: string;
   updated_at: string;
+  is_anonymous?: boolean;
   students?: {
     id: string;
     name: string;
@@ -678,6 +681,34 @@ export default function SubmissionPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const handleToggleAnonymity = async (currentValue: boolean) => {
+    if (!submission) return;
+
+    try {
+      const response = await fetch(`/api/submission/${submissionId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          isAnonymous: !currentValue,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update submission anonymity");
+      }
+
+      const data = await response.json();
+      setSubmission(data.submission);
+      toast.success("Anonymity setting updated");
+    } catch (err) {
+      console.error("Error updating submission anonymity:", err);
+      toast.error("Failed to update anonymity setting. Please try again.");
+    }
+  };
+
   // Reload submission data
   const reloadSubmission = async () => {
     try {
@@ -980,7 +1011,7 @@ export default function SubmissionPage() {
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-black break-words">{submission?.title}</h1>
               <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">
-                by {submission?.students?.name}
+                by {submission?.is_anonymous && !isOwner ? 'Anonymous' : (submission?.students?.name || 'Unknown')}
               </p>
             </div>
             {isOwner && (
@@ -994,15 +1025,27 @@ export default function SubmissionPage() {
           </div>
 
           {/* Metadata */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 flex-wrap items-center">
             <span>{submission?.view_count} views</span>
             <span className="break-words">
               Created: {submission?.created_at && formatDateTime(submission.created_at)}
             </span>
             {isOwner && (
-              <span className="break-words">
-                Last edited: {submission?.updated_at && formatDateTime(submission.updated_at)}
-              </span>
+              <>
+                <span className="break-words">
+                  Last edited: {submission?.updated_at && formatDateTime(submission.updated_at)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="submission-anonymous-toggle"
+                    checked={submission?.is_anonymous || false}
+                    onCheckedChange={() => handleToggleAnonymity(submission?.is_anonymous || false)}
+                  />
+                  <Label htmlFor="submission-anonymous-toggle" className="text-xs sm:text-sm text-gray-600 cursor-pointer">
+                    Anonymous
+                  </Label>
+                </div>
+              </>
             )}
           </div>
         </div>
