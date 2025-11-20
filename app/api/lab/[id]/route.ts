@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { processAnonymousContentArray } from "@/lib/anonymity";
 
 /**
  * GET /api/lab/[id]
@@ -104,12 +105,15 @@ export async function GET(
       );
     }
 
+    // Handle anonymous submissions - hide student info for anonymous submissions (unless user is the owner)
+    const processedSubmissions = processAnonymousContentArray(submissionData || [], studentId);
+
     return NextResponse.json({
       lab: labData,
       student: studentData,
       track: studentData.tracks,
       userSubmission: userSubmissionData || null,
-      submissions: submissionData || [],
+      submissions: processedSubmissions,
     });
   } catch (error) {
     console.error("Error in lab API:", error);

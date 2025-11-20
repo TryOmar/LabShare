@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { getAttachmentDownloadUrl, deleteSubmissionFolder, deleteSubmissionFiles } from "@/lib/storage";
+import { processAnonymousContent } from "@/lib/anonymity";
 
 /**
  * GET /api/submission/[id]
@@ -44,21 +45,26 @@ export async function GET(
       .eq("id", submissionId)
       .single();
 
-    if (submissionError || !submissionData) {
+    // Process anonymous display logic
+    const processedSubmission = submissionData 
+      ? processAnonymousContent(submissionData, studentId)
+      : null;
+
+    if (submissionError || !processedSubmission) {
       return NextResponse.json(
         { error: "Submission not found" },
         { status: 404 }
       );
     }
 
-    const isOwner = submissionData.student_id === studentId;
+    const isOwner = processedSubmission.student_id === studentId;
 
     // Security check: User must have submitted a solution for this lab to view any submission
     if (!isOwner) {
       const { data: userSubmission } = await supabase
         .from("submissions")
         .select("id")
-        .eq("lab_id", submissionData.lab_id)
+        .eq("lab_id", processedSubmission.lab_id)
         .eq("student_id", studentId)
         .single();
 
@@ -75,7 +81,7 @@ export async function GET(
       await supabase
         .from("submissions")
         .update({
-          view_count: submissionData.view_count + 1,
+          view_count: processedSubmission.view_count + 1,
         })
         .eq("id", submissionId);
     }
@@ -122,7 +128,7 @@ export async function GET(
     );
 
     return NextResponse.json({
-      submission: submissionData,
+      submission: processedSubmission,
       student: studentData,
       track: studentData.tracks,
       isOwner,
@@ -131,6 +137,94 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error in submission API:", error);
+    return NextResponse.json(
+      { error: "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/submission/[id]
+ * Updates a submission's anonymity setting.
+ * Only the owner can update their submission.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Validate authentication
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+    const { id: submissionId } = await params;
+
+    const body = await request.json();
+    const { isAnonymous } = body;
+
+    if (typeof isAnonymous !== 'boolean') {
+      return NextResponse.json(
+        { error: "isAnonymous must be a boolean" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    // Get submission to verify ownership
+    const { data: submissionData, error: submissionError } = await supabase
+      .from("submissions")
+      .select("student_id")
+      .eq("id", submissionId)
+      .single();
+
+    if (submissionError || !submissionData) {
+      return NextResponse.json(
+        { error: "Submission not found" },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership
+    if (submissionData.student_id !== studentId) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot update other users' submissions" },
+        { status: 403 }
+      );
+    }
+
+    // Update anonymity
+    const { data: updatedSubmission, error: updateError } = await supabase
+      .from("submissions")
+      .update({ 
+        is_anonymous: isAnonymous,
+        updated_at: new Date().toISOString() 
+      })
+      .eq("id", submissionId)
+      .select("*, students(id, name, email)")
+      .single();
+
+    if (updateError) {
+      console.error("Error updating submission:", updateError);
+      return NextResponse.json(
+        { error: "Failed to update submission" },
+        { status: 500 }
+      );
+    }
+
+    // Process anonymous display logic
+    const processedSubmission = updatedSubmission 
+      ? processAnonymousContent(updatedSubmission, studentId)
+      : null;
+
+    return NextResponse.json({
+      submission: processedSubmission,
+    });
+  } catch (error) {
+    console.error("Error in update submission API:", error);
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }

@@ -61,6 +61,7 @@ interface Submission {
   title: string;
   view_count: number;
   created_at: string;
+  is_anonymous?: boolean;
   students?: Student;
   labs?: Lab;
   hasAccess?: boolean;
@@ -143,7 +144,7 @@ const CourseCard = ({
 
                     {/* Uploader Name */}
                     <p className={`text-xs mb-2 ${isLocked ? "text-gray-400" : "text-gray-600"}`}>
-                      by {submission.students?.name}
+                      by {submission.is_anonymous ? 'Anonymous' : (submission.students?.name || 'Unknown')}
                     </p>
 
                     {/* Views and Timestamp */}

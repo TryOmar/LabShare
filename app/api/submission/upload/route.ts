@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { labId, title, files } = body;
+    const { labId, title, files, isAnonymous } = body;
 
     // Validate required fields
     if (!labId || !title || !files || !Array.isArray(files) || files.length === 0) {
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
             lab_id: labId,
             student_id: authenticatedStudentId,
             title,
+            is_anonymous: isAnonymous === true,
           },
         ])
         .select()
@@ -91,7 +92,11 @@ export async function POST(request: NextRequest) {
       // Update existing submission
       const { error: updateError } = await supabase
         .from("submissions")
-        .update({ title, updated_at: new Date().toISOString() })
+        .update({ 
+          title, 
+          is_anonymous: isAnonymous === true,
+          updated_at: new Date().toISOString() 
+        })
         .eq("id", submission.id);
 
       if (updateError) {
