@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { LoginPageSkeleton } from "@/components/loading-skeletons";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -139,17 +138,21 @@ export default function LoginPage() {
 
   // Show loading while checking authentication
   if (checkingAuth) {
-    return <LoginPageSkeleton />;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <p className="text-black">Loading...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 p-4 sm:p-6 animate-fade-in">
-      <div className="w-full max-w-md animate-scale-in">
-        <div className="bg-gradient-card border border-border/50 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-5 text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+    <div className="flex items-center justify-center min-h-screen bg-white p-4 sm:p-6">
+      <div className="w-full max-w-md">
+        <div className="bg-white border border-black p-4 sm:p-6 lg:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-black">
             Lab Sharing
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6 leading-relaxed">
             A collaborative learning platform where students share lab solutions, learn from each other, 
             and provide constructive feedback. Complete your labs, review with your instructor, then 
             explore peer solutions to enhance your understanding.
@@ -157,8 +160,8 @@ export default function LoginPage() {
 
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit}>
-              <div className="mb-4 sm:mb-5">
-                <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-sm sm:text-base text-black font-semibold mb-2">
                   ITI Email
                 </label>
                 <input
@@ -166,23 +169,23 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@iti.edu.eg"
-                  className="w-full px-4 py-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
                   required
                 />
               </div>
               {error && (
-                <div className="mb-4 sm:mb-5 animate-slide-up">
-                  <p className="text-xs sm:text-sm text-destructive mb-3 font-medium">{error}</p>
+                <div className="mb-3 sm:mb-4">
+                  <p className="text-xs sm:text-sm text-red-600 mb-2">{error}</p>
                   {error === "Email not found in student database" && (
-                    <div className="bg-muted/50 border border-border/30 p-4 sm:p-5 text-xs sm:text-sm text-muted-foreground rounded-xl backdrop-blur-sm">
-                      <p className="mb-3 sm:mb-4 leading-relaxed">
+                    <div className="bg-gray-50 border border-gray-300 p-3 sm:p-4 text-xs sm:text-sm text-gray-700">
+                      <p className="mb-2 sm:mb-3">
                         Email not registered. Submit your ITI email through our form to request access.
                       </p>
                       <a
                         href="https://forms.gle/yUSfPU1Vo4aHQKud7"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 underline font-semibold break-words transition-colors duration-300"
+                        className="text-blue-600 hover:text-blue-800 underline font-semibold break-words"
                       >
                         Submit Email Registration Form →
                       </a>
@@ -193,15 +196,15 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full gradient-primary text-primary-foreground font-semibold py-3 sm:py-3.5 text-sm sm:text-base rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg"
+                className="w-full bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
               >
                 {loading ? "Sending code..." : "Send Login Code"}
               </button>
             </form>
           ) : (
             <form onSubmit={handleCodeSubmit}>
-              <div className="mb-4 sm:mb-5">
-                <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-sm sm:text-base text-black font-semibold mb-2">
                   Enter Code
                 </label>
                 <input
@@ -210,15 +213,15 @@ export default function LoginPage() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground text-center text-2xl sm:text-3xl tracking-[0.5em] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
+                  className="w-full px-3 py-2 border border-black bg-white text-black text-center text-xl sm:text-2xl tracking-widest"
                   required
                 />
               </div>
-              {error && <p className="text-xs sm:text-sm text-destructive mb-4 sm:mb-5 animate-slide-up font-medium">{error}</p>}
+              {error && <p className="text-xs sm:text-sm text-red-600 mb-3 sm:mb-4">{error}</p>}
               <button
                 type="submit"
                 disabled={loading || code.length !== 6}
-                className="w-full gradient-primary text-primary-foreground font-semibold py-3 sm:py-3.5 text-sm sm:text-base rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg"
+                className="w-full bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
               >
                 {loading ? "Verifying..." : "Verify Code"}
               </button>
@@ -229,7 +232,7 @@ export default function LoginPage() {
                   setCode("");
                   setError("");
                 }}
-                className="w-full mt-3 text-sm sm:text-base text-muted-foreground hover:text-primary underline transition-colors duration-300 font-medium"
+                className="w-full mt-2 text-sm sm:text-base text-black underline"
               >
                 Back
               </button>
