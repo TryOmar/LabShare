@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Navigation from "@/components/navigation";
 import { detectLanguage } from "@/lib/language-detection";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Lab {
   id: string;
@@ -31,6 +33,7 @@ interface Submission {
   title: string;
   student_id: string;
   view_count: number;
+  is_anonymous?: boolean;
   students?: Student;
 }
 
@@ -280,7 +283,7 @@ export default function LabPage() {
                         {submission.title}
                       </h3>
                       <p className="text-xs sm:text-sm text-muted-foreground break-words mt-1">
-                        by {submission.students?.name}
+                        by {submission.is_anonymous ? 'Anonymous' : (submission.students?.name || 'Unknown')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -377,6 +380,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
   const [showPasteArea, setShowPasteArea] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const pasteTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const titleInputRef = React.useRef<HTMLInputElement>(null);
@@ -693,6 +697,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
           labId,
           title,
           files: filesToUpload,
+          isAnonymous: isAnonymous,
         }),
       });
 
@@ -784,6 +789,19 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               className="w-full px-4 py-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
               required
             />
+          </div>
+
+          {/* Anonymous Toggle */}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="submission-anonymous"
+              checked={isAnonymous}
+              onCheckedChange={setIsAnonymous}
+              disabled={loading}
+            />
+            <Label htmlFor="submission-anonymous" className="text-sm text-black cursor-pointer">
+              Submit anonymously
+            </Label>
           </div>
 
           {/* Combined Upload & Paste Box */}

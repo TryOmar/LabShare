@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,7 @@ interface Comment {
   content: string;
   created_at: string;
   updated_at: string;
+  is_anonymous?: boolean;
   students?: {
     id: string;
     name: string;
@@ -41,6 +44,7 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -86,6 +90,7 @@ export default function CommentsSection({
         credentials: "include",
         body: JSON.stringify({
           content: newComment.trim(),
+          isAnonymous: isAnonymous,
         }),
       });
 
@@ -94,6 +99,7 @@ export default function CommentsSection({
       }
 
       setNewComment("");
+      setIsAnonymous(false);
       await loadComments();
     } catch (err) {
       console.error("Error adding comment:", err);
@@ -131,6 +137,33 @@ export default function CommentsSection({
       console.error("Error deleting comment:", err);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleToggleAnonymity = async (commentId: string, currentValue: boolean) => {
+    try {
+      const response = await fetch(
+        `/api/submission/${submissionId}/comments/${commentId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            isAnonymous: !currentValue,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update comment anonymity");
+      }
+
+      await loadComments();
+    } catch (err) {
+      console.error("Error updating comment anonymity:", err);
+      alert("Failed to update anonymity setting. Please try again.");
     }
   };
 
@@ -184,7 +217,18 @@ export default function CommentsSection({
             className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground text-sm resize-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={submitting}
           />
-          <div className="flex items-center justify-end mt-3">
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="comment-anonymous"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+                disabled={submitting}
+              />
+              <Label htmlFor="comment-anonymous" className="text-sm text-foreground cursor-pointer">
+                Post anonymously
+              </Label>
+            </div>
             <button
               type="submit"
               disabled={submitting || !newComment.trim()}
@@ -232,7 +276,7 @@ export default function CommentsSection({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-foreground truncate">
-                        {comment.students?.name}
+                        {comment.students?.name || "Anonymous"}
                       </p>
                       {comment.student_id === studentId && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/30 font-medium">
@@ -245,13 +289,25 @@ export default function CommentsSection({
                     </p>
                   </div>
                   {comment.student_id === studentId && (
-                    <button
-                      onClick={() => handleDeleteClick(comment.id)}
-                      className="ml-3 px-3 py-1.5 text-xs border border-destructive/50 text-destructive font-medium rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-200 flex-shrink-0 shadow-modern"
-                      aria-label="Delete comment"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1">
+                        <Switch
+                          id={`comment-anonymous-${comment.id}`}
+                          checked={comment.is_anonymous || false}
+                          onCheckedChange={() => handleToggleAnonymity(comment.id, comment.is_anonymous || false)}
+                        />
+                        <Label htmlFor={`comment-anonymous-${comment.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                          Anonymous
+                        </Label>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteClick(comment.id)}
+                        className="ml-3 px-3 py-1.5 text-xs border border-destructive/50 text-destructive font-medium rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-200 flex-shrink-0 shadow-modern"
+                        aria-label="Delete comment"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div

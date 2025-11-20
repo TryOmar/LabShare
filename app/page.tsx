@@ -50,11 +50,8 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <div className="spinner h-5 w-5"></div>
-        <p className="text-foreground font-medium">Loading...</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-white">
+      <p className="text-black">Loading...</p>
     </div>
   );
 }
