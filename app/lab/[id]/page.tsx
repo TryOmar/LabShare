@@ -2,10 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import Navigation from "@/components/navigation";
 import { detectLanguage } from "@/lib/language-detection";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+}
 
 interface Lab {
   id: string;
@@ -13,6 +28,7 @@ interface Lab {
   lab_number: number;
   title: string;
   description: string;
+  courses?: Course;
 }
 
 interface Student {
@@ -209,6 +225,32 @@ export default function LabPage() {
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+        {/* Breadcrumb Navigation */}
+        {lab?.courses && (
+          <div className="mb-4 sm:mb-6 animate-slide-up">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={`/labs?course=${lab.courses.id}`}
+                      className="hover:text-primary transition-colors duration-200"
+                    >
+                      {lab.courses.name}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    Lab {lab.lab_number}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        )}
+
         {/* Lab Header */}
         <div className="mb-6 sm:mb-8 animate-slide-up">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 break-words bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">

@@ -22,10 +22,10 @@ export async function GET(
 
     const supabase = await createClient();
 
-    // Get lab details
+    // Get lab details with course information
     const { data: labData, error: labError } = await supabase
       .from("labs")
-      .select("*")
+      .select("*, courses(id, name, description)")
       .eq("id", labId)
       .single();
 
