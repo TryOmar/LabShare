@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LoginPageSkeleton } from "@/components/loading-skeletons";
 
 export default function LoginPage() {
@@ -147,10 +148,13 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-scale-in">
         <div className="bg-gradient-card border border-border/50 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
           <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <img 
+            <Image 
               src="/android-chrome-192x192.png" 
               alt="Lab Sharing Logo" 
+              width={80}
+              height={80}
               className="h-16 w-16 sm:h-20 sm:w-20 mb-4 object-contain"
+              priority
             />
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Lab Sharing
