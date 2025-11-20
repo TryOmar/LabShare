@@ -38,10 +38,10 @@ export async function GET(
       );
     }
 
-    // Get submission details
+    // Get submission details with lab and course information
     const { data: submissionData, error: submissionError } = await supabase
       .from("submissions")
-      .select("*, students(id, name, email)")
+      .select("*, students(id, name, email), labs(id, lab_number, title, course_id, courses(id, name, description))")
       .eq("id", submissionId)
       .single();
 

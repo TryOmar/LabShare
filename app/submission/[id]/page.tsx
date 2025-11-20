@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import Navigation from "@/components/navigation";
 import CommentsSection from "@/components/comments-section";
@@ -17,6 +18,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface CodeFile {
   id: string;
@@ -38,6 +47,20 @@ interface Attachment {
   downloadUrl?: string | null;
 }
 
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface Lab {
+  id: string;
+  lab_number: number;
+  title: string;
+  course_id: string;
+  courses?: Course;
+}
+
 interface Submission {
   id: string;
   title: string;
@@ -52,6 +75,7 @@ interface Submission {
     name: string;
     email: string;
   };
+  labs?: Lab;
 }
 
 interface Student {
@@ -1008,6 +1032,43 @@ export default function SubmissionPage() {
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+        {/* Breadcrumb Navigation */}
+        {submission?.labs?.courses && submission?.labs && (
+          <div className="mb-4 sm:mb-6 animate-slide-up">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={`/labs?course=${submission.labs.courses.id}`}
+                      className="hover:text-primary transition-colors duration-200"
+                    >
+                      {submission.labs.courses.name}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={`/lab/${submission.labs.id}`}
+                      className="hover:text-primary transition-colors duration-200"
+                    >
+                      Lab {submission.labs.lab_number}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {submission.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6 sm:mb-8 animate-slide-up">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-2">
