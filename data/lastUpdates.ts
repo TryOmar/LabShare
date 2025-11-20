@@ -11,6 +11,12 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "UI improvements with animations, LabShare logo, and modern design",
+    suggestedBy: ["@deiaamohamed"],
+    implementedBy: ["@deiaamohamed"],
+    date: "18 Nov 2025",
+  },
+  {
     feature: "Anonymous Lab Submission and Anonymous Comments",
     suggestedBy: ["@Mahmoud0-0Salah", "@deiaamohamed"],
     implementedBy: ["@TryOmar"],

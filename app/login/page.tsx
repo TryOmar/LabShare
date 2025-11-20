@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { LoginPageSkeleton } from "@/components/loading-skeletons";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -140,7 +139,14 @@ export default function LoginPage() {
 
   // Show loading while checking authentication
   if (checkingAuth) {
-    return <LoginPageSkeleton />;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="spinner h-5 w-5"></div>
+          <p className="text-foreground font-medium">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
