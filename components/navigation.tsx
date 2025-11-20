@@ -30,13 +30,22 @@ export default function Navigation({ student, track }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/50 glass shadow-modern">
       <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-xl font-bold text-foreground truncate transition-colors bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-            Lab Sharing
-          </h1>
-          <p className="text-xs text-muted-foreground truncate font-medium">
-            {track?.code} • {student?.name}
-          </p>
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <img 
+              src="/android-chrome-192x192.png" 
+              alt="Lab Sharing Logo" 
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-foreground truncate transition-colors bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+              Lab Sharing
+            </h1>
+            <p className="text-xs text-muted-foreground truncate font-medium">
+              {track?.code} • {student?.name}
+            </p>
+          </div>
         </div>
 
         {/* Desktop Navigation */}

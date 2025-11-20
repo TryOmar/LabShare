@@ -65,19 +65,19 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white p-4 sm:p-6">
-      <div className="w-full max-w-3xl">
-        <div className="border-2 border-black p-4 sm:p-6 lg:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-4 sm:mb-6">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 p-4 sm:p-6 animate-fade-in">
+      <div className="w-full max-w-3xl animate-scale-in">
+        <div className="border-2 border-border/50 bg-gradient-card p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-5 sm:mb-7 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Welcome to LabShare
           </h1>
 
-          <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-black mb-2 sm:mb-3">
+          <div className="space-y-5 sm:space-y-7 mb-7 sm:mb-9">
+            <div className="animate-slide-up">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                 Platform Purpose
               </h2>
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 LabShare is designed to improve learning by creating a collaborative environment 
                 where students can learn from each other and provide constructive feedback. 
                 This platform encourages peer learning and helps you grow through shared knowledge 
@@ -85,46 +85,46 @@ export default function TermsPage() {
               </p>
             </div>
 
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-black mb-2 sm:mb-3">
+            <div className="animate-slide-up">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                 Your Commitment
               </h2>
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4 sm:mb-5">
                 To maintain the integrity of the learning process and ensure everyone benefits 
                 from this platform, you must agree to the following:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-700 ml-2 sm:ml-4">
+              <ul className="list-disc list-inside space-y-2.5 text-sm sm:text-base text-muted-foreground ml-2 sm:ml-4">
                 <li>
-                  <strong>Complete and upload your work:</strong> Finish each lab assignment, have it <strong>reviewed by an instructor</strong>, 
+                  <strong className="text-foreground">Complete and upload your work:</strong> Finish each lab assignment, have it <strong className="text-foreground">reviewed by an instructor</strong>, 
                   then upload your solution before accessing other students' submissions.
                 </li>
                 <li>
-                  <strong>Learn from each other:</strong> Use this platform to learn from your peers' 
+                  <strong className="text-foreground">Learn from each other:</strong> Use this platform to learn from your peers' 
                   approaches and solutions, not to copy them.
                 </li>
                 <li>
-                  <strong>Respect everyone:</strong> Maintain a respectful and positive learning environment. 
+                  <strong className="text-foreground">Respect everyone:</strong> Maintain a respectful and positive learning environment. 
                   Sharing feedback is optional but encouraged.
                 </li>
               </ul>
             </div>
 
-            <div className="bg-gray-50 border border-gray-300 p-3 sm:p-4">
-              <p className="text-sm sm:text-base text-gray-700 font-medium">
+            <div className="bg-muted/50 border border-border/30 p-4 sm:p-5 rounded-xl backdrop-blur-sm animate-slide-up">
+              <p className="text-sm sm:text-base text-muted-foreground font-medium">
                 By proceeding, you acknowledge that you understand and agree to these terms.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-7 p-3 rounded-lg hover:bg-accent/30 transition-colors duration-200 animate-slide-up">
             <input
               type="checkbox"
               id="agree"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="w-4 h-4 sm:w-5 sm:h-5 border-black flex-shrink-0"
+              className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-primary rounded cursor-pointer text-primary focus:ring-2 focus:ring-primary/50 transition-all duration-200"
             />
-            <label htmlFor="agree" className="text-sm sm:text-base text-black font-semibold cursor-pointer">
+            <label htmlFor="agree" className="text-sm sm:text-base text-foreground font-semibold cursor-pointer">
               I understand and agree to these terms
             </label>
           </div>
@@ -132,7 +132,7 @@ export default function TermsPage() {
           <button
             onClick={handleAccept}
             disabled={!agreed || loading}
-            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-black text-white font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-5 sm:px-6 py-3 sm:py-3.5 text-sm sm:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg animate-slide-up"
           >
             {loading ? "Processing..." : "I Agree - Continue to Dashboard"}
           </button>

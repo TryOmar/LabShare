@@ -146,9 +146,16 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 p-4 sm:p-6 animate-fade-in">
       <div className="w-full max-w-md animate-scale-in">
         <div className="bg-gradient-card border border-border/50 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-5 text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            Lab Sharing
-          </h1>
+          <div className="flex flex-col items-center mb-6 sm:mb-8">
+            <img 
+              src="/android-chrome-192x192.png" 
+              alt="Lab Sharing Logo" 
+              className="h-16 w-16 sm:h-20 sm:w-20 mb-4 object-contain"
+            />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Lab Sharing
+            </h1>
+          </div>
           <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
             A collaborative learning platform where students share lab solutions, learn from each other, 
             and provide constructive feedback. Complete your labs, review with your instructor, then 
