@@ -125,8 +125,8 @@ export default function CommentsSection({
   };
 
   return (
-    <div className="border border-black p-4">
-      <h3 className="font-bold text-black mb-4 text-lg">
+    <div className="border border-border/50 p-5 rounded-xl shadow-modern-lg backdrop-blur-sm bg-gradient-card animate-slide-up">
+      <h3 className="font-bold text-foreground mb-5 text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
         Comments ({comments.length})
       </h3>
 
@@ -137,13 +137,13 @@ export default function CommentsSection({
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment... (supports **bold**, `code`, and \`\`\`code blocks\`\`\`)"
           rows={3}
-          className="w-full px-3 py-2 border border-black bg-white text-black text-sm resize-none"
+          className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground text-sm resize-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
           disabled={submitting}
         />
         <button
           type="submit"
           disabled={submitting || !newComment.trim()}
-          className="mt-2 px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800 disabled:opacity-50"
+          className="mt-3 px-5 py-2.5 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg"
         >
           {submitting ? "Posting..." : "Post Comment"}
         </button>
@@ -152,33 +152,37 @@ export default function CommentsSection({
       {/* Comments List */}
       <div className="space-y-4">
         {comments.length > 0 ? (
-          comments.map((comment) => (
-            <div key={comment.id} className="border border-gray-300 p-3">
-              <div className="flex justify-between items-start mb-2">
+          comments.map((comment, index) => (
+            <div 
+              key={comment.id} 
+              className="border border-border/50 p-4 rounded-xl bg-white/80 backdrop-blur-sm shadow-modern hover:shadow-modern-lg transition-all duration-300 hover-lift"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="font-semibold text-black">
+                  <p className="font-semibold text-foreground">
                     {comment.students?.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatDateTime(comment.created_at)}
                   </p>
                 </div>
                 {comment.student_id === studentId && (
                   <button
                     onClick={() => handleDeleteComment(comment.id)}
-                    className="text-xs text-red-600 hover:text-red-800 underline"
+                    className="text-xs text-destructive hover:text-destructive/80 underline transition-colors duration-200 font-medium"
                   >
                     Delete
                   </button>
                 )}
               </div>
-              <div className="text-sm text-black prose prose-sm max-w-none">
+              <div className="text-sm text-foreground prose prose-sm max-w-none">
                 <p dangerouslySetInnerHTML={{ __html: renderMarkdown(comment.content) }} />
               </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-600 text-sm">No comments yet. Be the first to comment!</p>
+          <p className="text-muted-foreground text-sm">No comments yet. Be the first to comment!</p>
         )}
       </div>
     </div>

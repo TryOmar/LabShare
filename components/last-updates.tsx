@@ -32,9 +32,9 @@ export default function LastUpdates({ showTitle = false, maxItems }: LastUpdates
   return (
     <div className="w-full">
       {showTitle && (
-        <h2 className="text-xl font-bold text-black mb-4">Last Updates</h2>
+        <h2 className="text-xl font-bold text-foreground mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Last Updates</h2>
       )}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {updatesToShow.map((update, index) => {
           const suggestedBy = normalizeToArray(update.suggestedBy);
           const implementedBy = normalizeToArray(update.implementedBy);
@@ -43,27 +43,28 @@ export default function LastUpdates({ showTitle = false, maxItems }: LastUpdates
           return (
             <div 
               key={index} 
-              className="border-b border-gray-200 pb-2.5 last:border-b-0 last:pb-0"
+              className="border-b border-border/30 pb-3 last:border-b-0 last:pb-0 animate-slide-up"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className="mb-1.5">
-                <h3 className="font-semibold text-black text-xs leading-snug">
+              <div className="mb-2">
+                <h3 className="font-semibold text-foreground text-xs leading-snug">
                   {update.feature}
                 </h3>
               </div>
-              <div className="text-[10px] text-gray-600 leading-tight">
+              <div className="text-[10px] text-muted-foreground leading-tight">
                 {isSamePerson ? (
                   <div className="flex flex-wrap items-center gap-x-1.5">
                     <span className="break-words">{formatNames(suggestedBy)}</span>
-                    <span className="text-gray-400 flex-shrink-0">•</span>
+                    <span className="text-muted-foreground/50 flex-shrink-0">•</span>
                     <span className="whitespace-nowrap flex-shrink-0">{update.date}</span>
                   </div>
                 ) : (
                   <div className="space-y-0.5">
                     <div className="break-words">
-                      <span className="font-medium">Suggested:</span> {formatNames(suggestedBy)}
+                      <span className="font-medium text-foreground">Suggested:</span> {formatNames(suggestedBy)}
                     </div>
                     <div className="break-words">
-                      <span className="font-medium">Implemented:</span> {formatNames(implementedBy)}
+                      <span className="font-medium text-foreground">Implemented:</span> {formatNames(implementedBy)}
                     </div>
                     <div className="whitespace-nowrap mt-0.5">{update.date}</div>
                   </div>

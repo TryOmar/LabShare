@@ -347,34 +347,34 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
 
   return (
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
+        className="fixed inset-0 glass-dark flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-white border border-black p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto my-4"
+          className="bg-gradient-card border border-border/50 p-5 sm:p-7 max-w-lg w-full max-h-[90vh] overflow-y-auto my-4 rounded-2xl shadow-modern-xl backdrop-blur-sm animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
-        <h2 className="text-xl sm:text-2xl font-bold text-black mb-3 sm:mb-4">Add Files</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Add Files</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-black font-semibold mb-2">Files & Code</label>
+            <label className="block text-foreground font-semibold mb-2.5">Files & Code</label>
             <div
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed p-4 ${
-                isDragging ? 'border-black bg-gray-100' : 'border-black bg-white'
+              className={`border-2 border-dashed rounded-xl p-5 transition-all duration-300 ${
+                isDragging ? 'border-primary/60 bg-primary/5 shadow-primary-lg' : 'border-border/50 bg-white/80 hover:bg-accent/30 hover:border-primary/40 shadow-modern'
               }`}
             >
               <div className="text-center">
-                <p className="text-sm text-black mb-1">
+                <p className="text-sm text-foreground mb-1">
                   Drag files here or{' '}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="underline"
+                    className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
                   >
                     browse
                   </button>
@@ -385,12 +385,12 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                       setShowPasteArea(true);
                       setTimeout(() => pasteTextareaRef.current?.focus(), 10);
                     }}
-                    className="underline"
+                    className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
                   >
                     paste code
                   </button>
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   Press Ctrl+V to paste files or code
                 </p>
               </div>
@@ -404,9 +404,9 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
               />
 
               {showPasteArea && (
-                <div className="space-y-2 mt-3 border-t border-black pt-3">
+                <div className="space-y-3 mt-4 border-t border-border/30 pt-4">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm text-black font-semibold">Paste Code</label>
+                    <label className="text-sm text-foreground font-semibold">Paste Code</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -414,7 +414,7 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                         setPastedContent("");
                         setPastedFileName("");
                       }}
-                      className="text-xs text-gray-600 hover:text-black underline"
+                      className="text-xs text-muted-foreground hover:text-primary underline transition-colors duration-200"
                     >
                       Cancel
                     </button>
@@ -432,7 +432,7 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                     }}
                     placeholder="Paste code here (Ctrl+V)..."
                     rows={4}
-                    className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-xs"
+                    className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
                   />
                   {pastedContent && (
                     <div className="flex gap-2">
@@ -441,12 +441,12 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                         value={pastedFileName}
                         onChange={(e) => setPastedFileName(e.target.value)}
                         placeholder="File name (optional)"
-                        className="flex-1 px-3 py-2 border border-black bg-white text-black text-sm"
+                        className="flex-1 px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                       />
                       <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="px-3 py-2 border border-black bg-white text-black text-sm"
+                        className="px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                       >
                         <option value="text">text</option>
                         {Object.entries(detectedLanguages)
@@ -465,7 +465,7 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                           setPastedFileName("");
                           pasteTextareaRef.current?.focus();
                         }}
-                        className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800 text-sm"
+                        className="px-4 py-2 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm"
                       >
                         Add
                       </button>
@@ -481,13 +481,13 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
               {pastedCodeFiles.map((file, index) => (
                 <div
                   key={`pasted-${index}`}
-                  className="flex items-center justify-between p-2 border border-black bg-white"
+                  className="flex items-center justify-between p-2.5 border border-border/50 bg-white/80 rounded-lg backdrop-blur-sm shadow-modern"
                 >
-                  <span className="text-xs text-black truncate flex-1">📄 {file.filename}</span>
+                  <span className="text-xs text-foreground truncate flex-1">📄 {file.filename}</span>
                   <button
                     type="button"
                     onClick={() => removePastedCodeFile(index)}
-                    className="ml-2 text-black hover:text-red-600 text-sm"
+                    className="ml-2 text-muted-foreground hover:text-destructive text-sm transition-colors duration-200"
                   >
                     ×
                   </button>
@@ -499,15 +499,15 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
                 return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 border border-black bg-white"
+                    className="flex items-center justify-between p-2.5 border border-border/50 bg-white/80 rounded-lg backdrop-blur-sm shadow-modern"
                   >
-                    <span className="text-xs text-black truncate flex-1">
+                    <span className="text-xs text-foreground truncate flex-1">
                       {isCodeFile ? '📄' : '📎'} {file.name}
                     </span>
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="ml-2 text-black hover:text-red-600 text-sm"
+                      className="ml-2 text-muted-foreground hover:text-destructive text-sm transition-colors duration-200"
                     >
                       ×
                     </button>
@@ -519,27 +519,27 @@ function AddFilesModal({ submissionId, onClose }: AddFilesModalProps) {
 
           {error && (
             <div>
-              <p className="text-red-600 text-sm">{error}</p>
+              <p className="text-destructive text-sm font-medium">{error}</p>
               {error.toLowerCase().includes('mime type') && error.toLowerCase().includes('not supported') && (
-                <p className="text-xs text-gray-600 mt-1">
-                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">report it</a>.
+                <p className="text-xs text-muted-foreground mt-2">
+                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline transition-colors duration-200">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline transition-colors duration-200">report it</a>.
                 </p>
               )}
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-3">
             <button
               type="submit"
               disabled={loading || (files.length === 0 && pastedCodeFiles.length === 0)}
-              className="flex-1 bg-black text-white font-semibold py-2 hover:bg-gray-800 disabled:opacity-50"
+              className="flex-1 gradient-primary text-primary-foreground font-semibold py-3 rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg"
             >
               {loading ? "Adding..." : "Add Files"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border border-black text-black font-semibold py-2 hover:bg-gray-100"
+              className="flex-1 border border-border/50 text-foreground font-semibold py-3 rounded-lg hover:bg-accent/50 hover:border-primary/40 backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
             >
               Cancel
             </button>
@@ -927,22 +927,25 @@ export default function SubmissionPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <p className="text-black">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="spinner h-5 w-5"></div>
+          <p className="text-foreground font-medium">Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen bg-white">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
         <Navigation student={student} track={track} />
         <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
-          <div className="border-2 border-red-500 bg-red-50 p-6">
+          <div className="border-2 border-destructive/50 bg-destructive/10 rounded-xl p-6 sm:p-8 shadow-modern-lg backdrop-blur-sm animate-slide-up">
             <div className="flex items-center gap-3 mb-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-red-600"
+                className="h-6 w-6 text-destructive"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -954,12 +957,12 @@ export default function SubmissionPage() {
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                 />
               </svg>
-              <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
+              <h2 className="text-xl font-bold text-destructive">Access Denied</h2>
             </div>
-            <p className="text-red-700 mb-4">{error}</p>
+            <p className="text-destructive/90 mb-5 leading-relaxed">{error}</p>
             <button
               onClick={() => router.push("/labs")}
-              className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800"
+              className="px-5 py-2.5 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
             >
               Back to Labs
             </button>
@@ -970,23 +973,23 @@ export default function SubmissionPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-2">
+        <div className="mb-6 sm:mb-8 animate-slide-up">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-3">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-black break-words">{submission?.title}</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{submission?.title}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2 break-words">
                 by {submission?.students?.name}
               </p>
             </div>
             {isOwner && (
               <button
                 onClick={() => router.back()}
-                className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-black text-black font-semibold hover:bg-gray-100 whitespace-nowrap flex-shrink-0"
+                className="px-4 sm:px-5 py-2.5 text-sm sm:text-base border border-border/50 text-foreground font-semibold rounded-lg hover:bg-accent/50 hover:border-primary/40 hover:text-primary whitespace-nowrap flex-shrink-0 backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
               >
                 Back
               </button>
@@ -994,7 +997,7 @@ export default function SubmissionPage() {
           </div>
 
           {/* Metadata */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-4 flex-wrap">
             <span>{submission?.view_count} views</span>
             <span className="break-words">
               Created: {submission?.created_at && formatDateTime(submission.created_at)}
@@ -1016,7 +1019,7 @@ export default function SubmissionPage() {
               <div className="mb-4">
                 <button
                   onClick={() => setShowAddFilesModal(true)}
-                  className="w-full px-3 py-2 border border-black bg-white text-black hover:bg-gray-100 text-sm font-semibold"
+                  className="w-full px-4 py-2.5 border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary text-sm font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
                 >
                   + Add Files
                 </button>
@@ -1026,7 +1029,7 @@ export default function SubmissionPage() {
             {/* Code Files List */}
             {codeFiles.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-bold text-black mb-3">Code Files</h3>
+                <h3 className="font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Code Files</h3>
                 <div className="space-y-2">
                   {codeFiles.map((file) => (
                     <div key={file.id} className="relative">
@@ -1052,11 +1055,11 @@ export default function SubmissionPage() {
                               }
                             }}
                             autoFocus
-                            className="flex-1 px-2 py-1 border border-black text-xs bg-white text-black"
+                            className="flex-1 px-2 py-1 border border-border/50 text-xs bg-white/80 text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                           />
                           <button
                             onClick={saveCodeFileRename}
-                            className="px-2 py-1 bg-black text-white text-xs hover:bg-gray-800"
+                            className="px-2 py-1 gradient-primary text-primary-foreground text-xs rounded-md hover:gradient-primary-hover transition-all duration-200 shadow-sm"
                           >
                             ✓
                           </button>
@@ -1066,7 +1069,7 @@ export default function SubmissionPage() {
                               e.preventDefault(); // Prevent blur event
                             }}
                             onClick={cancelRenameCodeFile}
-                            className="px-2 py-1 border border-black text-black text-xs hover:bg-gray-100"
+                            className="px-2 py-1 border border-border/50 text-foreground text-xs rounded-md hover:bg-accent/50 transition-all duration-200"
                           >
                             ×
                           </button>
@@ -1080,10 +1083,10 @@ export default function SubmissionPage() {
                               setSelectedAttachment(null);
                               setOpenMenuId(null);
                             }}
-                            className={`flex-1 text-left p-2 border border-black text-xs truncate pr-8 ${
+                            className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedCodeFile?.id === file.id
-                                ? "bg-black text-white"
-                                : "bg-white text-black hover:bg-gray-100"
+                                ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                                : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
                             }`}
                             title={file.filename}
                           >
@@ -1097,10 +1100,10 @@ export default function SubmissionPage() {
                                     onClick={(e) => {
                                       e.stopPropagation();
                                     }}
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
                                       selectedCodeFile?.id === file.id
-                                        ? "text-white hover:bg-gray-700"
-                                        : "text-black hover:bg-gray-200"
+                                        ? "text-primary-foreground hover:bg-primary/80"
+                                        : "text-foreground hover:bg-accent/50"
                                     }`}
                                     title="Options"
                                     style={{ fontSize: '12px', lineHeight: '1', letterSpacing: '1px' }}
@@ -1110,7 +1113,7 @@ export default function SubmissionPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent 
                                   align="end" 
-                                  className="bg-white border border-black shadow-lg min-w-[120px] p-1"
+                                  className="bg-gradient-card border border-border/50 shadow-modern-lg min-w-[120px] p-1 rounded-lg backdrop-blur-sm"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <DropdownMenuItem
@@ -1118,7 +1121,7 @@ export default function SubmissionPage() {
                                       e.stopPropagation();
                                       startEditCodeFile(file);
                                     }}
-                                    className="text-xs cursor-pointer focus:bg-gray-100"
+                                    className="text-xs cursor-pointer focus:bg-accent/50 text-foreground rounded-md transition-colors duration-200"
                                   >
                                     Edit
                                   </DropdownMenuItem>
@@ -1127,7 +1130,7 @@ export default function SubmissionPage() {
                                       e.stopPropagation();
                                       startRenameCodeFile(file);
                                     }}
-                                    className="text-xs cursor-pointer focus:bg-gray-100"
+                                    className="text-xs cursor-pointer focus:bg-accent/50 text-foreground rounded-md transition-colors duration-200"
                                   >
                                     Rename
                                   </DropdownMenuItem>
@@ -1136,7 +1139,7 @@ export default function SubmissionPage() {
                                       e.stopPropagation();
                                       deleteCodeFile(file.id, file.filename);
                                     }}
-                                    className="text-xs cursor-pointer focus:bg-red-50 text-red-600"
+                                    className="text-xs cursor-pointer focus:bg-destructive/10 text-destructive rounded-md transition-colors duration-200"
                                   >
                                     Delete
                                   </DropdownMenuItem>
@@ -1155,7 +1158,7 @@ export default function SubmissionPage() {
             {/* Attachments List */}
             {attachments.length > 0 && (
               <div>
-                <h3 className="font-bold text-black mb-3">Attachments</h3>
+                <h3 className="font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Attachments</h3>
                 <div className="space-y-2">
                   {attachments.map((attachment) => (
                     <div key={attachment.id} className="relative">
@@ -1181,11 +1184,11 @@ export default function SubmissionPage() {
                               }
                             }}
                             autoFocus
-                            className="flex-1 px-2 py-1 border border-black text-xs bg-white text-black"
+                            className="flex-1 px-2 py-1 border border-border/50 text-xs bg-white/80 text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                           />
                           <button
                             onClick={saveAttachmentRename}
-                            className="px-2 py-1 bg-black text-white text-xs hover:bg-gray-800"
+                            className="px-2 py-1 gradient-primary text-primary-foreground text-xs rounded-md hover:gradient-primary-hover transition-all duration-200 shadow-sm"
                           >
                             ✓
                           </button>
@@ -1195,7 +1198,7 @@ export default function SubmissionPage() {
                               e.preventDefault(); // Prevent blur event
                             }}
                             onClick={cancelRenameAttachment}
-                            className="px-2 py-1 border border-black text-black text-xs hover:bg-gray-100"
+                            className="px-2 py-1 border border-border/50 text-foreground text-xs rounded-md hover:bg-accent/50 transition-all duration-200"
                           >
                             ×
                           </button>
@@ -1209,10 +1212,10 @@ export default function SubmissionPage() {
                               setSelectedCodeFile(null);
                               setOpenMenuId(null);
                             }}
-                            className={`flex-1 text-left p-2 border border-black text-xs truncate pr-8 ${
+                            className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedAttachment?.id === attachment.id
-                                ? "bg-black text-white"
-                                : "bg-white text-black hover:bg-gray-100"
+                                ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                                : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
                             }`}
                             title={attachment.filename}
                           >
@@ -1226,10 +1229,10 @@ export default function SubmissionPage() {
                                     onClick={(e) => {
                                       e.stopPropagation();
                                     }}
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
                                       selectedAttachment?.id === attachment.id
-                                        ? "text-white hover:bg-gray-700"
-                                        : "text-black hover:bg-gray-200"
+                                        ? "text-primary-foreground hover:bg-primary/80"
+                                        : "text-foreground hover:bg-accent/50"
                                     }`}
                                     title="Options"
                                     style={{ fontSize: '12px', lineHeight: '1', letterSpacing: '1px' }}
@@ -1239,7 +1242,7 @@ export default function SubmissionPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent 
                                   align="end" 
-                                  className="bg-white border border-black shadow-lg min-w-[120px] p-1"
+                                  className="bg-gradient-card border border-border/50 shadow-modern-lg min-w-[120px] p-1 rounded-lg backdrop-blur-sm"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <DropdownMenuItem
@@ -1247,7 +1250,7 @@ export default function SubmissionPage() {
                                       e.stopPropagation();
                                       startRenameAttachment(attachment);
                                     }}
-                                    className="text-xs cursor-pointer focus:bg-gray-100"
+                                    className="text-xs cursor-pointer focus:bg-accent/50 text-foreground rounded-md transition-colors duration-200"
                                   >
                                     Rename
                                   </DropdownMenuItem>
@@ -1256,7 +1259,7 @@ export default function SubmissionPage() {
                                       e.stopPropagation();
                                       deleteAttachment(attachment.id, attachment.filename);
                                     }}
-                                    className="text-xs cursor-pointer focus:bg-red-50 text-red-600"
+                                    className="text-xs cursor-pointer focus:bg-destructive/10 text-destructive rounded-md transition-colors duration-200"
                                   >
                                     Delete
                                   </DropdownMenuItem>
@@ -1273,7 +1276,7 @@ export default function SubmissionPage() {
             )}
             
             {codeFiles.length === 0 && attachments.length === 0 && !isOwner && (
-              <div className="text-gray-500 text-sm">No files</div>
+              <div className="text-muted-foreground text-sm">No files</div>
             )}
           </div>
 
@@ -1282,9 +1285,9 @@ export default function SubmissionPage() {
             {/* Code File Viewer */}
             {selectedCodeFile ? (
               // View/Edit mode (inline editing like GitHub)
-                <div className="border border-black">
+                <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern-lg backdrop-blur-sm bg-gradient-card">
                   {/* File Header */}
-                  <div className={`bg-gray-100 border-b border-black p-3 flex justify-between ${editingCodeFileId === selectedCodeFile.id ? 'items-start' : 'items-center'}`}>
+                  <div className={`bg-muted/50 border-b border-border/30 p-4 flex justify-between rounded-t-xl ${editingCodeFileId === selectedCodeFile.id ? 'items-start' : 'items-center'}`}>
                     <div className="flex-1 pr-4">
                       {editingCodeFileId === selectedCodeFile.id ? (
                         // Edit mode - show filename input and language selector
@@ -1293,13 +1296,13 @@ export default function SubmissionPage() {
                             type="text"
                             value={editCodeFilename}
                             onChange={(e) => setEditCodeFilename(e.target.value)}
-                            className="w-full px-2 py-1.5 border border-black bg-white text-black text-sm font-semibold"
+                            className="w-full px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                             placeholder="Filename"
                           />
                           <select
                             value={editCodeLanguage}
                             onChange={(e) => setEditCodeLanguage(e.target.value)}
-                            className="px-2 py-1.5 border border-black bg-white text-black text-xs"
+                            className="px-3 py-2 border border-border/50 bg-white/80 text-foreground text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                           >
                             <option value="text">text</option>
                             <option value="javascript">javascript</option>
@@ -1321,9 +1324,9 @@ export default function SubmissionPage() {
                       ) : (
                         // View mode - show filename and language badge
                         <>
-                          <p className="font-semibold text-black">{selectedCodeFile.filename}</p>
+                          <p className="font-semibold text-foreground">{selectedCodeFile.filename}</p>
                           <span
-                            className={`inline-block mt-2 px-2 py-1 text-xs font-semibold rounded ${
+                            className={`inline-block mt-2 px-2.5 py-1 text-xs font-semibold rounded-lg ${
                               languageColors[selectedCodeFile.language] ||
                               languageColors.text
                             }`}
@@ -1337,7 +1340,7 @@ export default function SubmissionPage() {
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => startEditCodeFile(selectedCodeFile)}
-                          className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-200"
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground rounded-lg hover:bg-accent/50 hover:border-primary/40 transition-all duration-200 shadow-modern"
                         >
                           Edit
                         </button>
@@ -1346,7 +1349,7 @@ export default function SubmissionPage() {
                             navigator.clipboard.writeText(selectedCodeFile.content);
                             toast.success("Copied to clipboard!");
                           }}
-                          className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-200"
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground rounded-lg hover:bg-accent/50 hover:border-primary/40 transition-all duration-200 shadow-modern"
                         >
                           Copy
                         </button>
@@ -1356,13 +1359,13 @@ export default function SubmissionPage() {
                       <div className="flex gap-2 flex-shrink-0 pt-0.5">
                         <button
                           onClick={saveCodeFile}
-                          className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800"
+                          className="px-3 py-1.5 text-xs gradient-primary text-primary-foreground rounded-lg hover:gradient-primary-hover transition-all duration-200 shadow-primary"
                         >
                           Save
                         </button>
                         <button
                           onClick={cancelEditCodeFile}
-                          className="px-3 py-1.5 text-xs border border-black bg-white text-black hover:bg-gray-200"
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground rounded-lg hover:bg-accent/50 transition-all duration-200"
                         >
                           Cancel
                         </button>
@@ -1372,20 +1375,20 @@ export default function SubmissionPage() {
 
                   {/* Code Content - Edit or View */}
                   {editingCodeFileId === selectedCodeFile.id ? (
-                    <div className="p-4 bg-white">
+                    <div className="p-4 bg-white/80 backdrop-blur-sm">
                       <textarea
                         value={editCodeContent}
                         onChange={(e) => {
                           setEditCodeContent(e.target.value);
                         }}
-                        className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-sm"
+                        className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                         rows={25}
                         placeholder="Code content"
                         style={{ fontFamily: 'monospace', resize: 'vertical' }}
                       />
                     </div>
                   ) : (
-                    <pre className="p-0 bg-gray-50 overflow-x-auto text-xs leading-relaxed">
+                    <pre className="p-0 bg-muted/30 overflow-x-auto text-xs leading-relaxed rounded-b-xl">
                       <SyntaxHighlighter
                         language={mapLanguageToPrism(selectedCodeFile.language)}
                         style={oneLight}
@@ -1402,16 +1405,16 @@ export default function SubmissionPage() {
                 </div>
             ) : selectedAttachment ? (
               // View mode (no edit mode in preview for attachments - only rename in sidebar)
-              <div className="border border-black">
+              <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern-lg backdrop-blur-sm bg-gradient-card">
                 {/* Attachment Header */}
-                <div className="bg-gray-100 border-b border-black p-3 flex justify-between items-center">
+                <div className="bg-muted/50 border-b border-border/30 p-4 flex justify-between items-center rounded-t-xl">
                   <div>
-                    <p className="font-semibold text-black">{selectedAttachment.filename}</p>
+                    <p className="font-semibold text-foreground">{selectedAttachment.filename}</p>
                     <div className="mt-2 flex gap-2 items-center">
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         {selectedAttachment.mime_type}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground/70">
                         • {formatFileSize(selectedAttachment.file_size)}
                       </span>
                     </div>
@@ -1420,14 +1423,14 @@ export default function SubmissionPage() {
                     <a
                       href={selectedAttachment.downloadUrl}
                       download={selectedAttachment.filename}
-                      className="px-4 py-2 text-xs border border-black bg-white text-black hover:bg-gray-200 font-semibold"
+                      className="px-4 py-2 text-xs border border-border/50 bg-white/80 text-foreground rounded-lg hover:bg-accent/50 hover:border-primary/40 font-semibold transition-all duration-200 shadow-modern hover:shadow-primary/10"
                     >
                       Download
                     </a>
                   ) : (
                     <button
                       disabled
-                      className="px-4 py-2 text-xs border border-gray-300 bg-gray-100 text-gray-400 font-semibold cursor-not-allowed"
+                      className="px-4 py-2 text-xs border border-border/30 bg-muted/50 text-muted-foreground font-semibold cursor-not-allowed rounded-lg"
                     >
                       Download Unavailable
                     </button>
@@ -1435,17 +1438,17 @@ export default function SubmissionPage() {
                 </div>
 
                 {/* Attachment Info */}
-                <div className="p-6 bg-gray-50">
-                  <p className="text-gray-600 text-sm">
+                <div className="p-6 bg-muted/20 rounded-b-xl">
+                  <p className="text-muted-foreground text-sm">
                     This file is stored in storage. Click the download button to retrieve it.
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-muted-foreground/70 mt-2">
                     Uploaded: {formatDateTime(selectedAttachment.created_at)}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-gray-600">No file selected</p>
+              <p className="text-muted-foreground">No file selected</p>
             )}
 
             {/* Comments Section */}
@@ -1462,7 +1465,7 @@ export default function SubmissionPage() {
 
         {/* Actions */}
         {isOwner && (
-          <div className="mt-8 flex gap-3">
+          <div className="mt-8 flex gap-3 animate-slide-up">
             <button
               onClick={async () => {
                 if (confirm("Delete this submission?")) {
@@ -1485,7 +1488,7 @@ export default function SubmissionPage() {
                   }
                 }
               }}
-              className="px-6 py-2 border border-red-600 text-red-600 font-semibold hover:bg-red-50"
+              className="px-6 py-2.5 border border-destructive/50 text-destructive font-semibold rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-300 shadow-modern hover:shadow-modern-lg"
             >
               Delete Submission
             </button>

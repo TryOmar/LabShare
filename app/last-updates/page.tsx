@@ -32,40 +32,40 @@ export default function LastUpdatesPage() {
   }, [router]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
       <div className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-black">Last Updates</h1>
+        <div className="mb-6 sm:mb-8 animate-slide-up">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Last Updates</h1>
             <Link
               href="/dashboard"
-              className="text-sm sm:text-base text-black hover:underline font-semibold whitespace-nowrap"
+              className="text-sm sm:text-base text-primary hover:text-primary/80 underline font-semibold whitespace-nowrap transition-colors duration-200"
             >
               ← Back to Dashboard
             </Link>
           </div>
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className="text-sm sm:text-base text-muted-foreground">
             A chronological list of recent features and improvements to LabShare.
           </p>
         </div>
 
         {/* Updates List */}
-        <div className="border border-black p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="border border-border/50 bg-gradient-card p-5 sm:p-7 mb-5 sm:mb-6 rounded-2xl shadow-modern-lg backdrop-blur-sm animate-slide-up">
           <LastUpdates showTitle={false} />
         </div>
 
         {/* Call to Action */}
-        <div className="border border-black p-3 sm:p-4 bg-gray-50">
-          <p className="text-xs text-gray-700 mb-2 sm:mb-3">
+        <div className="border border-border/50 bg-gradient-card p-4 sm:p-5 rounded-xl shadow-modern backdrop-blur-sm animate-slide-up">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 font-medium">
             Want to see your name here? Contribute and get credited in Last Updates.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <a
               href="https://github.com/TryOmar/LabShare"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 px-3 py-1.5 bg-black text-white text-xs font-semibold text-center hover:bg-gray-800"
+              className="flex-1 px-4 py-2.5 gradient-primary text-primary-foreground text-xs font-semibold text-center rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
             >
               View Repo
             </a>
@@ -73,7 +73,7 @@ export default function LastUpdatesPage() {
               href="https://github.com/TryOmar/LabShare/issues/new"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 px-3 py-1.5 border border-black text-black text-xs font-semibold text-center hover:bg-gray-100"
+              className="flex-1 px-4 py-2.5 border border-border/50 text-foreground text-xs font-semibold text-center rounded-lg hover:bg-accent/50 hover:border-primary/40 backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
             >
               Suggest / Fix
             </a>
