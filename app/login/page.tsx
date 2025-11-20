@@ -166,7 +166,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@iti.edu.eg"
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
+                  className="w-full px-4 py-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
                   required
                 />
               </div>

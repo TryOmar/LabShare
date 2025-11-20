@@ -11,12 +11,6 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
-    feature: "UI Enhancements and animation Improvements",
-    suggestedBy: ["@DeiaaMohamed ", "@TryOmar"],
-    implementedBy: ["@DeiaaMohamed"],
-    date: "19 Nov 2025",
-  },
-  {
     feature: "Storage submission: pasted code and attachments support",
     suggestedBy: ["@TryOmar"],
     implementedBy: ["@TryOmar"],
