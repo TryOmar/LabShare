@@ -44,6 +44,15 @@ export async function GET(
       .eq("id", submissionId)
       .single();
 
+    // If submission is anonymous and user is not the owner, hide student info
+    if (submissionData && submissionData.is_anonymous && submissionData.student_id !== studentId) {
+      submissionData.students = {
+        id: '',
+        name: 'Anonymous',
+        email: '',
+      };
+    }
+
     if (submissionError || !submissionData) {
       return NextResponse.json(
         { error: "Submission not found" },
@@ -131,6 +140,98 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error in submission API:", error);
+    return NextResponse.json(
+      { error: "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/submission/[id]
+ * Updates a submission's anonymity setting.
+ * Only the owner can update their submission.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Validate authentication
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+    const { id: submissionId } = await params;
+
+    const body = await request.json();
+    const { isAnonymous } = body;
+
+    if (typeof isAnonymous !== 'boolean') {
+      return NextResponse.json(
+        { error: "isAnonymous must be a boolean" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    // Get submission to verify ownership
+    const { data: submissionData, error: submissionError } = await supabase
+      .from("submissions")
+      .select("student_id")
+      .eq("id", submissionId)
+      .single();
+
+    if (submissionError || !submissionData) {
+      return NextResponse.json(
+        { error: "Submission not found" },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership
+    if (submissionData.student_id !== studentId) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot update other users' submissions" },
+        { status: 403 }
+      );
+    }
+
+    // Update anonymity
+    const { data: updatedSubmission, error: updateError } = await supabase
+      .from("submissions")
+      .update({ 
+        is_anonymous: isAnonymous,
+        updated_at: new Date().toISOString() 
+      })
+      .eq("id", submissionId)
+      .select("*, students(id, name, email)")
+      .single();
+
+    if (updateError) {
+      console.error("Error updating submission:", updateError);
+      return NextResponse.json(
+        { error: "Failed to update submission" },
+        { status: 500 }
+      );
+    }
+
+    // If submission is anonymous, hide student info in response
+    if (updatedSubmission && updatedSubmission.is_anonymous) {
+      updatedSubmission.students = {
+        id: '',
+        name: 'Anonymous',
+        email: '',
+      };
+    }
+
+    return NextResponse.json({
+      submission: updatedSubmission,
+    });
+  } catch (error) {
+    console.error("Error in update submission API:", error);
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }
