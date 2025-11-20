@@ -508,13 +508,18 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-5 leading-relaxed">
                 Share feature ideas, improvements, or code contributions. Get publicly credited in the Last Updates section for your work.
               </p>
+            {/* Disabled link: prevent accidental outbound navigation from the dashboard.
+              Contributions should be made via PRs/issues on the repo — enable when ready. */}
             <a
-  href="https://github.com/TryOmar/LabShare/issues/new"
-  onClick={(e) => e.preventDefault()}
-  className="block w-full px-4 sm:px-5 py-2.5 text-xs sm:text-sm bg-muted/50 text-muted-foreground font-semibold text-center rounded-lg opacity-60 cursor-not-allowed shadow-modern"
->
-  Contribute on GitHub
-</a>
+              href="https://github.com/TryOmar/LabShare/issues/new"
+              //onClick={(e) => e.preventDefault()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full px-4 sm:px-5 py-2.5 text-xs sm:text-sm bg-primary text-primary-foreground font-semibold text-center rounded-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-modern hover:shadow-modern-lg"
+
+            >
+              Contribute on GitHub
+            </a>
             </div>
 
             {/* 3. Report */}

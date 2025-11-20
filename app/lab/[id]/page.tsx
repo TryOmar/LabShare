@@ -156,25 +156,22 @@ export default function LabPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="spinner h-5 w-5"></div>
-          <p className="text-foreground font-medium">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <p className="text-black">Loading...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
+      <div className="flex flex-col min-h-screen bg-white">
         <Navigation student={student} track={track} />
         <div className="flex-1 p-6 max-w-6xl mx-auto w-full">
-          <div className="border-2 border-destructive/50 bg-destructive/10 rounded-xl p-6 sm:p-8 shadow-modern-lg backdrop-blur-sm animate-slide-up">
+          <div className="border-2 border-red-500 bg-red-50 p-6">
             <div className="flex items-center gap-3 mb-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-destructive"
+                className="h-6 w-6 text-red-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -186,12 +183,12 @@ export default function LabPage() {
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                 />
               </svg>
-              <h2 className="text-xl font-bold text-destructive">Access Denied</h2>
+              <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
             </div>
-            <p className="text-destructive/90 mb-5 leading-relaxed">{error}</p>
+            <p className="text-red-700 mb-4">{error}</p>
             <button
               onClick={() => router.push("/labs")}
-              className="px-5 py-2.5 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
+              className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800"
             >
               Back to Labs
             </button>
@@ -202,32 +199,32 @@ export default function LabPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
+    <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         {/* Lab Header */}
-        <div className="mb-6 sm:mb-8 animate-slide-up">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 break-words bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2 break-words">
             Lab {lab?.lab_number}: {lab?.title}
           </h1>
           {lab?.description && (
-            <p className="text-sm sm:text-base text-muted-foreground break-words leading-relaxed">{lab.description}</p>
+            <p className="text-sm sm:text-base text-gray-600 break-words">{lab.description}</p>
           )}
         </div>
 
         {/* Action Bar */}
-        <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row gap-3 animate-slide-up">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="px-5 sm:px-6 py-2.5 text-sm sm:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
+            className="px-4 sm:px-6 py-2 text-sm sm:text-base bg-black text-white font-semibold hover:bg-gray-800"
           >
             {userSubmission ? "Edit Submission" : "Upload Solution"}
           </button>
           {userSubmission && (
             <button
               onClick={() => router.push(`/submission/${userSubmission.id}`)}
-              className="px-5 sm:px-6 py-2.5 text-sm sm:text-base border border-border/50 text-foreground font-semibold rounded-lg hover:bg-accent/50 hover:border-primary/40 hover:text-primary backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
+              className="px-4 sm:px-6 py-2 text-sm sm:text-base border border-black text-black font-semibold hover:bg-gray-50"
             >
               View My Solution
             </button>
@@ -261,35 +258,34 @@ export default function LabPage() {
         )}
 
         {/* Submissions List */}
-        <div className="animate-slide-up">
-          <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 sm:mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">
             Solutions ({submissions.length})
           </h2>
           {submissions.length > 0 ? (
-            <div className="space-y-3">
-              {submissions.map((submission, index) => (
+            <div className="space-y-2 sm:space-y-3">
+              {submissions.map((submission) => (
                 <div
                   key={submission.id}
                   onClick={() => router.push(`/submission/${submission.id}`)}
-                  className="border border-border/50 p-4 sm:p-5 rounded-xl hover:bg-accent/30 hover:border-primary/40 hover:shadow-modern cursor-pointer transition-all duration-300 hover-lift backdrop-blur-sm bg-gradient-card shadow-modern"
-                  style={{ animationDelay: `${index * 0.05}s` }}
+                  className="border border-black p-3 sm:p-4 hover:bg-gray-50 cursor-pointer"
                 >
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm sm:text-base text-foreground break-words mb-1">
+                      <h3 className="font-semibold text-sm sm:text-base text-black break-words">
                         {submission.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground break-words">
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">
                         by {submission.students?.name}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {submission.students?.id === student?.id && (
-                        <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 border border-primary/30 rounded-lg whitespace-nowrap font-medium">
+                        <span className="text-xs bg-gray-100 px-2 py-1 border border-black whitespace-nowrap">
                           Your Solution
                         </span>
                       )}
-                      <span className="text-xs bg-accent px-3 py-1.5 border border-border/50 rounded-lg whitespace-nowrap text-muted-foreground">
+                      <span className="text-xs bg-gray-100 px-2 py-1 border border-black whitespace-nowrap">
                         {submission.view_count} {submission.view_count === 1 ? 'view' : 'views'}
                       </span>
                     </div>
@@ -298,7 +294,7 @@ export default function LabPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm sm:text-base text-muted-foreground">No solutions uploaded yet</p>
+            <p className="text-sm sm:text-base text-gray-600">No solutions uploaded yet</p>
           )}
         </div>
       </div>
@@ -731,12 +727,12 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
       {/* Global drag overlay - appears when dragging files anywhere on the page */}
       {isDraggingOverPage && (
         <div 
-          className="fixed inset-0 glass-dark z-[60] flex items-center justify-center pointer-events-none animate-fade-in"
+          className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md z-[60] flex items-center justify-center pointer-events-none animate-in fade-in duration-200"
         >
-          <div className="bg-gradient-card border-4 border-primary/50 border-dashed rounded-2xl p-12 max-w-2xl mx-4 shadow-modern-xl transform transition-all duration-300 scale-105 animate-scale-in">
+          <div className="bg-white border-4 border-black border-dashed p-12 max-w-2xl mx-4 shadow-2xl transform transition-all duration-200 scale-105 animate-in zoom-in-95 duration-200">
             <div className="text-center">
               <svg 
-                className="mx-auto h-16 w-16 text-primary mb-4 animate-bounce" 
+                className="mx-auto h-16 w-16 text-black mb-4 animate-bounce" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -748,27 +744,27 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
                 />
               </svg>
-              <h3 className="text-lg sm:text-2xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Drop files to upload</h3>
-              <p className="text-sm sm:text-base text-muted-foreground">Release to add files to your submission</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-black mb-2">Drop files to upload</h3>
+              <p className="text-sm sm:text-base text-gray-600">Release to add files to your submission</p>
             </div>
           </div>
         </div>
       )}
 
       <div 
-        className="fixed inset-0 glass-dark flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
+        className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-gradient-card border border-border/50 p-5 sm:p-7 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-modern-xl backdrop-blur-sm animate-scale-in"
+          className="bg-white border border-black p-4 sm:p-6 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Upload Solution</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-black mb-3 sm:mb-4">Upload Solution</h2>
 
         <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-3 sm:space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">Solution Name</label>
+            <label className="block text-sm sm:text-base text-black font-semibold mb-2">Solution Name</label>
             <input
               ref={titleInputRef}
               type="text"
@@ -781,30 +777,30 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               onMouseMove={(e) => e.stopPropagation()}
               onSelect={(e) => e.stopPropagation()}
               onDragStart={(e) => e.stopPropagation()}
-              className="w-full px-4 py-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-black bg-white text-black"
               required
             />
           </div>
 
           {/* Combined Upload & Paste Box */}
           <div>
-            <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">Files & Code</label>
+            <label className="block text-sm sm:text-base text-black font-semibold mb-2">Files & Code</label>
             <div
               onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-5 sm:p-7 lg:p-9 transition-all duration-300 ${
+              className={`border-2 border-dashed p-4 sm:p-6 lg:p-8 transition-all duration-200 ${
                 isDragging 
-                  ? 'border-primary/60 bg-primary/5 scale-[1.02] shadow-primary-lg' 
-                  : 'border-border/50 bg-white/80 hover:bg-accent/30 hover:border-primary/40 shadow-modern'
+                  ? 'border-black bg-gray-100 scale-105 shadow-lg' 
+                  : 'border-black bg-white hover:bg-gray-50'
               }`}
             >
               <div className="text-center">
                 {isDragging ? (
                   <>
                     <svg 
-                      className="mx-auto h-12 w-12 text-primary mb-3 animate-pulse" 
+                      className="mx-auto h-12 w-12 text-black mb-3 animate-pulse" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -816,17 +812,17 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
                       />
                     </svg>
-                    <p className="text-lg font-semibold text-foreground mb-1">
+                    <p className="text-lg font-semibold text-black mb-1">
                       Drop files here
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-600">
                       Release to upload
                     </p>
                   </>
                 ) : (
                   <>
                     <svg 
-                      className="mx-auto h-10 w-10 text-muted-foreground mb-3" 
+                      className="mx-auto h-10 w-10 text-gray-400 mb-3" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -838,12 +834,12 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
                       />
                     </svg>
-                    <p className="text-sm text-foreground mb-2">
+                    <p className="text-sm text-black mb-2">
                       <span className="font-semibold">Drag files here</span> or{' '}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
+                        className="text-black hover:text-gray-700 underline font-medium"
                       >
                         browse
                       </button>
@@ -854,12 +850,12 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                           setShowPasteArea(true);
                           setTimeout(() => pasteTextareaRef.current?.focus(), 10);
                         }}
-                        className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
+                        className="text-black hover:text-gray-700 underline font-medium"
                       >
                         paste code
                       </button>
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       Press Ctrl+V to paste files or code
                     </p>
                   </>
@@ -876,13 +872,13 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
 
               {/* Paste Code Area - Only show when user clicks paste or presses Ctrl+V */}
               {showPasteArea && (
-                <div className="space-y-3 mt-4 border-t border-border/30 pt-4">
+                <div className="space-y-2 mt-3 border-t border-black pt-3">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm text-foreground font-semibold">Paste Code</label>
+                    <label className="text-sm text-black font-semibold">Paste Code</label>
                     <button
                       type="button"
                       onClick={handleCancelPaste}
-                      className="text-xs text-muted-foreground hover:text-primary underline transition-colors duration-200"
+                      className="text-xs text-gray-600 hover:text-black underline"
                     >
                       Cancel
                     </button>
@@ -902,7 +898,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                     onPaste={handleTextareaPaste}
                     placeholder="Paste code here (Ctrl+V)..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-3 py-2 border border-black bg-white text-black font-mono text-xs"
                   />
                   {pastedContent && (
                     <div className="flex gap-2">
@@ -911,12 +907,12 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                         value={pastedFileName}
                         onChange={(e) => setPastedFileName(e.target.value)}
                         placeholder="File name (optional)"
-                        className="flex-1 px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                        className="flex-1 px-3 py-2 border border-black bg-white text-black text-sm"
                       />
                       <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                        className="px-3 py-2 border border-black bg-white text-black text-sm"
                       >
                         <option value="text">text</option>
                         {Object.entries(detectedLanguages)
@@ -936,7 +932,7 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                           setPastedFileName("");
                           pasteTextareaRef.current?.focus();
                         }}
-                        className="px-4 py-2 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm"
+                        className="px-4 py-2 bg-black text-white font-semibold hover:bg-gray-800 text-sm"
                       >
                         Add
                       </button>
@@ -953,13 +949,13 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
               {pastedCodeFiles.map((file, index) => (
                 <div
                   key={`pasted-${index}`}
-                  className="flex items-center justify-between p-2.5 border border-border/50 bg-white/80 rounded-lg backdrop-blur-sm shadow-modern"
+                  className="flex items-center justify-between p-2 border border-black bg-white"
                 >
-                  <span className="text-xs text-foreground truncate flex-1">📄 {file.filename}</span>
+                  <span className="text-xs text-black truncate flex-1">📄 {file.filename}</span>
                   <button
                     type="button"
                     onClick={() => removePastedCodeFile(index)}
-                    className="ml-2 text-muted-foreground hover:text-destructive text-sm transition-colors duration-200"
+                    className="ml-2 text-black hover:text-red-600 text-sm"
                   >
                     ×
                   </button>
@@ -971,15 +967,15 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
                 return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2.5 border border-border/50 bg-white/80 rounded-lg backdrop-blur-sm shadow-modern"
+                    className="flex items-center justify-between p-2 border border-black bg-white"
                   >
-                    <span className="text-xs text-foreground truncate flex-1">
+                    <span className="text-xs text-black truncate flex-1">
                       {isCodeFile ? '📄' : '📎'} {file.name}
                     </span>
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="ml-2 text-muted-foreground hover:text-destructive text-sm transition-colors duration-200"
+                      className="ml-2 text-black hover:text-red-600 text-sm"
                     >
                       ×
                     </button>
@@ -991,28 +987,28 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
 
           {error && (
             <div>
-              <p className="text-destructive text-sm font-medium">{error}</p>
+              <p className="text-red-600 text-sm">{error}</p>
               {error.toLowerCase().includes('mime type') && error.toLowerCase().includes('not supported') && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline transition-colors duration-200">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline transition-colors duration-200">report it</a>.
+                <p className="text-xs text-gray-600 mt-1">
+                  Think this should be fixed? <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">Open an issue</a> or <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700 underline">report it</a>.
                 </p>
               )}
             </div>
           )}
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
             <button
               type="submit"
               disabled={loading || (files.length === 0 && pastedCodeFiles.length === 0)}
-              className="flex-1 gradient-primary text-primary-foreground font-semibold py-3 text-sm sm:text-base rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg"
+              className="flex-1 bg-black text-white font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? "Uploading..." : "Upload"}
             </button>
             <button
               type="button"
               onClick={() => onClose(true)}
-              className="flex-1 border border-border/50 text-foreground font-semibold py-3 text-sm sm:text-base rounded-lg hover:bg-accent/50 hover:border-primary/40 backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
+              className="flex-1 border border-black text-black font-semibold py-2 sm:py-2.5 text-sm sm:text-base hover:bg-gray-100"
             >
               Cancel
             </button>

@@ -133,25 +133,22 @@ export default function LockedLabPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="spinner h-5 w-5"></div>
-          <p className="text-foreground font-medium">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <p className="text-black">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
+    <div className="flex flex-col min-h-screen bg-white">
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-6 max-w-4xl mx-auto w-full">
-        <div className="border-2 border-border/50 bg-gradient-card rounded-2xl p-8 sm:p-10 shadow-modern-xl backdrop-blur-sm animate-slide-up">
+        <div className="border-2 border-gray-300 bg-gray-50 p-8">
           <div className="flex items-center gap-4 mb-6">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 text-primary"
+              className="h-12 w-12 text-gray-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -163,29 +160,29 @@ export default function LockedLabPage() {
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
-            <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <h1 className="text-3xl font-bold text-black">
               Lab {lab?.lab_number} — Locked
             </h1>
           </div>
 
           <div className="mb-8">
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              You must <span className="font-bold text-foreground">complete</span> this lab and have it <span className="font-bold text-foreground">reviewed</span> by the <span className="font-bold text-foreground">instructor</span> before you can access other students' submissions.
+            <p className="text-lg text-gray-700 leading-relaxed">
+              You must <span className="font-bold">complete</span> this lab and have it <span className="font-bold">reviewed</span> by the <span className="font-bold">instructor</span> before you can access other students' submissions.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed mt-4">
+            <p className="text-lg text-gray-700 leading-relaxed mt-3">
               Once you finish and review it, you can upload your work here.
             </p>
           </div>
 
-          <div className="mb-8 p-4 bg-muted/50 border border-border/30 rounded-xl backdrop-blur-sm">
+          <div className="mb-8">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
-                className="w-5 h-5 border-2 border-primary rounded cursor-pointer accent-primary transition-all duration-200"
+                className="w-5 h-5 border-2 border-black cursor-pointer"
               />
-              <span className="text-base text-foreground">
+              <span className="text-base text-gray-700">
                 I confirm I've <span className="font-bold">completed</span> and <span className="font-bold">reviewed</span> this lab with the <span className="font-bold">instructor</span>.
               </span>
             </label>
@@ -195,10 +192,10 @@ export default function LockedLabPage() {
             <button
               onClick={handleContinue}
               disabled={!confirmed}
-              className={`px-6 py-3 font-semibold rounded-lg transition-all duration-300 ${
+              className={`px-6 py-3 font-semibold transition-colors ${
                 confirmed
-                  ? "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
-                  : "bg-muted/50 text-muted-foreground cursor-not-allowed shadow-modern"
+                  ? "bg-red text-white hover:bg-gray-800"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
               Continue
@@ -229,7 +226,7 @@ export default function LockedLabPage() {
                   }
                 }
               }}
-              className="px-6 py-3 border border-border/50 text-foreground font-semibold rounded-lg hover:bg-accent/50 hover:border-primary/40 backdrop-blur-sm transition-all duration-300 shadow-modern hover:shadow-primary/10"
+              className="px-6 py-3 border border-black text-black font-semibold hover:bg-gray-50"
             >
               Back
             </button>
