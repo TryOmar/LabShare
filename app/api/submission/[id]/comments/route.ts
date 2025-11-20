@@ -20,6 +20,9 @@ export async function GET(
     const { id: submissionId } = await params;
     const supabase = await createClient();
 
+    // Get authenticated student ID for checking ownership
+    const currentStudentId = authResult.studentId;
+
     // Get comments for this submission
     const { data: commentsData, error: commentsError } = await supabase
       .from("comments")
@@ -35,8 +38,22 @@ export async function GET(
       );
     }
 
+    // Hide student info for anonymous comments (unless user is the owner)
+    const processedComments = (commentsData || []).map((comment: any) => {
+      if (comment.is_anonymous && comment.student_id !== currentStudentId) {
+        return {
+          ...comment,
+          students: {
+            id: '',
+            name: 'Anonymous',
+          },
+        };
+      }
+      return comment;
+    });
+
     return NextResponse.json({
-      comments: commentsData || [],
+      comments: processedComments,
     });
   } catch (error) {
     console.error("Error in comments API:", error);
@@ -65,7 +82,7 @@ export async function POST(
 
     const { id: submissionId } = await params;
     const body = await request.json();
-    const { content } = body;
+    const { content, isAnonymous } = body;
 
     if (!content || !content.trim()) {
       return NextResponse.json(
@@ -84,6 +101,7 @@ export async function POST(
           submission_id: submissionId,
           student_id: studentId,
           content: content.trim(),
+          is_anonymous: isAnonymous === true,
         },
       ])
       .select("*, students(id, name)")
@@ -95,6 +113,14 @@ export async function POST(
         { error: "Failed to create comment" },
         { status: 500 }
       );
+    }
+
+    // If comment is anonymous, hide student info in response (unless user is the owner)
+    if (commentData && commentData.is_anonymous && commentData.student_id !== studentId) {
+      commentData.students = {
+        id: '',
+        name: 'Anonymous',
+      };
     }
 
     return NextResponse.json({
