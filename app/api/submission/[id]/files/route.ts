@@ -24,6 +24,15 @@ async function createAutoLogComment(
   }
 ) {
   try {
+    // Get submission's anonymity status - auto-log comments inherit from submission
+    const { data: submission } = await supabase
+      .from("submissions")
+      .select("is_anonymous")
+      .eq("id", submissionId)
+      .single();
+
+    const isAnonymous = submission?.is_anonymous || false;
+
     // Get student name
     const { data: student } = await supabase
       .from("students")
@@ -92,6 +101,7 @@ async function createAutoLogComment(
             submission_id: submissionId,
             student_id: studentId,
             content: commentText,
+            is_anonymous: isAnonymous, // Auto-log comments inherit anonymity from submission
           },
         ]);
     }
