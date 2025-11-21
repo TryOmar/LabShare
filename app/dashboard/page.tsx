@@ -92,7 +92,7 @@ const CourseCard = ({
   router: { push: (path: string) => void };
 }) => {
   const submissions = course.submissions || [];
-  const recentSubmissions = submissions.slice(0, 3);
+  const recentSubmissions = submissions.slice(0, 10);
 
   return (
     <div className="border border-border/50 rounded-xl bg-gradient-card hover:shadow-modern-lg transition-all duration-300 backdrop-blur-sm shadow-modern">
@@ -181,7 +181,7 @@ const CourseCard = ({
                 );
               })}
             </div>
-            {submissions.length > 3 && (
+            {submissions.length > 10 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
