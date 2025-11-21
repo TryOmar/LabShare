@@ -350,7 +350,7 @@ export default function CommentsSection({
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 px-4 py-2"
+              className="bg-destructive text-white hover:bg-destructive/90 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 px-4 py-2"
             >
               {deleting ? (
                 <span className="flex items-center gap-2">
