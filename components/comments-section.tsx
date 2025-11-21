@@ -5,16 +5,7 @@ import { formatDateTime } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 
 interface Comment {
   id: string;
@@ -327,43 +318,19 @@ export default function CommentsSection({
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-white dark:bg-gray-900 border border-border/50 rounded-xl shadow-xl p-6 sm:p-6 backdrop-blur-none">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground text-xl font-semibold">
-              Delete Comment
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground text-sm mt-2">
-              Are you sure you want to delete this comment? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-3 mt-6">
-            <AlertDialogCancel
-              onClick={() => {
-                setDeleteDialogOpen(false);
-                setCommentToDelete(null);
-              }}
-              className="border border-border/50 text-foreground hover:bg-accent/50 hover:border-primary/40 rounded-lg transition-all duration-200 px-4 py-2"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-              className="bg-destructive text-white hover:bg-destructive/90 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 px-4 py-2"
-            >
-              {deleting ? (
-                <span className="flex items-center gap-2">
-                  <div className="spinner h-4 w-4"></div>
-                  Deleting...
-                </span>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setCommentToDelete(null);
+          }
+        }}
+        title="Delete Comment"
+        description="Are you sure you want to delete this comment? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleting}
+      />
     </>
   );
 }

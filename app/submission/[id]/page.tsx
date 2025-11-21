@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import Navigation from "@/components/navigation";
 import CommentsSection from "@/components/comments-section";
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { formatDateTime } from "@/lib/utils";
@@ -608,6 +609,14 @@ export default function SubmissionPage() {
   // Comments refresh key - increment to trigger comment reload
   const [commentsRefreshKey, setCommentsRefreshKey] = useState(0);
   
+  // Delete dialog states
+  const [deleteSubmissionDialogOpen, setDeleteSubmissionDialogOpen] = useState(false);
+  const [deleteCodeFileDialogOpen, setDeleteCodeFileDialogOpen] = useState(false);
+  const [deleteAttachmentDialogOpen, setDeleteAttachmentDialogOpen] = useState(false);
+  const [codeFileToDelete, setCodeFileToDelete] = useState<{ id: string; filename: string } | null>(null);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<{ id: string; filename: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const router = useRouter();
   const params = useParams();
   const submissionId = params.id as string;
@@ -880,11 +889,17 @@ export default function SubmissionPage() {
   };
 
   // Delete code file
-  const deleteCodeFile = async (fileId: string, filename: string) => {
-    if (!confirm(`Delete "${filename}"?`)) return;
+  const handleDeleteCodeFileClick = (fileId: string, filename: string) => {
+    setCodeFileToDelete({ id: fileId, filename });
+    setDeleteCodeFileDialogOpen(true);
+  };
+
+  const deleteCodeFile = async () => {
+    if (!codeFileToDelete) return;
     
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/submission/${submissionId}/code/${fileId}`, {
+      const response = await fetch(`/api/submission/${submissionId}/code/${codeFileToDelete.id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -895,14 +910,18 @@ export default function SubmissionPage() {
       }
 
       toast.success("Code file deleted successfully!");
-      if (selectedCodeFile?.id === fileId) {
+      if (selectedCodeFile?.id === codeFileToDelete.id) {
         setSelectedCodeFile(null);
       }
+      setDeleteCodeFileDialogOpen(false);
+      setCodeFileToDelete(null);
       await reloadSubmission();
       setCommentsRefreshKey(prev => prev + 1); // Refresh comments
     } catch (err) {
       console.error("Error deleting code file:", err);
       toast.error(err instanceof Error ? err.message : "Failed to delete code file");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -954,11 +973,17 @@ export default function SubmissionPage() {
 
 
   // Delete attachment
-  const deleteAttachment = async (attachmentId: string, filename: string) => {
-    if (!confirm(`Delete "${filename}"?`)) return;
+  const handleDeleteAttachmentClick = (attachmentId: string, filename: string) => {
+    setAttachmentToDelete({ id: attachmentId, filename });
+    setDeleteAttachmentDialogOpen(true);
+  };
+
+  const deleteAttachment = async () => {
+    if (!attachmentToDelete) return;
     
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/submission/${submissionId}/attachment/${attachmentId}`, {
+      const response = await fetch(`/api/submission/${submissionId}/attachment/${attachmentToDelete.id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -969,14 +994,41 @@ export default function SubmissionPage() {
       }
 
       toast.success("Attachment deleted successfully!");
-      if (selectedAttachment?.id === attachmentId) {
+      if (selectedAttachment?.id === attachmentToDelete.id) {
         setSelectedAttachment(null);
       }
+      setDeleteAttachmentDialogOpen(false);
+      setAttachmentToDelete(null);
       await reloadSubmission();
       setCommentsRefreshKey(prev => prev + 1); // Refresh comments
     } catch (err) {
       console.error("Error deleting attachment:", err);
       toast.error(err instanceof Error ? err.message : "Failed to delete attachment");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Delete submission
+  const deleteSubmission = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/submission/${submissionId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete submission");
+      }
+
+      // Show success message and redirect to labs page
+      toast.success("Submission deleted successfully!");
+      router.push("/labs");
+    } catch (err) {
+      console.error("Error deleting submission:", err);
+      toast.error("Failed to delete submission. Please try again.");
+      setIsDeleting(false);
     }
   };
 
@@ -1241,7 +1293,7 @@ export default function SubmissionPage() {
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      deleteCodeFile(file.id, file.filename);
+                                      handleDeleteCodeFileClick(file.id, file.filename);
                                     }}
                                     className="text-xs cursor-pointer focus:bg-destructive/10 hover:bg-destructive/10 text-destructive rounded-md transition-colors duration-200"
                                   >
@@ -1361,7 +1413,7 @@ export default function SubmissionPage() {
                                   <DropdownMenuItem
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      deleteAttachment(attachment.id, attachment.filename);
+                                      handleDeleteAttachmentClick(attachment.id, attachment.filename);
                                     }}
                                     className="text-xs cursor-pointer focus:bg-destructive/10 hover:bg-destructive/10 text-destructive rounded-md transition-colors duration-200"
                                   >
@@ -1571,27 +1623,7 @@ export default function SubmissionPage() {
         {isOwner && (
           <div className="mt-8 flex gap-3 animate-slide-up">
             <button
-              onClick={async () => {
-                if (confirm("Delete this submission?")) {
-                  try {
-                    const response = await fetch(`/api/submission/${submissionId}`, {
-                      method: "DELETE",
-                      credentials: "include",
-                    });
-
-                    if (!response.ok) {
-                      throw new Error("Failed to delete submission");
-                    }
-
-                    // Show success message and redirect to labs page
-                    toast.success("Submission deleted successfully!");
-                    router.push("/labs");
-                  } catch (err) {
-                    console.error("Error deleting submission:", err);
-                    toast.error("Failed to delete submission. Please try again.");
-                  }
-                }
-              }}
+              onClick={() => setDeleteSubmissionDialogOpen(true)}
               className="px-6 py-2.5 border border-destructive/50 text-destructive font-semibold rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-300 shadow-modern"
             >
               Delete Submission
@@ -1610,6 +1642,44 @@ export default function SubmissionPage() {
             }}
           />
         )}
+
+        {/* Delete Confirmation Dialogs */}
+        <DeleteConfirmationDialog
+          open={deleteSubmissionDialogOpen}
+          onOpenChange={setDeleteSubmissionDialogOpen}
+          title="Delete Submission"
+          description="Are you sure you want to delete this submission? This action cannot be undone and will delete all associated files and comments."
+          onConfirm={deleteSubmission}
+          isLoading={isDeleting}
+        />
+
+        <DeleteConfirmationDialog
+          open={deleteCodeFileDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteCodeFileDialogOpen(open);
+            if (!open) {
+              setCodeFileToDelete(null);
+            }
+          }}
+          title="Delete Code File"
+          description={`Are you sure you want to delete "${codeFileToDelete?.filename}"? This action cannot be undone.`}
+          onConfirm={deleteCodeFile}
+          isLoading={isDeleting}
+        />
+
+        <DeleteConfirmationDialog
+          open={deleteAttachmentDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteAttachmentDialogOpen(open);
+            if (!open) {
+              setAttachmentToDelete(null);
+            }
+          }}
+          title="Delete Attachment"
+          description={`Are you sure you want to delete "${attachmentToDelete?.filename}"? This action cannot be undone.`}
+          onConfirm={deleteAttachment}
+          isLoading={isDeleting}
+        />
       </div>
     </div>
   );
