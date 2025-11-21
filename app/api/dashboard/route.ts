@@ -42,13 +42,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Run multiple queries in parallel for better performance
+    // Database-level joins and filtering - minimize JS processing
     const [courseResult, userSubmissionsResult] = await Promise.all([
-      // Get courses for this track
+      // Get courses for this track - database does the join
       supabase
         .from("course_track")
         .select("courses(id, name, description)")
         .eq("track_id", studentData.track_id),
-      // Get all labs the user has submitted to (for access checking)
+      // Get all labs the user has submitted to (for access checking) - database filtering
       supabase
         .from("submissions")
         .select("lab_id")
@@ -68,6 +69,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Extract courses from nested Supabase join structure - minimal JS processing
+    // Database already filtered and joined, we just extract the nested data
     const coursesList = (courseData || [])
       .map((ct: any) => ct.courses)
       .filter(Boolean);
@@ -84,12 +87,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Extract course IDs for database queries - necessary for IN clause
     const courseIds = coursesList.map((c: any) => c.id);
+    
+    // Create Set for O(1) lookup of solved lab IDs - database already filtered by student_id
     const solvedLabIds = new Set(
       (userSubmissions || []).map((s: any) => s.lab_id)
     );
 
-    // Get labs for these courses, then filter submissions by lab_id (more efficient)
+    // Get labs for these courses - database filtering by course_id
+    // Only fetch id and course_id (not full lab data) for efficiency
     const { data: labsData, error: labsError } = await supabase
       .from("labs")
       .select("id, course_id")
@@ -100,23 +107,25 @@ export async function GET(request: NextRequest) {
       // Continue without lab filtering - will fetch all submissions
     }
 
+    // Extract lab IDs for database query - database already filtered by course_id
     const labIds = (labsData || []).map((lab: any) => lab.id);
     
     // Fetch submissions filtered by lab_id in SQL for better performance
-    // Calculate limit: 10 per course * number of courses + buffer for sorting
+    // Database-level filtering and sorting - calculate limit: 10 per course * number of courses + buffer
     const limitEstimate = Math.max(100, courseIds.length * 15);
     
+    // Use database-level filtering, ordering, and limiting - minimize JS processing
     let submissionQuery = supabase
       .from("submissions")
       .select(`
         *,
         students(id, name, email),
-        labs(id, lab_number, title, course_id, courses(id, name))
+        labs!inner(id, lab_number, title, course_id, courses(id, name))
       `)
       .order("created_at", { ascending: false })
       .limit(limitEstimate);
 
-    // Filter by lab_id if we have labs (more efficient than filtering in JS)
+    // Filter by lab_id at database level (more efficient than filtering in JS)
     if (labIds.length > 0) {
       submissionQuery = submissionQuery.in("lab_id", labIds);
     }
@@ -145,24 +154,32 @@ export async function GET(request: NextRequest) {
     // Process anonymous display logic
     const processedSubmissions = processAnonymousContentArray(submissionsWithAccess, studentId);
 
-    // Group submissions by course_id
+    // Group submissions by course_id - database already sorted by created_at DESC
+    // Use a Map for O(1) course lookup and track counts for efficient limiting
     const submissionsByCourse: Record<string, any[]> = {};
+    const courseSubmissionCounts: Record<string, number> = {};
+    
+    // Process submissions - database already sorted, so we get most recent first
+    // Limit to 10 per course efficiently during grouping (database-level sorted)
     processedSubmissions.forEach((submission: any) => {
       const courseId = submission.labs?.course_id;
       if (courseId) {
+        // Initialize course array if needed
         if (!submissionsByCourse[courseId]) {
           submissionsByCourse[courseId] = [];
+          courseSubmissionCounts[courseId] = 0;
         }
-        submissionsByCourse[courseId].push(submission);
+        
+        // Only add if we haven't reached the limit (database already sorted)
+        if (courseSubmissionCounts[courseId] < 10) {
+          submissionsByCourse[courseId].push(submission);
+          courseSubmissionCounts[courseId]++;
+        }
       }
     });
 
-    // Limit submissions per course to 10 most recent
-    Object.keys(submissionsByCourse).forEach((courseId) => {
-      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(0, 10);
-    });
-
-    // Sort courses by most recent activity (most recent submission date)
+    // Calculate most recent date per course and prepare courses with submissions
+    // Database already sorted submissions, so first item per course is most recent
     const coursesWithSubmissions = coursesList.map((course: any) => {
       const courseSubmissions = submissionsByCourse[course.id] || [];
       const mostRecentDate = courseSubmissions.length > 0
@@ -175,30 +192,29 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Sort by most recent activity (descending)
+    // Sort courses by most recent activity (descending) - efficient sort on pre-calculated dates
     coursesWithSubmissions.sort((a: any, b: any) => b.mostRecentDate - a.mostRecentDate);
 
     // Get suggested labs (labs with recent submissions from others that user hasn't submitted to)
-    // Only include labs from courses in the user's track
+    // Database already sorted submissions by created_at DESC, so we process most recent first
+    // Use Sets for O(1) lookup performance
     const courseIdsInTrack = new Set(coursesList.map((c: any) => c.id));
     const suggestedLabs: any[] = [];
     const seenLabIds = new Set<string>();
     
-    // Get unique labs from recent submissions that user hasn't submitted to
+    // Process submissions in database-sorted order (most recent first)
+    // Efficiently build suggestions with O(1) lookups using Sets
     for (const submission of processedSubmissions) {
+      // Early exit if we have enough suggestions
+      if (suggestedLabs.length >= 3) break;
+      
       const labId = submission.lab_id;
       const courseId = submission.labs?.course_id;
       
-      // Skip if course is not in user's track
+      // Fast filtering using Set lookups (database already filtered by lab_id)
       if (!courseId || !courseIdsInTrack.has(courseId)) continue;
-      
-      // Skip if user already submitted to this lab
       if (solvedLabIds.has(labId)) continue;
-      
-      // Skip if we've already added this lab
       if (seenLabIds.has(labId)) continue;
-      
-      // Skip if submission is from the user themselves
       if (submission.student_id === studentId) continue;
       
       if (labId && courseId && submission.labs) {
@@ -211,9 +227,6 @@ export async function GET(request: NextRequest) {
           course_name: submission.labs.courses?.name,
           latest_submission_date: submission.created_at,
         });
-        
-        // Stop at 3 suggestions
-        if (suggestedLabs.length >= 3) break;
       }
     }
 
