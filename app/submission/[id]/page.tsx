@@ -678,6 +678,9 @@ export default function SubmissionPage() {
   // Comments refresh key - increment to trigger comment reload
   const [commentsRefreshKey, setCommentsRefreshKey] = useState(0);
 
+  // Preview state for HTML files
+  const [showHtmlPreview, setShowHtmlPreview] = useState(false);
+
   // Delete dialog states
   const [deleteSubmissionDialogOpen, setDeleteSubmissionDialogOpen] =
     useState(false);
@@ -788,6 +791,16 @@ export default function SubmissionPage() {
       };
     }
   }, [openMenuId]);
+
+  // Reset HTML preview when selected file is not HTML
+  useEffect(() => {
+    if (
+      selectedCodeFile &&
+      selectedCodeFile.language.toLowerCase() !== "html"
+    ) {
+      setShowHtmlPreview(false);
+    }
+  }, [selectedCodeFile]);
 
   const formatFileSize = (bytes: number | null): string => {
     if (!bytes) return "Unknown size";
@@ -1479,6 +1492,7 @@ export default function SubmissionPage() {
                               setSelectedCodeFile(file);
                               setSelectedAttachment(null);
                               setOpenMenuId(null);
+                              setShowHtmlPreview(false); // Reset preview when switching files
                             }}
                             className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedCodeFile?.id === file.id
@@ -1765,14 +1779,16 @@ export default function SubmissionPage() {
                       </>
                     )}
                   </div>
-                  {isOwner && !editingCodeFileId && (
+                  {!editingCodeFileId && (
                     <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => startEditCodeFile(selectedCodeFile)}
-                        className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg transition-all duration-200 shadow-modern"
-                      >
-                        Edit
-                      </button>
+                      {isOwner && (
+                        <button
+                          onClick={() => startEditCodeFile(selectedCodeFile)}
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg transition-all duration-200 shadow-modern"
+                        >
+                          Edit
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(
@@ -1784,6 +1800,14 @@ export default function SubmissionPage() {
                       >
                         Copy
                       </button>
+                      {selectedCodeFile.language.toLowerCase() === "html" && (
+                        <button
+                          onClick={() => setShowHtmlPreview(!showHtmlPreview)}
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg transition-all duration-200 shadow-modern"
+                        >
+                          {showHtmlPreview ? "Code" : "Preview"}
+                        </button>
+                      )}
                     </div>
                   )}
                   {isOwner && editingCodeFileId === selectedCodeFile.id && (
@@ -1804,7 +1828,7 @@ export default function SubmissionPage() {
                   )}
                 </div>
 
-                {/* Code Content - Edit or View */}
+                {/* Code Content - Edit or View or Preview */}
                 {editingCodeFileId === selectedCodeFile.id ? (
                   <div className="p-4 sm:p-5 bg-white/80 backdrop-blur-sm w-full min-w-0 overflow-x-auto">
                     <textarea
@@ -1822,6 +1846,16 @@ export default function SubmissionPage() {
                         overflowWrap: "normal",
                         overflowX: "auto",
                       }}
+                    />
+                  </div>
+                ) : showHtmlPreview &&
+                  selectedCodeFile.language.toLowerCase() === "html" ? (
+                  <div className="w-full h-[600px] border-t border-border/30 bg-white">
+                    <iframe
+                      srcDoc={selectedCodeFile.content}
+                      className="w-full h-full border-0"
+                      title="HTML Preview"
+                      sandbox="allow-scripts allow-same-origin"
                     />
                   </div>
                 ) : (
