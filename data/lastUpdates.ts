@@ -11,6 +11,12 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "Upvote system for submissions with upvote counts and status tracking",
+    suggestedBy: ["@omartaha15"],
+    implementedBy: ["@KariMuhammad"],
+    date: "21 Nov 2025",
+  },
+  {
     feature: "Performance optimization: Move all transformation logic to SQL queries",
     suggestedBy: ["@KarimMohamed", "@DeiaaMohamed"],
     implementedBy: ["@m10090"],
