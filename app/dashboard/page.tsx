@@ -86,16 +86,21 @@ const formatUploadTimestamp = (date: string | Date): string => {
 // Course Card Component
 const CourseCard = ({ 
   course, 
-  router 
+  router,
+  index = 0,
 }: { 
   course: Course; 
   router: { push: (path: string) => void };
+  index?: number;
 }) => {
   const submissions = course.submissions || [];
-  const recentSubmissions = submissions.slice(0, 3);
+  const recentSubmissions = submissions.slice(0, 10);
 
   return (
-    <div className="border border-border/50 rounded-xl bg-gradient-card hover:shadow-modern-lg transition-all duration-300 backdrop-blur-sm shadow-modern">
+    <div
+      className="border border-border/50 rounded-xl bg-gradient-card hover:shadow-modern-lg transition-all duration-300 backdrop-blur-sm shadow-modern hover-lift animate-fade-in"
+      style={{ animationDelay: `${index * 0.07}s` }}
+    >
       {/* Course Header */}
       <div
         onClick={() => router.push(`/labs?course=${course.id}`)}
@@ -116,7 +121,7 @@ const CourseCard = ({
               <span className="text-xs text-muted-foreground/80">{submissions.length} total</span>
             </div>
             <div className="space-y-2 sm:space-y-3">
-              {recentSubmissions.map((submission) => {
+              {recentSubmissions.map((submission, submissionIndex) => {
                 const isLocked = !submission.hasAccess;
                 const labNumber = submission.labs?.lab_number;
                 const labTitle = labNumber ? `Lab ${labNumber}` : 'Lab';
@@ -127,8 +132,9 @@ const CourseCard = ({
                     className={`p-2 sm:p-3 border border-border/50 rounded-lg ${
                       isLocked
                         ? "bg-muted/30 opacity-60"
-                        : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm"
-                    } transition-all duration-200`}
+                        : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm hover-lift"
+                    } transition-all duration-300 animate-fade-in`}
+                    style={{ animationDelay: `${submissionIndex * 0.05}s` }}
                   >
                     {/* Lab Number and Title */}
                     <div className="mb-2 flex items-center gap-2">
@@ -181,7 +187,7 @@ const CourseCard = ({
                 );
               })}
             </div>
-            {submissions.length > 3 && (
+            {submissions.length > 10 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -451,8 +457,8 @@ export default function DashboardPage() {
               
               {coursesWithSubmissions.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {coursesWithSubmissions.map((course) => (
-                    <CourseCard key={course.id} course={course} router={router} />
+                  {coursesWithSubmissions.map((course, index) => (
+                    <CourseCard key={course.id} course={course} router={router} index={index} />
                   ))}
                 </div>
               ) : (
@@ -486,52 +492,49 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            {/* 1. Repository */}
+            {/* Resources & Support */}
             <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
-              <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Repository</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                Explore the LabShare codebase, architecture, and project structure. See how the platform works and track development progress.
-              </p>
-              <a
-                href="https://github.com/TryOmar/LabShare"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm gradient-primary text-primary-foreground font-semibold text-center rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
-              >
-                Go to Repo
-              </a>
-            </div>
-
-            {/* 2. Contribute */}
-            <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
-              <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Contribute</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                Share feature ideas, improvements, or code contributions. Get publicly credited in the Last Updates section for your work.
-              </p>
-              <a
-                href="https://github.com/TryOmar/LabShare/issues/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm gradient-primary text-primary-foreground font-semibold text-center rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
-              >
-                Contribute on GitHub
-              </a>
-            </div>
-
-            {/* 3. Report */}
-            <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
-              <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Report</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                Found a bug or have feedback? Submit reports anonymously or with contact info. No coding required.
-              </p>
-              <a
-                href="https://forms.gle/25mEvcjTPrhA6THf9"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full px-3 sm:px-4 py-2 text-xs sm:text-sm gradient-primary text-primary-foreground font-semibold text-center rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-primary hover:shadow-primary-lg"
-              >
-                Submit Report
-              </a>
+              <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Resources & Support</h3>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Documentation: </span>
+                    <a href="/about" className="text-xs sm:text-sm text-primary hover:underline font-medium">View About Page</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Repository: </span>
+                    <a href="https://github.com/TryOmar/LabShare" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">View on GitHub</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-muted-foreground">GitHub Discussions: </span>
+                    <a href="https://github.com/TryOmar/LabShare/discussions" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">Join Discussions</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-muted-foreground">GitHub Issues: </span>
+                    <a href="https://github.com/TryOmar/LabShare/issues" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">View Issues</a>
+                    <span className="text-xs sm:text-sm text-muted-foreground"> or </span>
+                    <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">Create New Issue</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Suggestions & Bug Reports: </span>
+                    <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">Submit Report Form</a>
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground/70"> (can be anonymous)</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <Dialog>
               <DialogTrigger asChild>

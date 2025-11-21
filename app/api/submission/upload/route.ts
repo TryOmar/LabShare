@@ -42,6 +42,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check for duplicate filenames (case-insensitive)
+    const filenameMap = new Map<string, string>();
+    const duplicates: string[] = [];
+    
+    for (const file of files) {
+      if (!file.filename) {
+        return NextResponse.json(
+          { error: "All files must have a filename" },
+          { status: 400 }
+        );
+      }
+      
+      const filenameLower = file.filename.toLowerCase();
+      if (filenameMap.has(filenameLower)) {
+        duplicates.push(file.filename);
+      } else {
+        filenameMap.set(filenameLower, file.filename);
+      }
+    }
+    
+    if (duplicates.length > 0) {
+      return NextResponse.json(
+        { error: `Duplicate filenames detected: ${duplicates.join(', ')}. Each file must have a unique name.` },
+        { status: 400 }
+      );
+    }
+
     // Note: We use authenticatedStudentId from the cookie, not from the request body
     // This prevents users from submitting on behalf of other users
 

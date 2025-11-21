@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Get student info with track
+    // Get student info first (needed for track_id)
     const { data: studentData, error: studentError } = await supabase
       .from("students")
       .select("*, tracks(id, code, name)")
@@ -41,11 +41,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get courses for this track
-    const { data: courseData, error: courseError } = await supabase
-      .from("course_track")
-      .select("courses(id, name, description)")
-      .eq("track_id", studentData.track_id);
+    // Run multiple queries in parallel for better performance
+    const [courseResult, userSubmissionsResult] = await Promise.all([
+      // Get courses for this track
+      supabase
+        .from("course_track")
+        .select("courses(id, name, description)")
+        .eq("track_id", studentData.track_id),
+      // Get all labs the user has submitted to (for access checking)
+      supabase
+        .from("submissions")
+        .select("lab_id")
+        .eq("student_id", studentId)
+    ]);
+
+    const { data: courseData, error: courseError } = courseResult;
+    const { data: userSubmissions } = userSubmissionsResult;
+    
+    // Note: userSubmissions error is non-critical - if it fails, user just won't have access to locked labs
 
     if (courseError) {
       console.error("Error fetching courses:", courseError);
@@ -59,8 +72,41 @@ export async function GET(request: NextRequest) {
       .map((ct: any) => ct.courses)
       .filter(Boolean);
 
-    // Get recent submissions with lab and course information (get more to have enough per course)
-    const { data: submissionData, error: submissionError } = await supabase
+    if (coursesList.length === 0) {
+      // No courses, return early
+      return NextResponse.json({
+        student: studentData,
+        track: studentData.tracks,
+        courses: [],
+        coursesWithSubmissions: [],
+        recentSubmissions: [],
+        suggestedLabs: [],
+      });
+    }
+
+    const courseIds = coursesList.map((c: any) => c.id);
+    const solvedLabIds = new Set(
+      (userSubmissions || []).map((s: any) => s.lab_id)
+    );
+
+    // Get labs for these courses, then filter submissions by lab_id (more efficient)
+    const { data: labsData, error: labsError } = await supabase
+      .from("labs")
+      .select("id, course_id")
+      .in("course_id", courseIds);
+
+    if (labsError) {
+      console.error("Error fetching labs:", labsError);
+      // Continue without lab filtering - will fetch all submissions
+    }
+
+    const labIds = (labsData || []).map((lab: any) => lab.id);
+    
+    // Fetch submissions filtered by lab_id in SQL for better performance
+    // Calculate limit: 10 per course * number of courses + buffer for sorting
+    const limitEstimate = Math.max(100, courseIds.length * 15);
+    
+    let submissionQuery = supabase
       .from("submissions")
       .select(`
         *,
@@ -68,7 +114,14 @@ export async function GET(request: NextRequest) {
         labs(id, lab_number, title, course_id, courses(id, name))
       `)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(limitEstimate);
+
+    // Filter by lab_id if we have labs (more efficient than filtering in JS)
+    if (labIds.length > 0) {
+      submissionQuery = submissionQuery.in("lab_id", labIds);
+    }
+    
+    const { data: submissionData, error: submissionError } = await submissionQuery;
 
     if (submissionError) {
       console.error("Error fetching submissions:", submissionError);
@@ -77,16 +130,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Get all labs the user has submitted to
-    const { data: userSubmissions } = await supabase
-      .from("submissions")
-      .select("lab_id")
-      .eq("student_id", studentId);
-
-    const solvedLabIds = new Set(
-      (userSubmissions || []).map((s: any) => s.lab_id)
-    );
 
     // Add hasAccess flag to each submission and handle anonymous display
     const submissionsWithAccess = (submissionData || []).map((submission: any) => {
@@ -114,9 +157,9 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Limit submissions per course to 3 most recent
+    // Limit submissions per course to 10 most recent
     Object.keys(submissionsByCourse).forEach((courseId) => {
-      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(0, 3);
+      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(0, 10);
     });
 
     // Sort courses by most recent activity (most recent submission date)
