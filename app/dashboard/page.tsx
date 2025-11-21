@@ -133,7 +133,7 @@ const CourseCard = ({
                     {/* Lab Number and Title */}
                     <div className="mb-2 flex items-center gap-2">
                       <h4 className={`font-semibold text-xs sm:text-sm flex-1 ${isLocked ? "text-muted-foreground" : "text-foreground"} break-words`}>
-                        <span className="hidden sm:inline">{labTitle} — </span>{submission.title}
+                        <span>{labTitle} — </span>{submission.title}
                       </h4>
                       {isLocked && (
                         <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

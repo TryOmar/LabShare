@@ -1169,7 +1169,7 @@ export default function SubmissionPage() {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Sidebar */}
-          <div>
+          <div className="w-full lg:w-auto">
             {/* Add Files Button - Single button above both sections */}
             {isOwner && (
               <div className="mb-4">
@@ -1437,17 +1437,17 @@ export default function SubmissionPage() {
           </div>
 
           {/* Code Viewer + Attachments + Comments */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 w-full min-w-0">
             {/* Code File Viewer */}
             {selectedCodeFile ? (
               // View/Edit mode (inline editing like GitHub)
-                <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern backdrop-blur-sm bg-gradient-card">
+                <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern backdrop-blur-sm bg-gradient-card w-full min-w-0">
                   {/* File Header */}
                   <div className={`bg-muted/50 border-b border-border/30 p-3 sm:p-4 flex justify-between rounded-t-xl ${editingCodeFileId === selectedCodeFile.id ? 'items-start' : 'items-center'}`}>
-                    <div className="flex-1 pr-4">
+                    <div className="flex-1 pr-4 min-w-0">
                       {editingCodeFileId === selectedCodeFile.id ? (
                         // Edit mode - show filename input and language selector
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full">
                           <input
                             type="text"
                             value={editCodeFilename}
@@ -1531,37 +1531,44 @@ export default function SubmissionPage() {
 
                   {/* Code Content - Edit or View */}
                   {editingCodeFileId === selectedCodeFile.id ? (
-                    <div className="p-4 sm:p-5 bg-white/80 backdrop-blur-sm">
+                    <div className="p-4 sm:p-5 bg-white/80 backdrop-blur-sm w-full min-w-0 overflow-x-auto">
                       <textarea
                         value={editCodeContent}
                         onChange={(e) => {
                           setEditCodeContent(e.target.value);
                         }}
-                        className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern"
+                        className="w-full min-w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern"
                         rows={25}
                         placeholder="Code content"
-                        style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                        style={{ fontFamily: 'monospace', resize: 'vertical', whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
                       />
                     </div>
                   ) : (
-                    <pre className="p-0 bg-gray-50 overflow-x-auto text-xs leading-relaxed">
-                      <SyntaxHighlighter
-                        language={mapLanguageToPrism(selectedCodeFile.language)}
-                        style={oneLight}
-                        PreTag="div"
-                        showLineNumbers={true}
-                        wrapLongLines={true}
-                        customStyle={{ margin: 0, background: 'transparent' }}
-                        className="!p-4 text-xs leading-relaxed"
-                      >
-                        {selectedCodeFile.content}
-                      </SyntaxHighlighter>
-                    </pre>
+                    <div className="w-full overflow-x-auto bg-gray-50">
+                      <pre className="p-0 m-0 text-xs leading-relaxed min-w-full">
+                        <SyntaxHighlighter
+                          language={mapLanguageToPrism(selectedCodeFile.language)}
+                          style={oneLight}
+                          PreTag="div"
+                          showLineNumbers={true}
+                          wrapLongLines={true}
+                          customStyle={{ 
+                            margin: 0, 
+                            background: 'transparent',
+                            padding: '1rem',
+                            overflow: 'visible'
+                          }}
+                          className="!p-4 text-xs leading-relaxed"
+                        >
+                          {selectedCodeFile.content}
+                        </SyntaxHighlighter>
+                      </pre>
+                    </div>
                   )}
                 </div>
             ) : selectedAttachment ? (
               // View mode (no edit mode in preview for attachments - only rename in sidebar)
-              <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern backdrop-blur-sm bg-gradient-card">
+              <div className="border border-border/50 rounded-xl overflow-hidden shadow-modern backdrop-blur-sm bg-gradient-card w-full min-w-0">
                 {/* Attachment Header */}
                 <div className="bg-muted/50 border-b border-border/30 p-3 sm:p-4 flex justify-between items-center rounded-t-xl">
                   <div>
