@@ -489,9 +489,6 @@ export default function DashboardPage() {
             {/* Resources & Support */}
             <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Resources & Support</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                Explore, contribute, and get help with LabShare.
-              </p>
               <div className="space-y-2.5">
                 <div className="flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
