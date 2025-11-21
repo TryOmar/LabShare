@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Run multiple queries in parallel for better performance
-    // Database-level joins and filtering - minimize JS processing
+    // Run all queries in parallel - all filtering done in SQL
+    // Get courses and user submissions first (needed to determine course IDs)
     const [courseResult, userSubmissionsResult] = await Promise.all([
       // Get courses for this track - database does the join
       supabase
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Extract course IDs for database queries - necessary for IN clause
+    // Extract course IDs - needed for SQL filtering (minimal JS - single map operation)
     const courseIds = coursesList.map((c: any) => c.id);
     
     // Create Set for O(1) lookup of solved lab IDs - database already filtered by student_id
@@ -95,26 +95,25 @@ export async function GET(request: NextRequest) {
       (userSubmissions || []).map((s: any) => s.lab_id)
     );
 
-    // Get labs for these courses - database filtering by course_id
-    // Only fetch id and course_id (not full lab data) for efficiency
+    // Get lab IDs filtered by course_id in SQL - all filtering in database
     const { data: labsData, error: labsError } = await supabase
       .from("labs")
-      .select("id, course_id")
+      .select("id")
       .in("course_id", courseIds);
-
+    
     if (labsError) {
       console.error("Error fetching labs:", labsError);
       // Continue without lab filtering - will fetch all submissions
     }
-
-    // Extract lab IDs for database query - database already filtered by course_id
+    
+    // Extract lab IDs from SQL result - minimal JS processing (single map)
     const labIds = (labsData || []).map((lab: any) => lab.id);
     
-    // Fetch submissions filtered by lab_id in SQL for better performance
-    // Database-level filtering and sorting - calculate limit: 10 per course * number of courses + buffer
+    // Fetch submissions with all filtering done in SQL
+    // Database calculates limit: 10 per course * number of courses + buffer
     const limitEstimate = Math.max(100, courseIds.length * 15);
     
-    // Use database-level filtering, ordering, and limiting - minimize JS processing
+    // Build submissions query with all filtering in SQL
     let submissionQuery = supabase
       .from("submissions")
       .select(`
@@ -124,8 +123,8 @@ export async function GET(request: NextRequest) {
       `)
       .order("created_at", { ascending: false })
       .limit(limitEstimate);
-
-    // Filter by lab_id at database level (more efficient than filtering in JS)
+    
+    // Filter by lab_id at database level (all in SQL)
     if (labIds.length > 0) {
       submissionQuery = submissionQuery.in("lab_id", labIds);
     }
