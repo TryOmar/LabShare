@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
-import { getAttachmentDownloadUrl, deleteSubmissionFolder, deleteSubmissionFiles } from "@/lib/storage";
+import {
+  getAttachmentDownloadUrl,
+  deleteSubmissionFolder,
+  deleteSubmissionFiles,
+} from "@/lib/storage";
 import { processAnonymousContent } from "@/lib/anonymity";
 
 /**
@@ -41,12 +45,14 @@ export async function GET(
     // Get submission details with lab and course information
     const { data: submissionData, error: submissionError } = await supabase
       .from("submissions")
-      .select("*, students(id, name, email), labs(id, lab_number, title, course_id, courses(id, name, description))")
+      .select(
+        "*, students(id, name, email), labs(id, lab_number, title, course_id, courses(id, name, description))"
+      )
       .eq("id", submissionId)
       .single();
 
     // Process anonymous display logic
-    const processedSubmission = submissionData 
+    const processedSubmission = submissionData
       ? processAnonymousContent(submissionData, studentId)
       : null;
 
@@ -70,7 +76,10 @@ export async function GET(
 
       if (!userSubmission) {
         return NextResponse.json(
-          { error: "Access denied. You must submit a solution for this lab before viewing other submissions." },
+          {
+            error:
+              "Access denied. You must submit a solution for this lab before viewing other submissions.",
+          },
           { status: 403 }
         );
       }
@@ -119,16 +128,32 @@ export async function GET(
     // Generate signed URLs for attachments (valid for 1 hour)
     const attachmentsWithUrls = await Promise.all(
       (attachments || []).map(async (attachment) => {
-        const urlResult = await getAttachmentDownloadUrl(attachment.storage_path, 3600);
+        const urlResult = await getAttachmentDownloadUrl(
+          attachment.storage_path,
+          3600
+        );
         return {
           ...attachment,
-          downloadUrl: 'url' in urlResult ? urlResult.url : null,
+          downloadUrl: "url" in urlResult ? urlResult.url : null,
         };
       })
     );
 
+    // Check if current user has upvoted this submission
+    const { data: userUpvote, error: upvoteCheckError } = await supabase
+      .from("submission_upvotes")
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("submission_id", submissionId)
+      .single();
+
+    const userHasUpvoted = userUpvote !== null && !upvoteCheckError;
+
     return NextResponse.json({
-      submission: processedSubmission,
+      submission: {
+        ...processedSubmission,
+        user_has_upvoted: userHasUpvoted,
+      },
       student: studentData,
       track: studentData.tracks,
       isOwner,
@@ -137,10 +162,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error in submission API:", error);
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
 
@@ -165,7 +187,7 @@ export async function PATCH(
     const body = await request.json();
     const { isAnonymous } = body;
 
-    if (typeof isAnonymous !== 'boolean') {
+    if (typeof isAnonymous !== "boolean") {
       return NextResponse.json(
         { error: "isAnonymous must be a boolean" },
         { status: 400 }
@@ -199,9 +221,9 @@ export async function PATCH(
     // Update anonymity
     const { data: updatedSubmission, error: updateError } = await supabase
       .from("submissions")
-      .update({ 
+      .update({
         is_anonymous: isAnonymous,
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString(),
       })
       .eq("id", submissionId)
       .select("*, students(id, name, email)")
@@ -216,7 +238,7 @@ export async function PATCH(
     }
 
     // Process anonymous display logic
-    const processedSubmission = updatedSubmission 
+    const processedSubmission = updatedSubmission
       ? processAnonymousContent(updatedSubmission, studentId)
       : null;
 
@@ -225,10 +247,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("Error in update submission API:", error);
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
 
@@ -281,7 +300,7 @@ export async function DELETE(
       .eq("submission_id", submissionId);
 
     if (attachments && attachments.length > 0) {
-      const filePaths = attachments.map(a => a.storage_path);
+      const filePaths = attachments.map((a) => a.storage_path);
       await deleteSubmissionFiles(filePaths);
     } else {
       // Delete folder in case of orphaned files
@@ -291,8 +310,8 @@ export async function DELETE(
     // Delete submission using database function (bypasses RLS)
     // This will cascade delete submission_code, submission_attachments, and comments
     // Ownership is already verified above, so this is safe
-    const { error: deleteError } = await supabase.rpc('delete_submission', {
-      submission_id: submissionId
+    const { error: deleteError } = await supabase.rpc("delete_submission", {
+      submission_id: submissionId,
     });
 
     if (deleteError) {
@@ -306,10 +325,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error in delete submission API:", error);
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
-
