@@ -328,29 +328,29 @@ export default function CommentsSection({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-gradient-card border border-border/50 rounded-2xl shadow-modern-xl backdrop-blur-sm">
+        <AlertDialogContent className="bg-white dark:bg-gray-900 border border-border/50 rounded-xl shadow-xl p-6 sm:p-6 backdrop-blur-none">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <AlertDialogTitle className="text-foreground text-xl font-semibold">
               Delete Comment
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
+            <AlertDialogDescription className="text-muted-foreground text-sm mt-2">
               Are you sure you want to delete this comment? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-3">
+          <AlertDialogFooter className="gap-2 sm:gap-3 mt-6">
             <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false);
                 setCommentToDelete(null);
               }}
-              className="border border-border/50 text-foreground hover:bg-accent/50 hover:border-primary/40 rounded-lg transition-all duration-200"
+              className="border border-border/50 text-foreground hover:bg-accent/50 hover:border-primary/40 rounded-lg transition-all duration-200 px-4 py-2"
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={deleting}
-              className="gradient-primary text-primary-foreground hover:gradient-primary-hover rounded-lg transition-all duration-200 shadow-primary hover:shadow-primary-lg disabled:opacity-50"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 px-4 py-2"
             >
               {deleting ? (
                 <span className="flex items-center gap-2">
