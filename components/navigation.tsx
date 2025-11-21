@@ -73,6 +73,15 @@ export default function Navigation({ student, track }: NavigationProps) {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex gap-2 lg:gap-3 flex-shrink-0">
+          {!isAboutPage && isAdmin && (
+            <button
+              onClick={() => router.push("/admin/add-student")}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+              aria-label="Add student"
+            >
+              Add Student
+            </button>
+          )}
           {!isAboutPage && (
             <>
               <button
@@ -98,15 +107,6 @@ export default function Navigation({ student, track }: NavigationProps) {
               aria-label="Go to about page"
             >
               About
-            </button>
-          )}
-          {!isAboutPage && isAdmin && (
-            <button
-              onClick={() => router.push("/admin/add-student")}
-              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
-              aria-label="Add student"
-            >
-              Add Student
             </button>
           )}
           {!isAboutPage && student && (
@@ -169,6 +169,18 @@ export default function Navigation({ student, track }: NavigationProps) {
         aria-hidden={!mobileMenuOpen}
       >
         <div className="flex flex-col animate-slide-up">
+          {!isAboutPage && isAdmin && (
+            <button
+              onClick={() => {
+                router.push("/admin/add-student");
+                setMobileMenuOpen(false);
+              }}
+              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
+              aria-label="Add student"
+            >
+              Add Student
+            </button>
+          )}
           {!isAboutPage && (
             <>
               <button
@@ -203,18 +215,6 @@ export default function Navigation({ student, track }: NavigationProps) {
               aria-label="Go to about page"
             >
               About
-            </button>
-          )}
-          {!isAboutPage && isAdmin && (
-            <button
-              onClick={() => {
-                router.push("/admin/add-student");
-                setMobileMenuOpen(false);
-              }}
-              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
-              aria-label="Add student"
-            >
-              Add Student
             </button>
           )}
           {!isAboutPage && student && (
