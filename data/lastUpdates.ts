@@ -11,6 +11,12 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "Performance optimization: Move all transformation logic to SQL queries",
+    suggestedBy: ["@KarimMohamed", "@DeiaaMohamed"],
+    implementedBy: ["@m10090"],
+    date: "21 Nov 2025",
+  },
+  {
     feature: "UI improvements with animations, LabShare logo, and modern design",
     suggestedBy: ["@deiaamohamed"],
     implementedBy: ["@deiaamohamed"],
