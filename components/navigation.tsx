@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface NavigationProps {
@@ -11,6 +11,27 @@ interface NavigationProps {
 export default function Navigation({ student, track }: NavigationProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch("/api/admin/status", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.isAdmin || false);
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -64,6 +85,15 @@ export default function Navigation({ student, track }: NavigationProps) {
           >
             Labs
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/admin/add-student")}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+              aria-label="Add student"
+            >
+              Add Student
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="px-4 lg:px-5 py-2 text-sm lg:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg transition-all duration-300 whitespace-nowrap"
@@ -133,6 +163,18 @@ export default function Navigation({ student, track }: NavigationProps) {
           >
             Labs
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                router.push("/admin/add-student");
+                setMobileMenuOpen(false);
+              }}
+              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
+              aria-label="Add student"
+            >
+              Add Student
+            </button>
+          )}
           <button
             onClick={() => {
               handleLogout();
