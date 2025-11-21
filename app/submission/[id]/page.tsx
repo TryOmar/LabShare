@@ -680,6 +680,8 @@ export default function SubmissionPage() {
 
   // Preview state for HTML files
   const [showHtmlPreview, setShowHtmlPreview] = useState(false);
+  // Preview state for image attachments
+  const [showImagePreview, setShowImagePreview] = useState(false);
 
   // Delete dialog states
   const [deleteSubmissionDialogOpen, setDeleteSubmissionDialogOpen] =
@@ -775,6 +777,19 @@ export default function SubmissionPage() {
     loadSubmission();
   }, [submissionId, router]);
 
+  // Check if attachment is an image (defined before useEffects that use it)
+  const isImageAttachment = (attachment: Attachment): boolean => {
+    const mimeType = attachment.mime_type.toLowerCase();
+    return mimeType.startsWith("image/");
+  };
+
+  const formatFileSize = (bytes: number | null): string => {
+    if (!bytes) return "Unknown size";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -802,12 +817,16 @@ export default function SubmissionPage() {
     }
   }, [selectedCodeFile]);
 
-  const formatFileSize = (bytes: number | null): string => {
-    if (!bytes) return "Unknown size";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  // Reset image preview when selected attachment is not an image or when switching to code file
+  useEffect(() => {
+    if (selectedAttachment && !isImageAttachment(selectedAttachment)) {
+      setShowImagePreview(false);
+    }
+    if (selectedCodeFile) {
+      setShowImagePreview(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAttachment, selectedCodeFile]);
 
   const handleToggleAnonymity = async (currentValue: boolean) => {
     if (!submission) return;
@@ -1639,6 +1658,7 @@ export default function SubmissionPage() {
                               setSelectedAttachment(attachment);
                               setSelectedCodeFile(null);
                               setOpenMenuId(null);
+                              setShowImagePreview(false); // Reset preview when switching attachments
                             }}
                             className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedAttachment?.id === attachment.id
@@ -1899,34 +1919,61 @@ export default function SubmissionPage() {
                       </span>
                     </div>
                   </div>
-                  {selectedAttachment.downloadUrl ? (
-                    <a
-                      href={selectedAttachment.downloadUrl}
-                      download={selectedAttachment.filename}
-                      className="px-4 py-2 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg font-semibold transition-all duration-200 shadow-modern"
-                    >
-                      Download
-                    </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="px-4 py-2 text-xs border border-border/30 bg-muted/50 text-muted-foreground font-semibold cursor-not-allowed rounded-lg"
-                    >
-                      Download Unavailable
-                    </button>
-                  )}
+                  <div className="flex gap-2 flex-shrink-0">
+                    {selectedAttachment.downloadUrl ? (
+                      <a
+                        href={selectedAttachment.downloadUrl}
+                        download={selectedAttachment.filename}
+                        className="px-4 py-2 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg font-semibold transition-all duration-200 shadow-modern"
+                      >
+                        Download
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="px-4 py-2 text-xs border border-border/30 bg-muted/50 text-muted-foreground font-semibold cursor-not-allowed rounded-lg"
+                      >
+                        Download Unavailable
+                      </button>
+                    )}
+                    {selectedAttachment.downloadUrl &&
+                      isImageAttachment(selectedAttachment) && (
+                        <button
+                          onClick={() => setShowImagePreview(!showImagePreview)}
+                          className="px-4 py-2 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary rounded-lg font-semibold transition-all duration-200 shadow-modern"
+                        >
+                          {showImagePreview ? "Info" : "Preview"}
+                        </button>
+                      )}
+                  </div>
                 </div>
 
-                {/* Attachment Info */}
-                <div className="p-6 bg-muted/30">
-                  <p className="text-muted-foreground text-sm">
-                    This file is stored in storage. Click the download button to
-                    retrieve it.
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 mt-2">
-                    Uploaded: {formatDateTime(selectedAttachment.created_at)}
-                  </p>
-                </div>
+                {/* Attachment Preview or Info */}
+                {showImagePreview &&
+                selectedAttachment.downloadUrl &&
+                isImageAttachment(selectedAttachment) ? (
+                  <div className="w-full bg-gray-100 flex items-center justify-center p-6 min-h-[400px] max-h-[600px] overflow-auto">
+                    <img
+                      src={selectedAttachment.downloadUrl}
+                      alt={selectedAttachment.filename}
+                      className="max-w-full max-h-full object-contain rounded-lg shadow-modern"
+                      onError={(e) => {
+                        console.error("Failed to load image");
+                        setShowImagePreview(false);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-6 bg-muted/30">
+                    <p className="text-muted-foreground text-sm">
+                      This file is stored in storage. Click the download button
+                      to retrieve it.
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-2">
+                      Uploaded: {formatDateTime(selectedAttachment.created_at)}
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-muted-foreground">No file selected</p>
