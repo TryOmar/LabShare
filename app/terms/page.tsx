@@ -9,7 +9,7 @@ export default function TermsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated and if terms are already accepted
+    // Check if user is authenticated
     const checkAuth = async () => {
       try {
         const authResponse = await fetch("/api/auth/status", {
@@ -22,20 +22,7 @@ export default function TermsPage() {
           router.push("/login");
           return;
         }
-
-        // Check if terms are already accepted
-        const termsResponse = await fetch("/api/auth/check-terms", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (termsResponse.ok) {
-          const termsData = await termsResponse.json();
-          if (termsData.termsAccepted) {
-            // Terms already accepted, redirect to dashboard
-            router.push("/dashboard");
-          }
-        }
+        // Terms must be accepted on each login, so we don't check if already accepted
       } catch (err) {
         console.error("Error checking auth:", err);
         router.push("/login");
@@ -112,6 +99,17 @@ export default function TermsPage() {
             <div className="bg-muted/50 border border-border/30 p-4 sm:p-5 rounded-xl backdrop-blur-sm animate-slide-up">
               <p className="text-sm sm:text-base text-muted-foreground font-medium">
                 By proceeding, you acknowledge that you understand and agree to these terms.
+              </p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-3">
+                Want to learn more about LabShare?{" "}
+                <a
+                  href="/about"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 underline font-semibold transition-colors duration-300"
+                >
+                  Read our documentation →
+                </a>
               </p>
             </div>
           </div>
