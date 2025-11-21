@@ -461,11 +461,22 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
   // Add files to the list (avoid duplicates)
   const addFiles = (newFiles: File[]) => {
     setFiles((prev) => {
-      const existingNames = new Set(prev.map(f => f.name));
-      const uniqueNewFiles = newFiles.filter(f => !existingNames.has(f.name));
+      // Check against both existing files and pasted code files
+      const existingFileNames = new Set(prev.map(f => f.name.toLowerCase()));
+      const existingPastedNames = new Set(pastedCodeFiles.map(f => f.filename.toLowerCase()));
+      const allExistingNames = new Set([...existingFileNames, ...existingPastedNames]);
+      
+      const uniqueNewFiles = newFiles.filter(f => !allExistingNames.has(f.name.toLowerCase()));
+      
+      if (uniqueNewFiles.length < newFiles.length) {
+        const duplicates = newFiles.filter(f => allExistingNames.has(f.name.toLowerCase()));
+        setError(`Skipped ${newFiles.length - uniqueNewFiles.length} duplicate file(s): ${duplicates.map(f => f.name).join(', ')}`);
+      } else {
+        setError("");
+      }
+      
       return [...prev, ...uniqueNewFiles];
     });
-    setError("");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -655,6 +666,17 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
     }
     
     const filename = pastedFileName.trim() || `code.${language}`;
+    
+    // Check for duplicate filenames (case-insensitive)
+    const existingFileNames = new Set(files.map(f => f.name.toLowerCase()));
+    const existingPastedNames = new Set(pastedCodeFiles.map(f => f.filename.toLowerCase()));
+    const allExistingNames = new Set([...existingFileNames, ...existingPastedNames]);
+    
+    if (allExistingNames.has(filename.toLowerCase())) {
+      setError(`A file with the name "${filename}" already exists. Please use a different name.`);
+      return;
+    }
+    
     setPastedCodeFiles(prev => [...prev, {
       filename,
       language,
@@ -723,6 +745,25 @@ function UploadModal({ labId, onClose }: UploadModalProps) {
       // Validate that we have at least one file
       if (filesToUpload.length === 0) {
         setError("Please add at least one file");
+        setLoading(false);
+        return;
+      }
+
+      // Check for duplicate filenames (case-insensitive)
+      const seenFilenames = new Set<string>();
+      const duplicates: string[] = [];
+      
+      for (const file of filesToUpload) {
+        const filename = file.filename.toLowerCase();
+        if (seenFilenames.has(filename)) {
+          duplicates.push(file.filename);
+        } else {
+          seenFilenames.add(filename);
+        }
+      }
+      
+      if (duplicates.length > 0) {
+        setError(`Duplicate filenames detected: ${duplicates.join(', ')}. Please remove duplicates before uploading.`);
         setLoading(false);
         return;
       }
