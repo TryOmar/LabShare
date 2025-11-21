@@ -49,6 +49,7 @@ interface Submission {
   title: string;
   student_id: string;
   view_count: number;
+  upvote_count?: number;
   is_anonymous?: boolean;
   students?: Student;
 }
@@ -336,6 +337,19 @@ export default function LabPage() {
                       )}
                       <span className="text-xs bg-accent px-3 py-1.5 border border-border/50 rounded-lg whitespace-nowrap text-muted-foreground">
                         {submission.view_count} {submission.view_count === 1 ? 'view' : 'views'}
+                      </span>
+                      <span className="text-xs bg-accent px-3 py-1.5 border border-border/50 rounded-lg whitespace-nowrap text-muted-foreground flex items-center gap-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3.5 w-3.5"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.834a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                        </svg>
+                        {submission.upvote_count || 0}
                       </span>
                     </div>
                   </div>
