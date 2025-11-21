@@ -28,14 +28,16 @@ async function createAutoLogComment(
     // Get submission's anonymity status - auto-log comments inherit from submission
     const isAnonymous = await getSubmissionAnonymityStatus(supabase, submissionId);
 
-    // Get student name
-    const { data: student } = await supabase
-      .from("students")
-      .select("name")
-      .eq("id", studentId)
-      .single();
-
-    const studentName = student?.name || "User";
+    // Get student name only if not anonymous
+    let studentName = "";
+    if (!isAnonymous) {
+      const { data: student } = await supabase
+        .from("students")
+        .select("name")
+        .eq("id", studentId)
+        .single();
+      studentName = student?.name || "User";
+    }
 
     let commentText = "";
 
@@ -46,15 +48,18 @@ async function createAutoLogComment(
         const filename = options.newFilename || options.oldFilename || 'file';
         
         if (options.filenameChanged && options.oldFilename && options.newFilename) {
-          changes.push(`${studentName} renamed: ${options.oldFilename} → ${options.newFilename} (auto-log)`);
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          changes.push(`${prefix}renamed: ${options.oldFilename} → ${options.newFilename} (auto-log)`);
         }
         
         if (options.languageChanged && options.oldLanguage && options.newLanguage) {
-          changes.push(`${studentName} changed language: ${options.oldLanguage} → ${options.newLanguage} (auto-log)`);
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          changes.push(`${prefix}changed language: ${options.oldLanguage} → ${options.newLanguage} (auto-log)`);
         }
         
         if (options.contentChanged) {
-          changes.push(`${studentName} edited: ${filename} (auto-log)`);
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          changes.push(`${prefix}edited: ${filename} (auto-log)`);
         }
         
         // Join all changes with newlines
@@ -64,25 +69,29 @@ async function createAutoLogComment(
         break;
       case 'code_delete':
         if (options.filename) {
-          commentText = `${studentName} deleted: ${options.filename} (auto-log)`;
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          commentText = `${prefix}deleted: ${options.filename} (auto-log)`;
         }
         break;
       case 'attachment_delete':
         if (options.filename) {
-          commentText = `${studentName} removed: ${options.filename} (auto-log)`;
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          commentText = `${prefix}removed: ${options.filename} (auto-log)`;
         }
         break;
       case 'attachment_rename':
         if (options.oldFilename && options.newFilename) {
-          commentText = `${studentName} renamed: ${options.oldFilename} → ${options.newFilename} (auto-log)`;
+          const prefix = isAnonymous ? "" : `${studentName} `;
+          commentText = `${prefix}renamed: ${options.oldFilename} → ${options.newFilename} (auto-log)`;
         }
         break;
       case 'file_add':
         if (options.filename) {
+          const prefix = isAnonymous ? "" : `${studentName} `;
           if (options.isCodeFile) {
-            commentText = `${studentName} added: ${options.filename} (auto-log)`;
+            commentText = `${prefix}added: ${options.filename} (auto-log)`;
           } else {
-            commentText = `${studentName} uploaded: ${options.filename} (auto-log)`;
+            commentText = `${prefix}uploaded: ${options.filename} (auto-log)`;
           }
         }
         break;
