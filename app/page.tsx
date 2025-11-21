@@ -18,24 +18,9 @@ export default function HomePage() {
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated) {
-            // User is authenticated, check terms
-            const termsResponse = await fetch("/api/auth/check-terms", {
-              method: "GET",
-              credentials: "include",
-            });
-
-            if (termsResponse.ok) {
-              const termsData = await termsResponse.json();
-              if (termsData.termsAccepted) {
-                // Both authenticated and terms accepted, go to dashboard
-                router.push("/dashboard");
-                return;
-              } else {
-                // Authenticated but terms not accepted, go to terms
-                router.push("/terms");
-                return;
-              }
-            }
+            // User is authenticated, always redirect to terms (terms required on each login)
+            router.push("/terms");
+            return;
           }
         }
         // Not authenticated, go to login

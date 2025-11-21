@@ -263,12 +263,23 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        // Check if terms are accepted first
-        const termsResponse = await fetch("/api/auth/check-terms", {
-          method: "GET",
-          credentials: "include",
-        });
+        // Run all three requests in parallel - they don't depend on each other
+        const [termsResponse, dashboardResponse, labsResponse] = await Promise.all([
+          fetch("/api/auth/check-terms", {
+            method: "GET",
+            credentials: "include",
+          }),
+          fetch("/api/dashboard", {
+            method: "GET",
+            credentials: "include", // Include cookies
+          }),
+          fetch("/api/labs", {
+            method: "GET",
+            credentials: "include",
+          }),
+        ]);
 
+        // Check terms first (early redirect if needed)
         if (termsResponse.ok) {
           const termsData = await termsResponse.json();
           if (!termsData.termsAccepted) {
@@ -278,22 +289,17 @@ export default function DashboardPage() {
           }
         }
 
-        // Fetch dashboard data from API route (server-side validation)
-        const response = await fetch("/api/dashboard", {
-          method: "GET",
-          credentials: "include", // Include cookies
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
+        // Process dashboard response
+        if (!dashboardResponse.ok) {
+          if (dashboardResponse.status === 401) {
             // Unauthorized - redirect to login
             router.push("/login");
             return;
           }
-          throw new Error(`Failed to load dashboard: ${response.statusText}`);
+          throw new Error(`Failed to load dashboard: ${dashboardResponse.statusText}`);
         }
 
-        const data = await response.json();
+        const data = await dashboardResponse.json();
         
         setStudent(data.student);
         setTrack(data.track);
@@ -302,12 +308,7 @@ export default function DashboardPage() {
         setRecentSubmissions(data.recentSubmissions || []);
         setSuggestedLabs(data.suggestedLabs || []);
 
-        // Fetch labs data for submission form
-        const labsResponse = await fetch("/api/labs", {
-          method: "GET",
-          credentials: "include",
-        });
-
+        // Process labs response
         if (labsResponse.ok) {
           const labsData = await labsResponse.json();
           const labsMap = new Map<string, Lab[]>();
