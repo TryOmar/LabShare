@@ -22,15 +22,6 @@ export async function POST(request: NextRequest) {
     }
     const authenticatedStudentId = authResult.studentId;
 
-    // Check if terms are accepted
-    const termsAccepted = request.cookies.get("termsAccepted")?.value === "true";
-    if (!termsAccepted) {
-      return NextResponse.json(
-        { error: "You must accept the terms and conditions before submitting" },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     const { labId, title, files, isAnonymous } = body;
 

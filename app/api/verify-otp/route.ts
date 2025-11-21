@@ -127,15 +127,6 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    // Clear termsAccepted cookie on each login to require terms acceptance
-    response.cookies.set("termsAccepted", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 0, // Expire immediately
-      path: "/",
-    });
-
     return response;
   } catch (error) {
     // Log error without exposing sensitive details

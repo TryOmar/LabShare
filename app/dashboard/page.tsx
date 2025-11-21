@@ -278,12 +278,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        // Run all three requests in parallel - they don't depend on each other
-        const [termsResponse, dashboardResponse, labsResponse] = await Promise.all([
-          fetch("/api/auth/check-terms", {
-            method: "GET",
-            credentials: "include",
-          }),
+        // Run dashboard and labs requests in parallel - they don't depend on each other
+        const [dashboardResponse, labsResponse] = await Promise.all([
           fetch("/api/dashboard", {
             method: "GET",
             credentials: "include", // Include cookies
@@ -293,16 +289,6 @@ export default function DashboardPage() {
             credentials: "include",
           }),
         ]);
-
-        // Check terms first (early redirect if needed)
-        if (termsResponse.ok) {
-          const termsData = await termsResponse.json();
-          if (!termsData.termsAccepted) {
-            // Terms not accepted, redirect to terms page
-            router.push("/terms");
-            return;
-          }
-        }
 
         // Process dashboard response
         if (!dashboardResponse.ok) {

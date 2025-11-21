@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 
 export default function TermsPage() {
   const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,23 +31,11 @@ export default function TermsPage() {
     checkAuth();
   }, [router]);
 
-  const handleAccept = async () => {
+  const handleAccept = () => {
     if (!agreed) return;
 
-    setLoading(true);
-    try {
-      // Set a cookie to remember they've accepted the terms
-      await fetch("/api/auth/accept-terms", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Error accepting terms:", err);
-      setLoading(false);
-    }
+    // Simply redirect to dashboard - no state storage needed
+    router.push("/dashboard");
   };
 
   return (
@@ -129,10 +116,10 @@ export default function TermsPage() {
 
           <button
             onClick={handleAccept}
-            disabled={!agreed || loading}
+            disabled={!agreed}
             className="w-full px-5 sm:px-6 py-3 sm:py-3.5 text-sm sm:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg animate-slide-up"
           >
-            {loading ? "Processing..." : "I Agree - Continue to Dashboard"}
+            I Agree - Continue to Dashboard
           </button>
         </div>
       </div>
