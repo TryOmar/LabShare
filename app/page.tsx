@@ -18,8 +18,8 @@ export default function HomePage() {
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated) {
-            // User is authenticated, always redirect to terms (terms required on each login)
-            router.push("/terms");
+            // User is already logged in, redirect to dashboard (no need to show terms)
+            router.push("/dashboard");
             return;
           }
         }

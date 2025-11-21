@@ -16,12 +16,21 @@ export default function TermsPage() {
           credentials: "include",
         });
 
-        if (!authResponse.ok || !(await authResponse.json()).authenticated) {
+        if (!authResponse.ok) {
           // Not authenticated, redirect to login
           router.push("/login");
           return;
         }
-        // Terms must be accepted on each login, so we don't check if already accepted
+
+        const authData = await authResponse.json();
+        if (!authData.authenticated) {
+          // Not authenticated, redirect to login
+          router.push("/login");
+          return;
+        }
+
+        // User is already logged in, redirect to dashboard (no need to show terms)
+        router.push("/dashboard");
       } catch (err) {
         console.error("Error checking auth:", err);
         router.push("/login");
