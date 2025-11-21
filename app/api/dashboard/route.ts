@@ -35,10 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!studentData) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
     // Run multiple queries in parallel for better performance
@@ -49,15 +46,12 @@ export async function GET(request: NextRequest) {
         .select("courses(id, name, description)")
         .eq("track_id", studentData.track_id),
       // Get all labs the user has submitted to (for access checking)
-      supabase
-        .from("submissions")
-        .select("lab_id")
-        .eq("student_id", studentId)
+      supabase.from("submissions").select("lab_id").eq("student_id", studentId),
     ]);
 
     const { data: courseData, error: courseError } = courseResult;
     const { data: userSubmissions } = userSubmissionsResult;
-    
+
     // Note: userSubmissions error is non-critical - if it fails, user just won't have access to locked labs
 
     if (courseError) {
@@ -101,18 +95,20 @@ export async function GET(request: NextRequest) {
     }
 
     const labIds = (labsData || []).map((lab: any) => lab.id);
-    
+
     // Fetch submissions filtered by lab_id in SQL for better performance
     // Calculate limit: 10 per course * number of courses + buffer for sorting
     const limitEstimate = Math.max(100, courseIds.length * 15);
-    
+
     let submissionQuery = supabase
       .from("submissions")
-      .select(`
+      .select(
+        `
         *,
         students(id, name, email),
         labs(id, lab_number, title, course_id, courses(id, name))
-      `)
+      `
+      )
       .order("created_at", { ascending: false })
       .limit(limitEstimate);
 
@@ -120,8 +116,9 @@ export async function GET(request: NextRequest) {
     if (labIds.length > 0) {
       submissionQuery = submissionQuery.in("lab_id", labIds);
     }
-    
-    const { data: submissionData, error: submissionError } = await submissionQuery;
+
+    const { data: submissionData, error: submissionError } =
+      await submissionQuery;
 
     if (submissionError) {
       console.error("Error fetching submissions:", submissionError);
@@ -132,18 +129,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Add hasAccess flag to each submission and handle anonymous display
-    const submissionsWithAccess = (submissionData || []).map((submission: any) => {
-      const isOwner = submission.student_id === studentId;
-      const hasAccess = isOwner || solvedLabIds.has(submission.lab_id);
-      
-      return {
-        ...submission,
-        hasAccess,
-      };
-    });
+    const submissionsWithAccess = (submissionData || []).map(
+      (submission: any) => {
+        const isOwner = submission.student_id === studentId;
+        const hasAccess = isOwner || solvedLabIds.has(submission.lab_id);
+
+        return {
+          ...submission,
+          hasAccess,
+        };
+      }
+    );
 
     // Process anonymous display logic
-    const processedSubmissions = processAnonymousContentArray(submissionsWithAccess, studentId);
+    const processedSubmissions = processAnonymousContentArray(
+      submissionsWithAccess,
+      studentId
+    );
 
     // Group submissions by course_id
     const submissionsByCourse: Record<string, any[]> = {};
@@ -159,15 +161,19 @@ export async function GET(request: NextRequest) {
 
     // Limit submissions per course to 10 most recent
     Object.keys(submissionsByCourse).forEach((courseId) => {
-      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(0, 10);
+      submissionsByCourse[courseId] = submissionsByCourse[courseId].slice(
+        0,
+        10
+      );
     });
 
     // Sort courses by most recent activity (most recent submission date)
     const coursesWithSubmissions = coursesList.map((course: any) => {
       const courseSubmissions = submissionsByCourse[course.id] || [];
-      const mostRecentDate = courseSubmissions.length > 0
-        ? new Date(courseSubmissions[0].created_at).getTime()
-        : 0;
+      const mostRecentDate =
+        courseSubmissions.length > 0
+          ? new Date(courseSubmissions[0].created_at).getTime()
+          : 0;
       return {
         ...course,
         submissions: courseSubmissions,
@@ -176,31 +182,33 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by most recent activity (descending)
-    coursesWithSubmissions.sort((a: any, b: any) => b.mostRecentDate - a.mostRecentDate);
+    coursesWithSubmissions.sort(
+      (a: any, b: any) => b.mostRecentDate - a.mostRecentDate
+    );
 
     // Get suggested labs (labs with recent submissions from others that user hasn't submitted to)
     // Only include labs from courses in the user's track
     const courseIdsInTrack = new Set(coursesList.map((c: any) => c.id));
     const suggestedLabs: any[] = [];
     const seenLabIds = new Set<string>();
-    
+
     // Get unique labs from recent submissions that user hasn't submitted to
     for (const submission of processedSubmissions) {
       const labId = submission.lab_id;
       const courseId = submission.labs?.course_id;
-      
+
       // Skip if course is not in user's track
       if (!courseId || !courseIdsInTrack.has(courseId)) continue;
-      
+
       // Skip if user already submitted to this lab
       if (solvedLabIds.has(labId)) continue;
-      
+
       // Skip if we've already added this lab
       if (seenLabIds.has(labId)) continue;
-      
+
       // Skip if submission is from the user themselves
       if (submission.student_id === studentId) continue;
-      
+
       if (labId && courseId && submission.labs) {
         seenLabIds.add(labId);
         suggestedLabs.push({
@@ -211,7 +219,7 @@ export async function GET(request: NextRequest) {
           course_name: submission.labs.courses?.name,
           latest_submission_date: submission.created_at,
         });
-        
+
         // Stop at 3 suggestions
         if (suggestedLabs.length >= 3) break;
       }
@@ -220,17 +228,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       student: studentData,
       track: studentData.tracks,
-      courses: coursesWithSubmissions.map(({ submissions, mostRecentDate, ...course }: any) => course),
-      coursesWithSubmissions: coursesWithSubmissions.map(({ mostRecentDate, ...course }: any) => course),
+      courses: coursesWithSubmissions.map(
+        ({ submissions, mostRecentDate, ...course }: any) => course
+      ),
+      coursesWithSubmissions: coursesWithSubmissions.map(
+        ({ mostRecentDate, ...course }: any) => course
+      ),
       recentSubmissions: processedSubmissions,
       suggestedLabs: suggestedLabs.slice(0, 3),
     });
   } catch (error) {
     console.error("Error in dashboard API:", error);
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
-
