@@ -86,16 +86,21 @@ const formatUploadTimestamp = (date: string | Date): string => {
 // Course Card Component
 const CourseCard = ({ 
   course, 
-  router 
+  router,
+  index = 0,
 }: { 
   course: Course; 
   router: { push: (path: string) => void };
+  index?: number;
 }) => {
   const submissions = course.submissions || [];
   const recentSubmissions = submissions.slice(0, 10);
 
   return (
-    <div className="border border-border/50 rounded-xl bg-gradient-card hover:shadow-modern-lg transition-all duration-300 backdrop-blur-sm shadow-modern">
+    <div
+      className="border border-border/50 rounded-xl bg-gradient-card hover:shadow-modern-lg transition-all duration-300 backdrop-blur-sm shadow-modern hover-lift animate-fade-in"
+      style={{ animationDelay: `${index * 0.07}s` }}
+    >
       {/* Course Header */}
       <div
         onClick={() => router.push(`/labs?course=${course.id}`)}
@@ -116,7 +121,7 @@ const CourseCard = ({
               <span className="text-xs text-muted-foreground/80">{submissions.length} total</span>
             </div>
             <div className="space-y-2 sm:space-y-3">
-              {recentSubmissions.map((submission) => {
+              {recentSubmissions.map((submission, submissionIndex) => {
                 const isLocked = !submission.hasAccess;
                 const labNumber = submission.labs?.lab_number;
                 const labTitle = labNumber ? `Lab ${labNumber}` : 'Lab';
@@ -127,8 +132,9 @@ const CourseCard = ({
                     className={`p-2 sm:p-3 border border-border/50 rounded-lg ${
                       isLocked
                         ? "bg-muted/30 opacity-60"
-                        : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm"
-                    } transition-all duration-200`}
+                        : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm hover-lift"
+                    } transition-all duration-300 animate-fade-in`}
+                    style={{ animationDelay: `${submissionIndex * 0.05}s` }}
                   >
                     {/* Lab Number and Title */}
                     <div className="mb-2 flex items-center gap-2">
@@ -451,8 +457,8 @@ export default function DashboardPage() {
               
               {coursesWithSubmissions.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {coursesWithSubmissions.map((course) => (
-                    <CourseCard key={course.id} course={course} router={router} />
+                  {coursesWithSubmissions.map((course, index) => (
+                    <CourseCard key={course.id} course={course} router={router} index={index} />
                   ))}
                 </div>
               ) : (
@@ -490,28 +496,28 @@ export default function DashboardPage() {
             <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Resources & Support</h3>
               <div className="space-y-2.5">
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.05s' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                   <div className="flex-1">
                     <span className="text-xs sm:text-sm text-muted-foreground">Documentation: </span>
                     <a href="/about" className="text-xs sm:text-sm text-primary hover:underline font-medium">View About Page</a>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                   <div className="flex-1">
                     <span className="text-xs sm:text-sm text-muted-foreground">Repository: </span>
                     <a href="https://github.com/TryOmar/LabShare" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">View on GitHub</a>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.15s' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                   <div className="flex-1">
                     <span className="text-xs sm:text-sm text-muted-foreground">GitHub Discussions: </span>
                     <a href="https://github.com/TryOmar/LabShare/discussions" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">Join Discussions</a>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                   <div className="flex-1">
                     <span className="text-xs sm:text-sm text-muted-foreground">GitHub Issues: </span>
@@ -520,7 +526,7 @@ export default function DashboardPage() {
                     <a href="https://github.com/TryOmar/LabShare/issues/new" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-primary hover:underline font-medium">Create New Issue</a>
                   </div>
                 </div>
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-2.5 animate-fade-in" style={{ animationDelay: '0.25s' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                   <div className="flex-1">
                     <span className="text-xs sm:text-sm text-muted-foreground">Suggestions & Bug Reports: </span>
