@@ -688,8 +688,9 @@ export default function AboutPage() {
                   <div className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
                     <div className="flex-1">
-                      <span className="text-sm text-muted-foreground">Feedback & Bug Reports: </span>
+                      <span className="text-sm text-muted-foreground">Suggestions & Bug Reports: </span>
                       <a href="https://forms.gle/25mEvcjTPrhA6THf9" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline font-medium">Submit Report Form</a>
+                      <span className="text-[10px] text-muted-foreground/70"> (can be anonymous)</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
