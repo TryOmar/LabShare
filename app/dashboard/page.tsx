@@ -7,6 +7,7 @@ import Navigation from "@/components/navigation";
 import LastUpdates from "@/components/last-updates";
 import { formatDateTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -88,10 +89,12 @@ const formatUploadTimestamp = (date: string | Date): string => {
 const CourseCard = ({ 
   course, 
   router,
+  currentStudentId,
   index = 0,
 }: { 
   course: Course; 
   router: { push: (path: string) => void };
+  currentStudentId?: string;
   index?: number;
 }) => {
   const submissions = course.submissions || [];
@@ -142,11 +145,21 @@ const CourseCard = ({
                       <h4 className={`font-semibold text-xs sm:text-sm flex-1 ${isLocked ? "text-muted-foreground" : "text-foreground"} break-words`}>
                         <span>{labTitle} — </span>{submission.title}
                       </h4>
-                      {isLocked && (
-                        <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {submission.student_id === currentStudentId && (
+                          <Badge 
+                            variant="outline" 
+                            className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-semibold border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 transition-colors duration-200 backdrop-blur-sm"
+                          >
+                            You
+                          </Badge>
+                        )}
+                        {isLocked && (
+                          <svg className="h-4 w-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        )}
+                      </div>
                     </div>
 
                     {/* Uploader Name */}
@@ -460,7 +473,7 @@ export default function DashboardPage() {
               {coursesWithSubmissions.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {coursesWithSubmissions.map((course, index) => (
-                    <CourseCard key={course.id} course={course} router={router} index={index} />
+                    <CourseCard key={course.id} course={course} router={router} currentStudentId={student?.id} index={index} />
                   ))}
                 </div>
               ) : (
