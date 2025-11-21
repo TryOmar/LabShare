@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface NavigationProps {
   student: any;
@@ -10,8 +10,10 @@ interface NavigationProps {
 
 export default function Navigation({ student, track }: NavigationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const isAboutPage = pathname === '/about';
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -71,21 +73,34 @@ export default function Navigation({ student, track }: NavigationProps) {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex gap-2 lg:gap-3 flex-shrink-0">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
-            aria-label="Go to dashboard"
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => router.push("/labs")}
-            className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
-            aria-label="Go to labs"
-          >
-            Labs
-          </button>
-          {isAdmin && (
+          {!isAboutPage && (
+            <>
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+                aria-label="Go to dashboard"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => router.push("/labs")}
+                className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+                aria-label="Go to labs"
+              >
+                Labs
+              </button>
+            </>
+          )}
+          {!isAboutPage && (
+            <button
+              onClick={() => router.push("/about")}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+              aria-label="Go to about page"
+            >
+              About
+            </button>
+          )}
+          {!isAboutPage && isAdmin && (
             <button
               onClick={() => router.push("/admin/add-student")}
               className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
@@ -94,13 +109,24 @@ export default function Navigation({ student, track }: NavigationProps) {
               Add Student
             </button>
           )}
-          <button
-            onClick={handleLogout}
-            className="px-4 lg:px-5 py-2 text-sm lg:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg transition-all duration-300 whitespace-nowrap"
-            aria-label="Logout"
-          >
-            Logout
-          </button>
+          {!isAboutPage && student && (
+            <button
+              onClick={handleLogout}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg transition-all duration-300 whitespace-nowrap"
+              aria-label="Logout"
+            >
+              Logout
+            </button>
+          )}
+          {isAboutPage && !student && (
+            <button
+              onClick={() => router.push("/login")}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg transition-all duration-300 whitespace-nowrap"
+              aria-label="Login"
+            >
+              Login
+            </button>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -143,27 +169,43 @@ export default function Navigation({ student, track }: NavigationProps) {
         aria-hidden={!mobileMenuOpen}
       >
         <div className="flex flex-col animate-slide-up">
-          <button
-            onClick={() => {
-              router.push("/dashboard");
-              setMobileMenuOpen(false);
-            }}
-            className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
-            aria-label="Go to dashboard"
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => {
-              router.push("/labs");
-              setMobileMenuOpen(false);
-            }}
-            className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
-            aria-label="Go to labs"
-          >
-            Labs
-          </button>
-          {isAdmin && (
+          {!isAboutPage && (
+            <>
+              <button
+                onClick={() => {
+                  router.push("/dashboard");
+                  setMobileMenuOpen(false);
+                }}
+                className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
+                aria-label="Go to dashboard"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  router.push("/labs");
+                  setMobileMenuOpen(false);
+                }}
+                className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
+                aria-label="Go to labs"
+              >
+                Labs
+              </button>
+            </>
+          )}
+          {!isAboutPage && (
+            <button
+              onClick={() => {
+                router.push("/about");
+                setMobileMenuOpen(false);
+              }}
+              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
+              aria-label="Go to about page"
+            >
+              About
+            </button>
+          )}
+          {!isAboutPage && isAdmin && (
             <button
               onClick={() => {
                 router.push("/admin/add-student");
@@ -175,16 +217,30 @@ export default function Navigation({ student, track }: NavigationProps) {
               Add Student
             </button>
           )}
-          <button
-            onClick={() => {
-              handleLogout();
-              setMobileMenuOpen(false);
-            }}
-            className="px-6 py-4 text-left gradient-primary text-primary-foreground font-semibold hover:gradient-primary-hover transition-all duration-300"
-            aria-label="Logout"
-          >
-            Logout
-          </button>
+          {!isAboutPage && student && (
+            <button
+              onClick={() => {
+                handleLogout();
+                setMobileMenuOpen(false);
+              }}
+              className="px-6 py-4 text-left gradient-primary text-primary-foreground font-semibold hover:gradient-primary-hover transition-all duration-300"
+              aria-label="Logout"
+            >
+              Logout
+            </button>
+          )}
+          {isAboutPage && !student && (
+            <button
+              onClick={() => {
+                router.push("/login");
+                setMobileMenuOpen(false);
+              }}
+              className="px-6 py-4 text-left gradient-primary text-primary-foreground font-semibold hover:gradient-primary-hover transition-all duration-300"
+              aria-label="Login"
+            >
+              Login
+            </button>
+          )}
         </div>
       </div>
     </nav>

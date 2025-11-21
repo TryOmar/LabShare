@@ -45,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !studentId &&
     !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/about") &&
     !request.nextUrl.pathname.startsWith("/public") &&
     !request.nextUrl.pathname.startsWith("/api")
   ) {
