@@ -46,39 +46,58 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Extract courses from nested Supabase join structure - minimal JS processing
+    // Database already filtered and joined, we just extract the nested data
     const coursesList = (courseData || [])
       .map((ct: any) => ct.courses)
       .filter(Boolean);
 
-    // Get labs for each course with submission status
-    const labsByCourse: Record<string, any[]> = {};
-    for (const course of coursesList) {
-      const { data: labData, error: labError } = await supabase
+    // Get labs for each course with submission status - PARALLELIZED & DB-LEVEL OPTIMIZED
+    const courseIds = coursesList.map((course: any) => course.id);
+    
+    // Fetch all labs for all courses in parallel with a single query
+    // Fetch user submissions separately to check submission status (database-level)
+    const [labsResult, submissionsResult] = await Promise.all([
+      supabase
         .from("labs")
         .select("*")
-        .eq("course_id", course.id)
-        .order("lab_number");
+        .in("course_id", courseIds)
+        .order("course_id")
+        .order("lab_number"),
+      supabase
+        .from("submissions")
+        .select("lab_id")
+        .eq("student_id", studentId)
+    ]);
 
-      if (!labError && labData) {
-        // Check which labs the user has submitted
-        const labIds = labData.map((lab: any) => lab.id);
-        const { data: userSubmissions } = await supabase
-          .from("submissions")
-          .select("lab_id")
-          .eq("student_id", studentId)
-          .in("lab_id", labIds);
+    const { data: allLabsData, error: allLabsError } = labsResult;
+    const { data: userSubmissions } = submissionsResult;
 
-        const submittedLabIds = new Set(
-          (userSubmissions || []).map((s: any) => s.lab_id)
-        );
-
-        // Add hasSubmission flag to each lab
-        labsByCourse[course.id] = labData.map((lab: any) => ({
-          ...lab,
-          hasSubmission: submittedLabIds.has(lab.id),
-        }));
-      }
+    if (allLabsError) {
+      console.error("Error fetching labs:", allLabsError);
+      return NextResponse.json(
+        { error: "Failed to fetch labs" },
+        { status: 500 }
+      );
     }
+
+    // Create a Set for O(1) lookup of submitted lab IDs (database already filtered)
+    const submittedLabIds = new Set(
+      (userSubmissions || []).map((s: any) => s.lab_id)
+    );
+
+    // Group labs by course - database already sorted by course_id and lab_number
+    // Minimal JS processing: just grouping and adding hasSubmission flag
+    const labsByCourse: Record<string, any[]> = {};
+    (allLabsData || []).forEach((lab: any) => {
+      if (!labsByCourse[lab.course_id]) {
+        labsByCourse[lab.course_id] = [];
+      }
+      labsByCourse[lab.course_id].push({
+        ...lab,
+        hasSubmission: submittedLabIds.has(lab.id),
+      });
+    });
 
     return NextResponse.json({
       student: studentData,
