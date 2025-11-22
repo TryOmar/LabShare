@@ -63,11 +63,11 @@ export function AttachmentViewer({
 
       {/* Attachment Preview or Info */}
       {showImagePreview && attachment.downloadUrl && isImage ? (
-        <div className="w-full bg-gray-100 flex items-center justify-center p-6 min-h-[400px] max-h-[600px] overflow-auto">
+        <div className="w-full bg-gray-100 flex items-start justify-center p-6 min-h-[400px] max-h-[80vh] overflow-auto">
           <img
             src={attachment.downloadUrl}
             alt={attachment.filename}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-modern"
+            className="max-w-full h-auto object-contain rounded-lg shadow-modern"
             onError={() => {
               console.error("Failed to load image");
               onTogglePreview();
