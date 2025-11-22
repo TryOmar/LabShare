@@ -7,20 +7,20 @@ interface UseFileEditingResult {
   editCodeFilename: string;
   editCodeContent: string;
   editCodeLanguage: string;
-  
+
   // Rename states
   renamingCodeFileId: string | null;
   renamingAttachmentId: string | null;
   renameCodeFilename: string;
   renameAttachmentFilename: string;
-  
+
   // Edit handlers
   startEditCodeFile: (file: CodeFile) => void;
   cancelEditCodeFile: () => void;
   setEditCodeFilename: (value: string) => void;
   setEditCodeContent: (value: string) => void;
   setEditCodeLanguage: (value: string) => void;
-  
+
   // Rename handlers
   startRenameCodeFile: (file: CodeFile) => void;
   cancelRenameCodeFile: () => void;
@@ -28,7 +28,7 @@ interface UseFileEditingResult {
   startRenameAttachment: (attachment: Attachment) => void;
   cancelRenameAttachment: () => void;
   setRenameAttachmentFilename: (value: string) => void;
-  
+
   // Reset all editing states
   resetAllEditing: () => void;
 }
@@ -37,13 +37,19 @@ interface UseFileEditingResult {
  * Hook to manage file editing and renaming states
  */
 export function useFileEditing(): UseFileEditingResult {
-  const [editingCodeFileId, setEditingCodeFileId] = useState<string | null>(null);
+  const [editingCodeFileId, setEditingCodeFileId] = useState<string | null>(
+    null
+  );
   const [editCodeFilename, setEditCodeFilename] = useState("");
   const [editCodeContent, setEditCodeContent] = useState("");
   const [editCodeLanguage, setEditCodeLanguage] = useState("");
-  
-  const [renamingCodeFileId, setRenamingCodeFileId] = useState<string | null>(null);
-  const [renamingAttachmentId, setRenamingAttachmentId] = useState<string | null>(null);
+
+  const [renamingCodeFileId, setRenamingCodeFileId] = useState<string | null>(
+    null
+  );
+  const [renamingAttachmentId, setRenamingAttachmentId] = useState<
+    string | null
+  >(null);
   const [renameCodeFilename, setRenameCodeFilename] = useState("");
   const [renameAttachmentFilename, setRenameAttachmentFilename] = useState("");
 
@@ -116,4 +122,3 @@ export function useFileEditing(): UseFileEditingResult {
     resetAllEditing,
   };
 }
-
