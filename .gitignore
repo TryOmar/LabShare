@@ -93,6 +93,13 @@ data/*.sql
 dumps/*.sql
 backups/*.sql
 
+# Database backups directory
+backups/
+*.backup
+*.dump
+backup_*.sql
+backup_*.dump
+
 # Build outputs
 dist/
 .vercel/
