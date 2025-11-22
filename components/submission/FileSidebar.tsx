@@ -140,10 +140,10 @@ export function FileSidebar({
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${
                                 selectedCodeFile?.id === file.id
-                                  ? "text-white hover:bg-gray-700"
-                                  : "text-foreground hover:bg-accent/50"
+                                  ? "text-white hover:bg-gray-700 bg-white/10"
+                                  : "text-foreground hover:bg-accent/50 bg-white"
                               }`}
                               title="Options"
                               style={{
@@ -279,10 +279,10 @@ export function FileSidebar({
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${
                                 selectedAttachment?.id === attachment.id
-                                  ? "text-white hover:bg-gray-700"
-                                  : "text-foreground hover:bg-accent/50"
+                                  ? "text-white hover:bg-gray-700 bg-white/10"
+                                  : "text-foreground hover:bg-accent/50 bg-white"
                               }`}
                               title="Options"
                               style={{
