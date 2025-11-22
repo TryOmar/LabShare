@@ -141,32 +141,6 @@ export function CodeViewer({
                 {showHtmlPreview ? "Code" : "Preview"}
               </button>
             )}
-            {isCpp && (
-              <button
-                onClick={onRunCode}
-                disabled={isRunningCode}
-                className="px-3 py-1.5 text-xs border border-border/50 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-400 hover:text-green-800 rounded-lg transition-all duration-200 shadow-modern disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-              >
-                {isRunningCode ? (
-                  <>
-                    <div className="spinner h-3 w-3 border-2 border-green-600 border-t-transparent rounded-full"></div>
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                    </svg>
-                    Run
-                  </>
-                )}
-              </button>
-            )}
           </div>
         )}
         {isOwner && isEditing && (
@@ -240,19 +214,45 @@ export function CodeViewer({
           {/* User Input Section (for C++ files) */}
           {isCpp && (
             <div className="border-t border-border/30 bg-muted/20 p-3">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-3 w-3 text-muted-foreground"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3 text-muted-foreground"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                  </svg>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Input (stdin)
+                  </span>
+                </div>
+                <button
+                  onClick={onRunCode}
+                  disabled={isRunningCode}
+                  className="px-3 py-1.5 text-xs border border-border/50 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-400 hover:text-green-800 rounded-lg transition-all duration-200 shadow-modern disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 >
-                  <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                  <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                </svg>
-                <span className="text-xs font-medium text-muted-foreground">
-                  Input (stdin)
-                </span>
+                  {isRunningCode ? (
+                    <>
+                      <div className="spinner h-3 w-3 border-2 border-green-600 border-t-transparent rounded-full"></div>
+                      Running...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                      </svg>
+                      Run
+                    </>
+                  )}
+                </button>
               </div>
               <textarea
                 value={userInput}
