@@ -15,15 +15,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
-import { useSubmission } from "@/hooks/useSubmission";
-import { useSubmissionMutations } from "@/hooks/useSubmissionMutations";
-import { useFileEditing } from "@/hooks/useFileEditing";
-import { usePreviewStates } from "@/hooks/usePreviewStates";
-import { useCodeExecution } from "@/hooks/useCodeExecution";
-import { useDialogStates } from "@/hooks/useDialogStates";
-import { useFileOperations } from "@/hooks/useFileOperations";
-import { useFileSelection } from "@/hooks/useFileSelection";
-import { useCommentsRefresh } from "@/hooks/useCommentsRefresh";
+import { useSubmission } from "@/hooks/submission/useSubmission";
+import { useSubmissionMutations } from "@/hooks/submission/useSubmissionMutations";
+import { useFileEditing } from "@/hooks/submission/useFileEditing";
+import { usePreviewStates } from "@/hooks/submission/usePreviewStates";
+import { useCodeExecution } from "@/hooks/submission/useCodeExecution";
+import { useDialogStates } from "@/hooks/submission/useDialogStates";
+import { useFileOperations } from "@/hooks/submission/useFileOperations";
+import { useFileSelection } from "@/hooks/submission/useFileSelection";
+import { useCommentsRefresh } from "@/hooks/submission/useCommentsRefresh";
 import { AddFilesModal } from "@/components/submission/AddFilesModal";
 import { SubmissionHeader } from "@/components/submission/SubmissionHeader";
 import { FileSidebar } from "@/components/submission/FileSidebar";
