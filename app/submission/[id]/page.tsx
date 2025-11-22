@@ -682,6 +682,18 @@ export default function SubmissionPage() {
   const [showHtmlPreview, setShowHtmlPreview] = useState(false);
   // Preview state for image attachments
   const [showImagePreview, setShowImagePreview] = useState(false);
+  
+  // Code execution states
+  const [isRunningCode, setIsRunningCode] = useState(false);
+  const [userInput, setUserInput] = useState(""); // For stdin input
+  const [executionResult, setExecutionResult] = useState<{
+    stdout: string;
+    stderr: string;
+    status: { id: number; description: string };
+    time: string;
+    memory: number;
+    message?: string;
+  } | null>(null);
 
   // Delete dialog states
   const [deleteSubmissionDialogOpen, setDeleteSubmissionDialogOpen] =
@@ -917,6 +929,8 @@ export default function SubmissionPage() {
     setRenamingCodeFileId(null);
     setRenamingAttachmentId(null);
     setOpenMenuId(null);
+    setExecutionResult(null); // Clear execution results when editing
+    setUserInput(""); // Clear user input when editing
   };
 
   // Cancel editing code file
@@ -1232,6 +1246,61 @@ export default function SubmissionPage() {
     }
   };
 
+  // Run C++ code
+  const handleRunCode = async () => {
+    if (!selectedCodeFile) return;
+
+    const language = selectedCodeFile.language.toLowerCase();
+    if (language !== "cpp" && language !== "c++") {
+      toast.error("Run button is only available for C++ code");
+      return;
+    }
+
+    setIsRunningCode(true);
+    setExecutionResult(null);
+
+    try {
+      const response = await fetch("/api/code/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          code: selectedCodeFile.content,
+          language: "cpp",
+          stdin: userInput || "",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to execute code");
+      }
+
+      const result = await response.json();
+      setExecutionResult(result);
+
+      if (result.status.id === 3) {
+        toast.success("Code executed successfully!");
+      } else if (result.status.id === 6) {
+        toast.error("Compilation error");
+      } else if (result.status.id >= 7 && result.status.id <= 12) {
+        toast.error(`Runtime error: ${result.status.description}`);
+      } else {
+        toast.info(result.status.description);
+      }
+    } catch (err) {
+      console.error("Error running code:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to execute code"
+      );
+      setExecutionResult(null);
+    } finally {
+      setIsRunningCode(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
@@ -1512,6 +1581,8 @@ export default function SubmissionPage() {
                               setSelectedAttachment(null);
                               setOpenMenuId(null);
                               setShowHtmlPreview(false); // Reset preview when switching files
+                              setExecutionResult(null); // Reset execution results when switching files
+                              setUserInput(""); // Reset user input when switching files
                             }}
                             className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedCodeFile?.id === file.id
@@ -1659,6 +1730,8 @@ export default function SubmissionPage() {
                               setSelectedCodeFile(null);
                               setOpenMenuId(null);
                               setShowImagePreview(false); // Reset preview when switching attachments
+                              setExecutionResult(null); // Reset execution results when switching to attachment
+                              setUserInput(""); // Reset user input when switching to attachment
                             }}
                             className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
                               selectedAttachment?.id === attachment.id
@@ -1828,6 +1901,33 @@ export default function SubmissionPage() {
                           {showHtmlPreview ? "Code" : "Preview"}
                         </button>
                       )}
+                      {(selectedCodeFile.language.toLowerCase() === "cpp" ||
+                        selectedCodeFile.language.toLowerCase() === "c++") && (
+                        <button
+                          onClick={handleRunCode}
+                          disabled={isRunningCode}
+                          className="px-3 py-1.5 text-xs border border-border/50 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-400 hover:text-green-800 rounded-lg transition-all duration-200 shadow-modern disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        >
+                          {isRunningCode ? (
+                            <>
+                              <div className="spinner h-3 w-3 border-2 border-green-600 border-t-transparent rounded-full"></div>
+                              Running...
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-3 w-3"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                              </svg>
+                              Run
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
                   {isOwner && editingCodeFileId === selectedCodeFile.id && (
@@ -1879,26 +1979,144 @@ export default function SubmissionPage() {
                     />
                   </div>
                 ) : (
-                  <div className="w-full overflow-x-auto bg-gray-50">
-                    <pre className="p-0 m-0 text-xs leading-relaxed min-w-full">
-                      <SyntaxHighlighter
-                        language={mapLanguageToPrism(selectedCodeFile.language)}
-                        style={oneLight}
-                        PreTag="div"
-                        showLineNumbers={true}
-                        wrapLongLines={true}
-                        customStyle={{
-                          margin: 0,
-                          background: "transparent",
-                          padding: "1rem",
-                          overflow: "visible",
-                        }}
-                        className="!p-4 text-xs leading-relaxed"
-                      >
-                        {selectedCodeFile.content}
-                      </SyntaxHighlighter>
-                    </pre>
-                  </div>
+                  <>
+                    <div className="w-full overflow-x-auto bg-gray-50">
+                      <pre className="p-0 m-0 text-xs leading-relaxed min-w-full">
+                        <SyntaxHighlighter
+                          language={mapLanguageToPrism(selectedCodeFile.language)}
+                          style={oneLight}
+                          PreTag="div"
+                          showLineNumbers={true}
+                          wrapLongLines={true}
+                          customStyle={{
+                            margin: 0,
+                            background: "transparent",
+                            padding: "1rem",
+                            overflow: "visible",
+                          }}
+                          className="!p-4 text-xs leading-relaxed"
+                        >
+                          {selectedCodeFile.content}
+                        </SyntaxHighlighter>
+                      </pre>
+                    </div>
+                    
+                    {/* User Input Section (for C++ files) - Below code block */}
+                    {!editingCodeFileId &&
+                      (selectedCodeFile.language.toLowerCase() === "cpp" ||
+                        selectedCodeFile.language.toLowerCase() === "c++") && (
+                        <div className="border-t border-border/30 bg-muted/20 p-3">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-3 w-3 text-muted-foreground"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                              <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                            </svg>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Input (stdin)
+                            </span>
+                          </div>
+                          <textarea
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            placeholder="Input (stdin)..."
+                            rows={2}
+                            disabled={isRunningCode}
+                            className="w-full px-3 py-2 border border-border/40 bg-white/60 text-foreground font-mono text-xs rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+                          />
+                        </div>
+                      )}
+                    
+                    {/* Execution Results */}
+                    {executionResult && (
+                      <div className="border-t border-border/30 bg-muted/30">
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-foreground">
+                              Execution Results
+                            </h3>
+                            <button
+                              onClick={() => setExecutionResult(null)}
+                              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              Close
+                            </button>
+                          </div>
+                          
+                          {/* Status Badge */}
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-1 text-xs font-semibold rounded ${
+                                executionResult.status.id === 3
+                                  ? "bg-green-100 text-green-800"
+                                  : executionResult.status.id === 6
+                                  ? "bg-red-100 text-red-800"
+                                  : executionResult.status.id >= 7 &&
+                                    executionResult.status.id <= 12
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {executionResult.status.description}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Time: {executionResult.time}s | Memory:{" "}
+                              {executionResult.memory
+                                ? `${(executionResult.memory / 1024).toFixed(2)} MB`
+                                : "N/A"}
+                            </span>
+                          </div>
+
+                          {/* Input (if provided) */}
+                          {userInput && (
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-muted-foreground">
+                                Input Used:
+                              </label>
+                              <pre className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs font-mono text-blue-900 overflow-x-auto whitespace-pre-wrap break-words">
+                                {userInput || "(no input)"}
+                              </pre>
+                            </div>
+                          )}
+
+                          {/* Output */}
+                          {executionResult.stdout && (
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-foreground">
+                                Output:
+                              </label>
+                              <pre className="p-3 bg-white/80 border border-border/50 rounded-lg text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap break-words">
+                                {executionResult.stdout || "(no output)"}
+                              </pre>
+                            </div>
+                          )}
+
+                          {/* Error/Stderr */}
+                          {executionResult.stderr && (
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-destructive">
+                                Error:
+                              </label>
+                              <pre className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs font-mono text-red-800 overflow-x-auto whitespace-pre-wrap break-words">
+                                {executionResult.stderr}
+                              </pre>
+                            </div>
+                          )}
+
+                          {/* Message (if any) */}
+                          {executionResult.message && (
+                            <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                              {executionResult.message}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : selectedAttachment ? (
