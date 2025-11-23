@@ -7,7 +7,6 @@
 
 CREATE OR REPLACE FUNCTION get_dashboard_submissions(
   p_student_id UUID,
-  p_course_ids UUID[],
   p_limit INTEGER
 )
 RETURNS JSONB
@@ -25,7 +24,12 @@ BEGIN
       MAX(s.created_at) OVER (PARTITION BY l.course_id) as course_max_date
     FROM submissions s
     INNER JOIN labs l ON s.lab_id = l.id
-    WHERE l.course_id = ANY(p_course_ids)
+        WHERE l.course_id IN (
+      SELECT ct.course_id FROM course_track ct
+      WHERE ct.track_id = (
+        SELECT track_id FROM students WHERE id = p_student_id
+      )
+    )
   ),
   submission_data AS (
     SELECT 

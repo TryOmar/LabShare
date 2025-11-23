@@ -37,59 +37,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    // Get courses for this track - database does the join
-    const { data: courseData, error: courseError } = await supabase
-      .from("course_track")
-      .select("courses(id, name, description)")
-      .eq("track_id", studentData.track_id);
+      // After we have the student's track, fetch courses and run database RPCs in parallel.
+      // The submissions RPC uses a conservative default `limitEstimate` so we don't
+      // have to wait for the course list to compute it (keeps requests parallel).
+      const limitEstimate = 100; // safe default: 10 per course * avg courses + buffer
 
-    if (courseError) {
-      console.error("Error fetching courses:", courseError);
-      return NextResponse.json(
-        { error: "Failed to fetch courses" },
-        { status: 500 }
-      );
-    }
+      const [courseResp, submissionResult, suggestedLabsResult] = await Promise.all([
+        supabase
+          .from("course_track")
+          .select("courses(id, name, description)")
+          .eq("track_id", studentData.track_id),
+        supabase.rpc("get_dashboard_submissions", {
+          p_student_id: studentId,
+          p_limit: limitEstimate,
+        }),
+        supabase.rpc("get_suggested_labs", {
+          p_student_id: studentId,
+        }),
+      ]);
 
-    // Extract courses from nested Supabase join structure - minimal JS processing
-    // Database already filtered and joined, we just extract the nested data
-    const coursesList = (courseData || [])
-      .map((ct: any) => ct.courses)
-      .filter(Boolean);
+      const { data: courseData, error: courseError } = courseResp as any;
 
-    if (coursesList.length === 0) {
-      // No courses, return early
-      return NextResponse.json({
-        student: studentData,
-        track: studentData.tracks,
-        courses: [],
-        coursesWithSubmissions: [],
-        recentSubmissions: [],
-        suggestedLabs: [],
-      });
-    }
+      if (courseError) {
+        console.error("Error fetching courses:", courseError);
+        return NextResponse.json(
+          { error: "Failed to fetch courses" },
+          { status: 500 }
+        );
+      }
 
-    // Extract course IDs - needed for SQL filtering (minimal JS - single map operation)
-    const courseIds = coursesList.map((c: any) => c.id);
+      // Extract courses from nested Supabase join structure - minimal JS processing
+      const coursesList = (courseData || []).map((ct: any) => ct.courses).filter(Boolean);
 
-    // Single SQL query that does all computation in the database
-    // Database calculates limit: 10 per course * number of courses + buffer
-    const limitEstimate = Math.max(100, courseIds.length * 15);
-
-    // Execute SQL queries in parallel - all computation done in database
-    const [submissionResult, suggestedLabsResult] = await Promise.all([
-      // Execute single SQL query that computes hasAccess and handles anonymous display
-      supabase.rpc('get_dashboard_submissions', {
-        p_student_id: studentId,
-        p_course_ids: courseIds,
-        p_limit: limitEstimate
-      }),
-      // Execute single SQL query that gets suggested labs
-      supabase.rpc('get_suggested_labs', {
-        p_student_id: studentId,
-        p_course_ids: courseIds
-      })
-    ]);
+      if (coursesList.length === 0) {
+        // No courses, return early
+        return NextResponse.json({
+          student: studentData,
+          track: studentData.tracks,
+          courses: [],
+          coursesWithSubmissions: [],
+          recentSubmissions: [],
+          suggestedLabs: [],
+        });
+      }
 
     const { data: submissionData, error: submissionError } = submissionResult;
     const { data: suggestedLabs, error: suggestedLabsError } = suggestedLabsResult;

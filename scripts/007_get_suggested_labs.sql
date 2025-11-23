@@ -3,8 +3,7 @@
 -- All filtering and computation done in SQL
 
 CREATE OR REPLACE FUNCTION get_suggested_labs(
-  p_student_id UUID,
-  p_course_ids UUID[]
+  p_student_id UUID
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -25,7 +24,13 @@ BEGIN
     FROM submissions s
     INNER JOIN labs l ON s.lab_id = l.id
     INNER JOIN courses c ON l.course_id = c.id
-    WHERE l.course_id = ANY(p_course_ids)
+    -- Restrict to courses that belong to the student's track
+    WHERE l.course_id IN (
+      SELECT ct.course_id FROM course_track ct
+      WHERE ct.track_id = (
+        SELECT track_id FROM students WHERE id = p_student_id
+      )
+    )
       AND s.student_id != p_student_id
       -- Exclude labs the user has already submitted to
       AND NOT EXISTS (
