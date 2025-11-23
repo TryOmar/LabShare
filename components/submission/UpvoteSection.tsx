@@ -29,13 +29,13 @@ export function UpvoteSection({
               disabled={isUpvoting}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-200 font-semibold ${
                 submission?.user_has_upvoted
-                  ? "bg-primary/10 text-primary border-2 border-primary/30 hover:bg-primary/20 hover:scale-105"
-                  : "bg-accent/50 text-muted-foreground border-2 border-border/50 hover:bg-accent hover:border-primary/40 hover:text-primary hover:scale-105"
+                  ? "bg-[#007bff]/10 text-[#007bff] border-2 border-[#007bff]/30 hover:bg-[#007bff]/20 hover:scale-105"
+                  : "bg-accent/50 text-muted-foreground border-2 border-border/50 hover:bg-accent hover:border-[#007bff]/40 hover:text-[#007bff] hover:scale-105"
               } ${
                 isUpvoting
                   ? "opacity-50 cursor-not-allowed scale-100"
                   : "cursor-pointer active:scale-95"
-              } shadow-modern hover:shadow-primary/20`}
+              } shadow-modern hover:shadow-[#007bff]/20`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
