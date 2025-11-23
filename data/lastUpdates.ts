@@ -11,6 +11,12 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "Updated like button color from red to blue in the submission page",
+    suggestedBy: ["@Omar-Ezzat-AbdAlmoaz"],
+    implementedBy: ["@Omar-Ezzat-AbdAlmoaz"],
+    date: "22 Nov 2025",
+  },
+  {
     feature: "Image/HTML preview and C++ code execution: Preview images and HTML files, test C++ code with real-time results",
     suggestedBy: ["@m10090", "@TryOmar", "@omartaha15"],
     implementedBy: ["@TryOmar", "@m10090"],
