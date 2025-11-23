@@ -66,8 +66,8 @@ export function SubmissionHeader({
             disabled={isUpvoting}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 ${
               submission?.user_has_upvoted
-                ? "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20"
-                : "bg-accent/50 text-muted-foreground border border-border/50 hover:bg-accent hover:border-primary/40 hover:text-primary"
+                ? "bg-[#007bff]/10 text-[#007bff] border border-[#007bff]/30 hover:bg-[#007bff]/20"
+                : "bg-accent/50 text-muted-foreground border border-border/50 hover:bg-accent hover:border-[#007bff]/40 hover:text-[#007bff]"
             } ${
               isUpvoting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
             }`}
