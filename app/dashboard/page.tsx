@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import DashboardPageClient from "./clientPage";
+import { requireAuth } from "@/lib/auth";
 
 export default async function DashboardPage() {
   // Get the base URL from headers for API calls
@@ -8,7 +9,11 @@ export default async function DashboardPage() {
   const host = headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") || "http";
   const baseUrl = `${protocol}://${host}`;
-
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
   try {
     // Call the existing API routes
     const [dashboardResponse, labsResponse] = await Promise.all([
@@ -17,14 +22,23 @@ export default async function DashboardPage() {
         headers: {
           cookie: headersList.get("cookie") || "",
         },
-        cache: "no-store",
+        cache: "force-cache",
+        next: {
+          tags: [`dashboard-${studentId}`],
+          revalidate: 100
+
+        }
       }),
       fetch(`${baseUrl}/api/labs`, {
         method: "GET",
         headers: {
           cookie: headersList.get("cookie") || "",
         },
-        cache: "no-store",
+        cache: "force-cache",
+        next: {
+          tags: [`labs-${studentId}`],
+          revalidate: 100
+        }
       }),
     ]);
 
