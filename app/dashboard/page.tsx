@@ -1,58 +1,39 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import DashboardPageClient from "./clientPage";
 import { requireAuth } from "@/lib/auth";
+import { getDashboardAction } from "@/app/api/dashboard/action";
+import { getLabsAction } from "@/app/api/labs/action";
+import { unstable_cache } from "next/cache";
 
 export default async function DashboardPage() {
-  // Get the base URL from headers for API calls
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = headersList.get("x-forwarded-proto") || "http";
-  const baseUrl = `${protocol}://${host}`;
-    const authResult = await requireAuth();
-    if ("error" in authResult) {
-      return authResult.error;
-    }
-    const studentId = authResult.studentId;
-  try {
-    // Call the existing API routes
-    const [dashboardResponse, labsResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/dashboard`, {
-        method: "GET",
-        headers: {
-          cookie: headersList.get("cookie") || "",
-        },
-        cache: "force-cache",
-        next: {
-          tags: [`dashboard-${studentId}`],
-          revalidate: 100
+  const authResult = await requireAuth();
+  if ("error" in authResult) {
+    redirect("/login");
+  }
+  const studentId = authResult.studentId;
 
-        }
-      }),
-      fetch(`${baseUrl}/api/labs`, {
-        method: "GET",
-        headers: {
-          cookie: headersList.get("cookie") || "",
-        },
-        cache: "force-cache",
-        next: {
-          tags: [`labs-${studentId}`],
-          revalidate: 100
-        }
-      }),
+  try {
+    // Fetch data in parallel using the cached functions
+    const [dashboardData, labsData] = await Promise.all([
+      getCachedDashboard(studentId),
+      getCachedLabs(studentId),
     ]);
 
-    // Check if unauthorized
-    if (dashboardResponse.status === 401) {
-      redirect("/login");
+    // Handle errors from actions
+    if ("error" in dashboardData) {
+      if (dashboardData.status === 401) {
+        redirect("/login");
+      }
+      throw new Error(
+        typeof dashboardData.error === "string"
+          ? dashboardData.error
+          : "Failed to load dashboard"
+      );
     }
 
-    if (!dashboardResponse.ok) {
-      throw new Error(`Failed to load dashboard: ${dashboardResponse.statusText}`);
-    }
-
-    const dashboardData = await dashboardResponse.json();
-    const labsData = labsResponse.ok ? await labsResponse.json() : { labsByCourse: {} };
+    // labsData error handling (non-critical, fallback to empty)
+    const safeLabsData =
+      "error" in labsData ? { labsByCourse: {} } : labsData;
 
     return (
       <DashboardPageClient
@@ -62,7 +43,7 @@ export default async function DashboardPage() {
         coursesWithSubmissions={dashboardData.coursesWithSubmissions || []}
         recentSubmissions={dashboardData.recentSubmissions || []}
         suggestedLabs={dashboardData.suggestedLabs || []}
-        labsByCourse={labsData.labsByCourse || {}}
+        labsByCourse={safeLabsData.labsByCourse || {}}
       />
     );
   } catch (error) {
@@ -70,3 +51,28 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 }
+
+// Helper to cache dashboard data with studentId as key
+const getCachedDashboard = async (studentId: string) => {
+  return unstable_cache(
+    async () => getDashboardAction(),
+    ["dashboard", studentId],
+    {
+      tags: [`dashboard-${studentId}`],
+      revalidate: 100,
+    }
+  )();
+};
+
+// Helper to cache labs data with studentId as key
+const getCachedLabs = async (studentId: string) => {
+  // this isn't needed but you know I am to lazy 
+  return unstable_cache(
+    async () => getLabsAction(),
+    ["labs", studentId],
+    {
+      tags: [`labs-${studentId}`],
+      revalidate: 100,
+    }
+  )();
+};
