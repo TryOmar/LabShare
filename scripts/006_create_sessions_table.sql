@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 -- Indexes for efficient session lookups
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_id ON sessions(id);
+-- Note: idx_sessions_id is not needed - PRIMARY KEY automatically creates an index
 CREATE INDEX IF NOT EXISTS idx_sessions_revoked ON sessions(revoked);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_revoked ON sessions(user_id, revoked);
 
@@ -20,8 +20,23 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_revoked ON sessions(user_id, revoke
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for sessions
--- All operations are allowed server-side (authentication is handled in application code)
--- The anon key is used, but RLS allows all operations since we validate in the app layer
+-- 
+-- SECURITY NOTE: These policies allow all operations (USING (true) and WITH CHECK (true)),
+-- which effectively disables Row Level Security for this table. This is intentional because:
+-- 
+-- 1. The application uses the anon key and validates authentication at the application layer
+-- 2. All session operations are performed server-side via API routes that require authentication
+-- 3. The application code enforces that users can only access their own sessions
+-- 
+-- RISK: If the anon key is compromised or if there's a bug in application-level validation,
+-- users could potentially access other users' sessions. Consider implementing proper RLS
+-- policies that restrict operations to the authenticated user if security requirements change.
+-- 
+-- For production deployments with higher security requirements, consider:
+-- - Using service role key for server-side operations (with proper access controls)
+-- - Implementing RLS policies that check user_id against auth.uid() or session context
+-- - Adding additional application-level checks and audit logging
+--
 CREATE POLICY "sessions_select_all" ON sessions FOR SELECT 
   USING (true);
 

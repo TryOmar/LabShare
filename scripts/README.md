@@ -8,8 +8,14 @@ This guide explains how to push your database schema and seed data to Supabase.
 2. Select your project
 3. Navigate to **SQL Editor** (left sidebar)
 4. Click **New Query**
-5. Copy and paste the contents of `001_create_schema.sql` and click **Run**
-6. Once the schema is created, copy and paste the contents of `002_seed_data.sql` and click **Run**
+5. Copy and paste the contents of each migration file in order and click **Run**:
+   - `001_create_schema.sql` - Creates database schema
+   - `002_seed_data.sql` - Seeds initial data
+   - `003_fix_timestamps_utc.sql` - Fixes timestamp timezone issues
+   - `004_remove_versions_separate_code_attachments.sql` - Migration to separate code files from attachments
+   - `005_add_performance_indexes.sql` - Adds performance indexes
+   - `006_create_sessions_table.sql` - Creates sessions table for JWT authentication
+   - `007_add_session_cleanup.sql` - Adds session cleanup function (optional but recommended)
 
 ## Option 2: Using Supabase CLI
 
