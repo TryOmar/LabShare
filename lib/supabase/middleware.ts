@@ -4,6 +4,8 @@ import { verifyToken } from "@/lib/auth/jwt";
 import { verifySession } from "@/lib/auth/sessions";
 import { extractFingerprint } from "@/lib/auth/fingerprint";
 import { clearAuthCookies } from "@/lib/auth";
+// Import config validation to ensure JWT_SECRET is set at startup
+import "@/lib/config";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -65,6 +67,14 @@ export async function updateSession(request: NextRequest) {
           clearAuthCookies(redirectResponse);
           return redirectResponse;
         }
+      } else {
+        // Fingerprint missing but token is valid - this shouldn't happen in normal flow
+        // but could occur if fingerprint cookie was deleted. Clear auth and redirect.
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        const redirectResponse = NextResponse.redirect(url);
+        clearAuthCookies(redirectResponse);
+        return redirectResponse;
       }
     }
   }
