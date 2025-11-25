@@ -1,12 +1,18 @@
 import { SignJWT, jwtVerify } from "jose";
+import { validateConfig } from "@/lib/config";
 
 /**
  * Gets the JWT secret from environment variables.
  * Throws an error if not configured.
+ * 
+ * Note: validateConfig() should be called at startup to catch this early.
  */
 function getJWTSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
+    // Validate config on first access if not already validated
+    validateConfig();
+    // If we get here, JWT_SECRET is still missing (shouldn't happen)
     throw new Error(
       "JWT_SECRET environment variable is not set. Please configure it in your .env.local file."
     );
@@ -66,6 +72,8 @@ export async function verifyToken(
     return { sessionId };
   } catch (error) {
     // Token is invalid, expired, or malformed
+    // Log error details for debugging/monitoring (not exposed to client)
+    console.debug("JWT verification failed:", error);
     return null;
   }
 }
