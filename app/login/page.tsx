@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -111,8 +111,7 @@ export default function LoginPage() {
       }
 
       // Cookies are set by the server (httpOnly, secure, 7 days expiration)
-      // No need to store in localStorage - the cookie persists across sessions
-      // Redirect to terms page first (will redirect to dashboard if already accepted)
+      // Redirect to terms page (will show terms on every login)
       router.push("/terms");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -139,14 +138,14 @@ export default function LoginPage() {
         <div className="bg-gradient-card border border-border/50 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-modern-xl backdrop-blur-sm">
           <div className="flex flex-col items-center mb-6 sm:mb-8">
             <div className="h-16 w-16 sm:h-20 sm:w-20 mb-4 flex items-center justify-center">
-              <img 
-                src="/icon.png" 
-                alt="Lab Sharing Logo" 
+              <img
+                src="/icon.png"
+                alt="Lab Sharing Logo"
                 className="h-full w-full object-contain"
                 onError={(e) => {
                   // Fallback to PNG if SVG fails
                   const target = e.target as HTMLImageElement;
-                  target.src = '/android-chrome-192x192.png';
+                  target.src = "/android-chrome-192x192.png";
                 }}
               />
             </div>
@@ -155,9 +154,10 @@ export default function LoginPage() {
             </h1>
           </div>
           <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
-            A collaborative learning platform where students share lab solutions, learn from each other, 
-            and provide constructive feedback. Complete your labs, review with your instructor, then 
-            explore peer solutions to enhance your understanding.
+            A collaborative learning platform where students share lab
+            solutions, learn from each other, and provide constructive feedback.
+            Complete your labs, review with your instructor, then explore peer
+            solutions to enhance your understanding.
           </p>
 
           {step === "email" ? (
@@ -177,11 +177,14 @@ export default function LoginPage() {
               </div>
               {error && (
                 <div className="mb-4 sm:mb-5 animate-slide-up">
-                  <p className="text-xs sm:text-sm text-destructive mb-3 font-medium">{error}</p>
+                  <p className="text-xs sm:text-sm text-destructive mb-3 font-medium">
+                    {error}
+                  </p>
                   {error === "Email not found in student database" && (
                     <div className="bg-muted/50 border border-border/30 p-4 sm:p-5 text-xs sm:text-sm text-muted-foreground rounded-xl backdrop-blur-sm">
                       <p className="mb-3 sm:mb-4 leading-relaxed">
-                        Email not registered. Submit your ITI email through our form to request access.
+                        Email not registered. Submit your ITI email through our
+                        form to request access.
                       </p>
                       <a
                         href="https://forms.gle/yUSfPU1Vo4aHQKud7"
@@ -219,7 +222,11 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              {error && <p className="text-xs sm:text-sm text-destructive mb-4 sm:mb-5 animate-slide-up font-medium">{error}</p>}
+              {error && (
+                <p className="text-xs sm:text-sm text-destructive mb-4 sm:mb-5 animate-slide-up font-medium">
+                  {error}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={loading || code.length !== 6}

@@ -29,26 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Invalidate all existing unused codes for this student
-    const { data: invalidatedCodes, error: invalidateError } = await supabase
-      .from("auth_codes")
-      .update({ used: true })
-      .eq("student_id", student.id)
-      .eq("used", false)
-      .select();
-
-    // Invalidate all existing unused codes for this student
-    if (process.env.NODE_ENV === "development") {
-      console.log("🗑️ Invalidated old codes:", {
-        count: invalidatedCodes?.length || 0,
-        hasError: !!invalidateError
-      });
-    }
-
     // Generate fresh OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     // Create expiration time: 10 minutes from now in UTC
-    // Use Date.UTC to ensure we're working in UTC
     const nowUTC = new Date();
     const expiresAtUTC = new Date(nowUTC.getTime() + 10 * 60000); // 10 minutes from now
 
@@ -65,28 +48,52 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Insert new code with UTC timestamps
-    // Explicitly set created_at to UTC to avoid timezone issues
-    const createdAtISO = nowUTC.toISOString();
-    const { data: newCode, error: insertError } = await supabase
+    // Use the database function to atomically upsert the OTP code
+    // This function uses advisory locks to prevent race conditions when multiple
+    // requests come in simultaneously for the same user
+    const { error: upsertError } = await supabase.rpc("upsert_otp_code", {
+      p_student_id: student.id,
+      p_code: otp,
+      p_expires_at: expiresAtISO,
+    });
+
+    if (upsertError) {
+      console.error("❌ Error upserting auth code:", upsertError);
+      // Check if it's a unique constraint violation (shouldn't happen with the function, but handle it)
+      if (upsertError.code === "23505" || upsertError.message?.includes("duplicate key")) {
+        // Race condition occurred - retry once after a short delay
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const { error: retryError } = await supabase.rpc("upsert_otp_code", {
+          p_student_id: student.id,
+          p_code: otp,
+          p_expires_at: expiresAtISO,
+        });
+        if (retryError) {
+          console.error("❌ Error on retry:", retryError);
+          return NextResponse.json(
+            { error: "Failed to generate code. Please try again." },
+            { status: 500 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "Failed to generate code" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Fetch the newly created code to return its ID
+    const { data: newCode, error: fetchError } = await supabase
       .from("auth_codes")
-      .insert([
-        {
-          student_id: student.id,
-          code: otp,
-          expires_at: expiresAtISO, // UTC ISO string
-          created_at: createdAtISO, // Explicitly set created_at in UTC
-        },
-      ])
-      .select()
+      .select("id, created_at")
+      .eq("student_id", student.id)
+      .eq("code", otp)
       .single();
 
-    if (insertError || !newCode) {
-      console.error("❌ Error inserting auth code:", insertError);
-      return NextResponse.json(
-        { error: "Failed to generate code" },
-        { status: 500 }
-      );
+    if (fetchError) {
+      console.error("❌ Error fetching new auth code:", fetchError);
+      // Code was created but we couldn't fetch it - still proceed with email
     }
 
     // Send email with OTP
@@ -132,8 +139,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       messageId: emailData?.id,
-      codeId: newCode.id,
-      createdAt: newCode.created_at
+      codeId: newCode?.id,
+      createdAt: newCode?.created_at
     });
   } catch (error) {
     // Log error without exposing sensitive details

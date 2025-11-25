@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 
 export default function TermsPage() {
   const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const acceptedRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,8 +31,8 @@ export default function TermsPage() {
           return;
         }
 
-        // User is already logged in, redirect to dashboard (no need to show terms)
-        router.push("/dashboard");
+        // User is authenticated - show the terms page
+        setLoading(false);
       } catch (err) {
         console.error("Error checking auth:", err);
         router.push("/login");
@@ -40,12 +42,50 @@ export default function TermsPage() {
     checkAuth();
   }, [router]);
 
+  // Auto-logout if user tries to leave without accepting
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!acceptedRef.current) {
+        // User is trying to leave without accepting - logout
+        // Use fetch with keepalive for reliable delivery during page unload
+        fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+          keepalive: true,
+        }).catch(() => {
+          // Ignore errors - page is unloading
+        });
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   const handleAccept = () => {
     if (!agreed) return;
 
-    // Simply redirect to dashboard - no state storage needed
+    // Mark as accepted to prevent logout
+    acceptedRef.current = true;
+    
+    // Redirect to dashboard
     router.push("/dashboard");
   };
+
+  // Show loading while checking authentication and terms status
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="spinner h-5 w-5"></div>
+          <p className="text-foreground font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-white via-white to-accent/20 p-4 sm:p-6 animate-fade-in">

@@ -4,11 +4,11 @@ A collaborative platform for ITI students to share and view lab solutions. Built
 
 ## 🚀 Features
 
-- **Secure Authentication**: OTP-based email authentication with persistent sessions (30-day cookies)
+- **Secure Authentication**: OTP-based email authentication with JWT tokens and server-side sessions (device-bound with fingerprinting)
 - **Terms & Conditions**: First-time users must accept terms before accessing the platform
 - **Lab Management**: Browse labs by course and track with many-to-many course-track relationships
 - **Solution Sharing**: Upload and share lab solutions with code files and file attachments
-- **Dual File Support**: 
+- **Dual File Support**:
   - **Code Files**: Direct code editing with syntax highlighting (JavaScript, TypeScript, Python, C++, Java, etc.)
   - **File Attachments**: Upload PDFs, images, and other files stored in Supabase Storage
 - **Comments System**: Comment on submissions with markdown support (bold, code blocks, inline code)
@@ -26,14 +26,14 @@ A collaborative platform for ITI students to share and view lab solutions. Built
 - **UI Components**: Radix UI
 - **Database**: Supabase (PostgreSQL)
 - **Storage**: Supabase Storage (for file attachments)
-- **Authentication**: Custom OTP flow with httpOnly cookies
+- **Authentication**: Custom OTP flow with JWT tokens and server-side sessions (device fingerprinting)
 - **Email**: Resend
 - **Syntax Highlighting**: react-syntax-highlighter
 - **Deployment**: Vercel (recommended)
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm, yarn, or pnpm
 - Supabase account and project
 - Resend account (for email OTP)
@@ -71,6 +71,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key  # Required for storage
 # Resend (for email OTP)
 RESEND_API_KEY=your_resend_api_key
 
+# JWT Authentication
+JWT_SECRET=your_jwt_secret_key  # Generate a secure random string (e.g., openssl rand -hex 32)
+JWT_EXPIRES_IN=7d  # JWT expiration time (default: 7d, supports formats like "1h", "30d", etc.)
+
 # Database (optional - for migration script)
 DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@[HOST]:[PORT]/postgres
 
@@ -96,10 +100,13 @@ npm run db:migrate
 ```
 
 This will execute the SQL scripts in the `scripts/` directory in order:
+
 - `001_create_schema.sql` - Creates database schema with all tables and RLS policies
 - `002_seed_data.sql` - Seeds initial data (tracks, courses, labs, students)
 - `003_fix_timestamps_utc.sql` - Fixes timestamp timezone issues
 - `004_remove_versions_separate_code_attachments.sql` - Migration to separate code files from attachments
+- `005_add_performance_indexes.sql` - Adds performance indexes for common queries
+- `006_create_sessions_table.sql` - Creates sessions table for JWT-based authentication
 
 **Note**: See `scripts/README.md` for detailed migration instructions and alternative methods.
 
@@ -153,6 +160,10 @@ LabShare/
 │   └── theme-provider.tsx
 ├── lib/                   # Utility libraries
 │   ├── auth.ts           # Authentication utilities
+│   ├── auth/             # Authentication modules
+│   │   ├── jwt.ts        # JWT signing and verification
+│   │   ├── sessions.ts  # Session management
+│   │   └── fingerprint.ts # Device fingerprinting
 │   ├── storage.ts        # Storage operations (Supabase)
 │   ├── supabase/         # Supabase clients
 │   │   ├── client.ts     # Client-side client
@@ -165,6 +176,8 @@ LabShare/
 │   ├── 002_seed_data.sql
 │   ├── 003_fix_timestamps_utc.sql
 │   ├── 004_remove_versions_separate_code_attachments.sql
+│   ├── 005_add_performance_indexes.sql
+│   ├── 006_create_sessions_table.sql
 │   ├── run-migrations.js  # Migration runner
 │   └── README.md         # Migration guide
 ├── data/                  # Static data
@@ -177,7 +190,10 @@ LabShare/
 ## 🔐 Security Features
 
 - **Server-Side Validation**: All database queries run server-side with authentication checks
-- **HttpOnly Cookies**: Secure cookie-based authentication (30-day expiration)
+- **JWT Authentication**: Secure JWT tokens with server-side session validation
+- **Device Fingerprinting**: Sessions are bound to device fingerprints to detect token theft
+- **Session Management**: Server-side session revocation and multi-device support
+- **HttpOnly Cookies**: Secure cookie-based token storage (httpOnly, secure, sameSite)
 - **Terms Acceptance**: First-time users must accept terms before accessing the platform
 - **Authorization Checks**: Users can only access/modify their own data
 - **Input Validation**: Server-side validation for all API routes
@@ -187,9 +203,10 @@ LabShare/
 
 ## 🎯 API Routes
 
-All API routes require authentication via httpOnly cookies (except login/OTP endpoints):
+All API routes require authentication via JWT tokens in httpOnly cookies (except login/OTP endpoints):
 
 ### Authentication
+
 - `POST /api/auth/request-otp` - Request OTP code
 - `POST /api/auth/send-otp` - Send OTP email
 - `POST /api/auth/verify-otp` - Verify OTP and create session
@@ -199,16 +216,19 @@ All API routes require authentication via httpOnly cookies (except login/OTP end
 - `POST /api/auth/logout` - Logout user
 
 ### Dashboard & Labs
+
 - `GET /api/dashboard` - Get dashboard data (student, track, courses, recent submissions)
 - `GET /api/labs` - Get labs for authenticated student (grouped by course)
 - `GET /api/lab/[id]` - Get specific lab data with submissions
 
 ### Submissions
+
 - `GET /api/submission/[id]` - Get submission details (with code files and attachments)
 - `POST /api/submission/upload` - Upload/update submission (code files + attachments)
 - `DELETE /api/submission/[id]` - Delete submission (and associated files)
 
 ### Comments
+
 - `GET /api/submission/[id]/comments` - Get comments for a submission
 - `POST /api/submission/[id]/comments` - Add a comment
 - `DELETE /api/submission/[id]/comments/[commentId]` - Delete a comment
@@ -216,23 +236,28 @@ All API routes require authentication via httpOnly cookies (except login/OTP end
 ## 📝 Database Schema
 
 ### Core Tables
+
 - `students` - Student information (name, email, track_id)
 - `tracks` - ITI tracks (code, name)
 - `courses` - Course information (name, description)
 - `course_track` - Many-to-many relationship between courses and tracks
 - `labs` - Lab assignments (course_id, lab_number, title, description)
 - `auth_codes` - OTP codes for authentication (student_id, code, expires_at, used)
+- `sessions` - User sessions for JWT authentication (user_id, fingerprint, last_seen, revoked)
 
 ### Submission Tables
+
 - `submissions` - Student submissions (student_id, lab_id, title, view_count)
 - `submission_code` - Code files (submission_id, filename, language, content)
 - `submission_attachments` - File attachments stored in Supabase Storage (submission_id, filename, storage_path, mime_type, file_size)
 
 ### Interaction Tables
+
 - `comments` - Comments on submissions (submission_id, student_id, content)
 - `lab_unlocks` - Track which labs students have unlocked (student_id, lab_id, unlocked_at)
 
 ### Key Relationships
+
 - Students belong to one Track (many-to-one)
 - Courses can belong to multiple Tracks (many-to-many via `course_track`)
 - Labs belong to one Course (many-to-one)
@@ -262,10 +287,13 @@ The application uses Supabase Storage for file attachments:
 ### Environment Variables for Production
 
 Make sure to set all environment variables in your deployment platform:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
+- `JWT_SECRET` - Secure random string for signing JWTs
+- `JWT_EXPIRES_IN` - JWT expiration time (default: "7d")
 - `NODE_ENV=production`
 - `DATABASE_URL` (optional, for migrations)
 
@@ -285,11 +313,13 @@ The database has evolved through several migrations:
 2. **002_seed_data.sql** - Initial data seeding
 3. **003_fix_timestamps_utc.sql** - UTC timestamp fixes
 4. **004_remove_versions_separate_code_attachments.sql** - Removed version system, separated code files from attachments
+5. **005_add_performance_indexes.sql** - Added performance indexes for common queries
+6. **006_create_sessions_table.sql** - Created sessions table for JWT-based authentication with device fingerprinting
 
 ## 🎨 UI Features
 
 - **Syntax Highlighting**: Code files support multiple languages with Prism.js
-- **Markdown Support**: Comments support bold (`**text**`), inline code (`` `code` ``), and code blocks (``` ```code``` ```)
+- **Markdown Support**: Comments support bold (`**text**`), inline code (`` `code` ``), and code blocks (` `code` `)
 - **Date Formatting**: All dates display with time (e.g., "12/25/2023, 3:45 PM")
 - **Responsive Design**: Mobile-friendly interface with Tailwind CSS
 - **Dark Mode Ready**: Theme provider included (can be enabled)
