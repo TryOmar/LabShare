@@ -6,9 +6,9 @@ import { uploadAttachment } from "@/lib/storage";
 /**
  * POST /api/submission/upload
  * Creates or updates a submission with files.
- * Uses the authenticated studentId from the cookie (validated server-side).
+ * Uses the authenticated studentId from JWT session (validated server-side).
  * This prevents users from submitting on behalf of other users.
- * 
+ *
  * Files are separated into:
  * - Code files: Saved to submission_code table (pasted or uploaded code files)
  * - Attachments: Saved to submission_attachments table (PDFs, images, etc.)
@@ -26,7 +26,13 @@ export async function POST(request: NextRequest) {
     const { labId, title, files, isAnonymous } = body;
 
     // Validate required fields
-    if (!labId || !title || !files || !Array.isArray(files) || files.length === 0) {
+    if (
+      !labId ||
+      !title ||
+      !files ||
+      !Array.isArray(files) ||
+      files.length === 0
+    ) {
       return NextResponse.json(
         { error: "labId, title, and files are required" },
         { status: 400 }
@@ -36,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Check for duplicate filenames (case-insensitive)
     const filenameMap = new Map<string, string>();
     const duplicates: string[] = [];
-    
+
     for (const file of files) {
       if (!file.filename) {
         return NextResponse.json(
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       const filenameLower = file.filename.toLowerCase();
       if (filenameMap.has(filenameLower)) {
         duplicates.push(file.filename);
@@ -52,15 +58,19 @@ export async function POST(request: NextRequest) {
         filenameMap.set(filenameLower, file.filename);
       }
     }
-    
+
     if (duplicates.length > 0) {
       return NextResponse.json(
-        { error: `Duplicate filenames detected: ${duplicates.join(', ')}. Each file must have a unique name.` },
+        {
+          error: `Duplicate filenames detected: ${duplicates.join(
+            ", "
+          )}. Each file must have a unique name.`,
+        },
         { status: 400 }
       );
     }
 
-    // Note: We use authenticatedStudentId from the cookie, not from the request body
+    // Note: We use authenticatedStudentId from the JWT session, not from the request body
     // This prevents users from submitting on behalf of other users
 
     const supabase = await createClient();
@@ -110,10 +120,10 @@ export async function POST(request: NextRequest) {
       // Update existing submission
       const { error: updateError } = await supabase
         .from("submissions")
-        .update({ 
-          title, 
+        .update({
+          title,
           is_anonymous: isAnonymous === true,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString(),
         })
         .eq("id", submission.id);
 
@@ -127,10 +137,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Code file extensions that should be parsed and stored as text
-    const codeExtensions = ['.js', '.ts', '.py', '.cpp', '.c', '.java', '.cs', '.php', '.rb', '.go', '.rs', '.txt', '.sql', '.html', '.css'];
-    
+    const codeExtensions = [
+      ".js",
+      ".ts",
+      ".py",
+      ".cpp",
+      ".c",
+      ".java",
+      ".cs",
+      ".php",
+      ".rb",
+      ".go",
+      ".rs",
+      ".txt",
+      ".sql",
+      ".html",
+      ".css",
+    ];
+
     const now = new Date().toISOString();
-    
+
     // Separate files into code files and attachments
     const codeFiles: any[] = [];
     const attachmentsToProcess: Array<{
@@ -142,8 +168,10 @@ export async function POST(request: NextRequest) {
 
     for (const file of files) {
       // Check if file has an extension
-      const fileExt = file.filename ? '.' + file.filename.split('.').pop()?.toLowerCase() : '';
-      
+      const fileExt = file.filename
+        ? "." + file.filename.split(".").pop()?.toLowerCase()
+        : "";
+
       // If file has content and language, it's a code file (pasted or uploaded code)
       // OR if it has a code extension
       if (file.content && file.language) {
@@ -161,8 +189,8 @@ export async function POST(request: NextRequest) {
         codeFiles.push({
           submission_id: submission.id,
           filename: file.filename,
-          language: file.language || 'text',
-          content: file.content || '',
+          language: file.language || "text",
+          content: file.content || "",
           created_at: now,
           updated_at: now,
         });
@@ -172,13 +200,15 @@ export async function POST(request: NextRequest) {
         if (file.fileData || file.base64) {
           attachmentsToProcess.push({
             filename: file.filename,
-            mimeType: file.mimeType || 'application/octet-stream',
+            mimeType: file.mimeType || "application/octet-stream",
             fileData: file.fileData || file.base64,
-            isBase64: !!file.base64 || file.fileData?.startsWith('data:'),
+            isBase64: !!file.base64 || file.fileData?.startsWith("data:"),
           });
         } else {
           return NextResponse.json(
-            { error: `File "${file.filename}" is not a code file and no file data provided. Attachments must include file data.` },
+            {
+              error: `File "${file.filename}" is not a code file and no file data provided. Attachments must include file data.`,
+            },
             { status: 400 }
           );
         }
@@ -208,16 +238,16 @@ export async function POST(request: NextRequest) {
         let fileBuffer: Buffer;
         if (attachment.isBase64) {
           // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-          const base64Data = attachment.fileData.includes(',') 
-            ? attachment.fileData.split(',')[1] 
+          const base64Data = attachment.fileData.includes(",")
+            ? attachment.fileData.split(",")[1]
             : attachment.fileData;
-          
+
           // Decode base64 directly to Buffer - this is the correct way
           // DO NOT use .buffer.slice() as it corrupts the binary data
-          fileBuffer = Buffer.from(base64Data, 'base64');
+          fileBuffer = Buffer.from(base64Data, "base64");
         } else {
           // Assume it's already base64 encoded string (without data URL prefix)
-          fileBuffer = Buffer.from(attachment.fileData, 'base64');
+          fileBuffer = Buffer.from(attachment.fileData, "base64");
         }
 
         // Upload to storage using raw Buffer
@@ -228,8 +258,11 @@ export async function POST(request: NextRequest) {
           attachment.mimeType
         );
 
-        if ('error' in uploadResult) {
-          console.error(`Error uploading attachment ${attachment.filename}:`, uploadResult.error);
+        if ("error" in uploadResult) {
+          console.error(
+            `Error uploading attachment ${attachment.filename}:`,
+            uploadResult.error
+          );
           return NextResponse.json(
             { error: `Failed to upload attachment: ${uploadResult.error}` },
             { status: 500 }
@@ -250,9 +283,16 @@ export async function POST(request: NextRequest) {
           updated_at: now,
         });
       } catch (error) {
-        console.error(`Error processing attachment ${attachment.filename}:`, error);
+        console.error(
+          `Error processing attachment ${attachment.filename}:`,
+          error
+        );
         return NextResponse.json(
-          { error: `Failed to process attachment: ${error instanceof Error ? error.message : 'Unknown error'}` },
+          {
+            error: `Failed to process attachment: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          },
           { status: 500 }
         );
       }
@@ -282,7 +322,7 @@ export async function POST(request: NextRequest) {
         .select("id")
         .eq("submission_id", submission.id)
         .limit(1);
-      
+
       const { data: existingAttachments } = await supabase
         .from("submission_attachments")
         .select("id")
@@ -291,16 +331,18 @@ export async function POST(request: NextRequest) {
 
       // If submission has no existing files and no new files were added, delete it
       // (to prevent empty submissions from unlocking labs)
-      if ((!existingCodeFiles || existingCodeFiles.length === 0) && 
-          (!existingAttachments || existingAttachments.length === 0)) {
-        await supabase
-          .from("submissions")
-          .delete()
-          .eq("id", submission.id);
+      if (
+        (!existingCodeFiles || existingCodeFiles.length === 0) &&
+        (!existingAttachments || existingAttachments.length === 0)
+      ) {
+        await supabase.from("submissions").delete().eq("id", submission.id);
       }
-      
+
       return NextResponse.json(
-        { error: "At least one file (code file or attachment) must be successfully uploaded" },
+        {
+          error:
+            "At least one file (code file or attachment) must be successfully uploaded",
+        },
         { status: 400 }
       );
     }
@@ -330,10 +372,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error in upload submission API:", error);
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
-
