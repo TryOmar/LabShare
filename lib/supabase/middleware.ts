@@ -59,7 +59,7 @@ export async function updateSession(request: NextRequest) {
         if (sessionResult) {
           isAuthenticated = true;
         } else {
-          // Session invalid, revoked, or fingerprint mismatch
+          // Session invalid or fingerprint mismatch
           // Clear cookies and redirect to login
           const url = request.nextUrl.clone();
           url.pathname = "/login";

@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
       .select("id, created_at")
       .eq("student_id", student.id)
       .eq("code", otp)
-      .eq("used", false)
       .single();
 
     if (fetchError) {

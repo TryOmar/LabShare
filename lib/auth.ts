@@ -14,8 +14,7 @@ import { getFingerprintFromCookies } from "@/lib/auth/fingerprint";
  * 2. Extract fingerprint from fingerprint cookie
  * 3. Verify JWT → get session_id
  * 4. Verify session in DB → get user_id
- * 5. Handle fingerprint mismatch (revoke session, clear cookies)
- * 6. Handle revoked sessions (clear cookies)
+ * 5. Handle fingerprint mismatch (delete session, clear cookies)
  *
  * @returns The authenticated user ID, or null if not authenticated
  */
@@ -46,7 +45,7 @@ export async function getAuthenticatedStudentId(): Promise<string | null> {
   // Verify session in database
   const sessionResult = await verifySession(sessionId, fingerprint);
   if (!sessionResult) {
-    // Session invalid, revoked, or fingerprint mismatch
+    // Session invalid or fingerprint mismatch
     // Cookies should be cleared by the caller if needed
     return null;
   }
@@ -111,7 +110,7 @@ export async function validateStudentId(
 
 /**
  * Clears authentication cookies (access_token and fingerprint).
- * Used when authentication fails or session is revoked.
+ * Used when authentication fails or session is invalid.
  *
  * @param response - The NextResponse object to set cookies on
  */

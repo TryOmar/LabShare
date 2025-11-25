@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createSession } from "@/lib/auth/sessions";
 import { signToken } from "@/lib/auth/jwt";
 import { generateFingerprint } from "@/lib/auth/fingerprint";
+import { runLazyCleanup } from "@/lib/auth/cleanup";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email not found" }, { status: 404 });
     }
 
-    // Get the most recent unused code for this student
+    // Get the most recent code for this student
     // Only get codes created in the last 15 minutes to avoid matching old codes
     // Use UTC explicitly
     const nowUTC = new Date();
@@ -41,7 +42,6 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("code", code)
       .eq("student_id", student.id)
-      .eq("used", false)
       .gte("created_at", fifteenMinutesAgoUTC)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -90,11 +90,15 @@ export async function POST(request: NextRequest) {
 
     // Check if code has expired
     if (timeRemaining <= 0) {
-      // Mark expired code as used
-      await supabase
+      // Delete expired code immediately
+      const { error: deleteError } = await supabase
         .from("auth_codes")
-        .update({ used: true })
+        .delete()
         .eq("id", authCode.id);
+
+      if (deleteError) {
+        console.error("Error deleting expired auth code:", deleteError);
+      }
 
       return NextResponse.json(
         {
@@ -106,11 +110,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark code as used
-    await supabase
+    // Delete code immediately after successful use (before creating session to ensure cleanup)
+    const { error: deleteError } = await supabase
       .from("auth_codes")
-      .update({ used: true })
+      .delete()
       .eq("id", authCode.id);
+
+    if (deleteError) {
+      console.error("Error deleting auth code after use:", deleteError);
+      // Continue anyway - code was used successfully, but log the error
+    }
 
     // Generate device fingerprint from user agent
     const userAgent = request.headers.get("user-agent") || "";
@@ -147,6 +156,13 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days (matches JWT expiration)
       path: "/",
+    });
+
+    // Run lazy cleanup in the background (non-blocking)
+    // This helps keep the database clean without impacting user experience
+    runLazyCleanup().catch((error) => {
+      console.error("Background cleanup error:", error);
+      // Silently fail - cleanup shouldn't affect login
     });
 
     return response;

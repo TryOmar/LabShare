@@ -4,13 +4,15 @@ import { cleanupExpiredSessions } from "@/lib/auth/sessions";
 /**
  * POST /api/admin/cleanup-sessions
  * 
- * Cleans up expired and stale sessions from the database.
+ * Cleans up expired sessions from the database.
+ * 
+ * NOTE: Consider using /api/cleanup instead, which cleans up both sessions and auth codes.
+ * 
  * This endpoint should be called periodically (e.g., via cron job) to prevent
  * unbounded table growth.
  * 
  * Optional query parameters:
  * - jwtExpirationDays: Number of days after which sessions are considered expired (default: 7)
- * - revokedCleanupDays: Number of days to keep revoked sessions before cleanup (default: 1)
  * 
  * Security: In production, this should be protected with an API key or admin authentication.
  */
@@ -27,13 +29,9 @@ export async function POST(request: NextRequest) {
     const jwtExpirationDays = searchParams.get("jwtExpirationDays")
       ? parseInt(searchParams.get("jwtExpirationDays")!, 10)
       : 7;
-    const revokedCleanupDays = searchParams.get("revokedCleanupDays")
-      ? parseInt(searchParams.get("revokedCleanupDays")!, 10)
-      : 1;
 
     const deletedCount = await cleanupExpiredSessions(
-      jwtExpirationDays,
-      revokedCleanupDays
+      jwtExpirationDays
     );
 
     return NextResponse.json({

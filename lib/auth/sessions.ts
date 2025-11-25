@@ -21,7 +21,6 @@ export async function createSession(
     user_id: userId,
     fingerprint: fingerprint,
     last_seen: new Date().toISOString(),
-    revoked: false,
   });
 
   if (error) {
@@ -37,11 +36,11 @@ export async function createSession(
 
 /**
  * Verifies a session by checking:
- * 1. Session exists and is not revoked
+ * 1. Session exists
  * 2. Fingerprint matches
  * 3. Updates last_seen timestamp
  *
- * If fingerprint mismatch is detected, the session is automatically revoked.
+ * If fingerprint mismatch is detected, the session is automatically deleted.
  * Uses atomic operations to prevent race conditions.
  *
  * @param sessionId - The session ID to verify
@@ -55,33 +54,30 @@ export async function verifySession(
   const supabase = await createClient();
 
   // Atomic check: Query session with all validation conditions in a single query
-  // This prevents race conditions where a session could be revoked between check and update
+  // This prevents race conditions
   const { data: session, error } = await supabase
     .from("sessions")
-    .select("user_id, fingerprint, revoked")
+    .select("user_id, fingerprint")
     .eq("id", sessionId)
-    .eq("revoked", false)
     .eq("fingerprint", fingerprint)
     .single();
 
   if (error || !session) {
-    // Session not found, revoked, or fingerprint mismatch
+    // Session not found or fingerprint mismatch
     // Check if session exists with different fingerprint (possible token theft)
-    // Use atomic update to revoke only if session exists, is not revoked, and fingerprint doesn't match
-    // This prevents race conditions and handles fingerprint mismatch detection
+    // If mismatch detected, delete the session immediately
     const { data: mismatchSession } = await supabase
       .from("sessions")
       .select("id")
       .eq("id", sessionId)
-      .eq("revoked", false)
       .neq("fingerprint", fingerprint)
       .single();
 
     if (mismatchSession) {
-      // Fingerprint mismatch detected - revoke the session
+      // Fingerprint mismatch detected - delete the session immediately
       await supabase
         .from("sessions")
-        .update({ revoked: true })
+        .delete()
         .eq("id", sessionId);
     }
 
@@ -92,8 +88,7 @@ export async function verifySession(
   const { error: lastSeenError } = await supabase
     .from("sessions")
     .update({ last_seen: new Date().toISOString() })
-    .eq("id", sessionId)
-    .eq("revoked", false);
+    .eq("id", sessionId);
 
   if (lastSeenError) {
     console.error("Error updating last_seen for session:", sessionId, lastSeenError);
@@ -103,80 +98,70 @@ export async function verifySession(
 }
 
 /**
- * Revokes a session by marking it as revoked in the database.
+ * Deletes a session from the database.
  *
- * @param sessionId - The session ID to revoke
+ * @param sessionId - The session ID to delete
  */
-export async function revokeSession(sessionId: string): Promise<void> {
+export async function deleteSession(sessionId: string): Promise<void> {
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("sessions")
-    .update({ revoked: true })
+    .delete()
     .eq("id", sessionId);
 
   if (error) {
-    console.error("Error revoking session:", error);
-    throw new Error("Failed to revoke session");
+    console.error("Error deleting session:", error);
+    throw new Error("Failed to delete session");
   }
 }
 
 /**
- * Revokes all active sessions for a user.
+ * Deletes all sessions for a user.
  * Useful for logout from all devices or security events.
  *
  * @param userId - The user ID (student ID)
  */
-export async function revokeAllUserSessions(userId: string): Promise<void> {
+export async function deleteAllUserSessions(userId: string): Promise<void> {
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("sessions")
-    .update({ revoked: true })
-    .eq("user_id", userId)
-    .eq("revoked", false);
+    .delete()
+    .eq("user_id", userId);
 
   if (error) {
-    console.error("Error revoking user sessions:", error);
-    throw new Error("Failed to revoke user sessions");
+    console.error("Error deleting user sessions:", error);
+    throw new Error("Failed to delete user sessions");
   }
 }
 
 /**
- * Cleans up expired or stale sessions from the database.
- * Deletes sessions that are either:
- * 1. Revoked and older than the cleanup threshold
- * 2. Not revoked but older than the JWT expiration time (stale sessions)
+ * Cleans up expired sessions from the database.
+ * Deletes sessions older than the JWT expiration time.
  *
  * This should be run periodically (e.g., via cron job or scheduled task)
  * to prevent unbounded table growth.
  *
  * @param jwtExpirationDays - Number of days after which sessions are considered expired (default: 7)
- * @param revokedCleanupDays - Number of days to keep revoked sessions before cleanup (default: 1)
  * @returns Number of sessions deleted
  */
 export async function cleanupExpiredSessions(
-  jwtExpirationDays: number = 7,
-  revokedCleanupDays: number = 1
+  jwtExpirationDays: number = 7
 ): Promise<number> {
   const supabase = await createClient();
 
   const now = new Date();
   
-  // Calculate cutoff dates
+  // Calculate cutoff date
   const expiredCutoff = new Date(
     now.getTime() - jwtExpirationDays * 24 * 60 * 60 * 1000
   ).toISOString();
-  
-  const revokedCutoff = new Date(
-    now.getTime() - revokedCleanupDays * 24 * 60 * 60 * 1000
-  ).toISOString();
 
-  // Delete expired non-revoked sessions (older than JWT expiration)
+  // Delete expired sessions (older than JWT expiration)
   const { error: expiredError, count: expiredCount } = await supabase
     .from("sessions")
     .delete()
-    .eq("revoked", false)
     .lt("created_at", expiredCutoff);
 
   if (expiredError) {
@@ -184,22 +169,10 @@ export async function cleanupExpiredSessions(
     throw new Error("Failed to cleanup expired sessions");
   }
 
-  // Delete old revoked sessions
-  const { error: revokedError, count: revokedCount } = await supabase
-    .from("sessions")
-    .delete()
-    .eq("revoked", true)
-    .lt("created_at", revokedCutoff);
-
-  if (revokedError) {
-    console.error("Error cleaning up revoked sessions:", revokedError);
-    throw new Error("Failed to cleanup revoked sessions");
-  }
-
-  const totalDeleted = (expiredCount || 0) + (revokedCount || 0);
+  const totalDeleted = expiredCount || 0;
   
   if (totalDeleted > 0) {
-    console.log(`Cleaned up ${totalDeleted} expired sessions (${expiredCount || 0} expired, ${revokedCount || 0} revoked)`);
+    console.log(`Cleaned up ${totalDeleted} expired sessions`);
   }
 
   return totalDeleted;
