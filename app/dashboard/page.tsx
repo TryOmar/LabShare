@@ -374,14 +374,34 @@ export default function DashboardPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 w-full">
             {/* Submit Work Section */}
-            <div className="mb-6 sm:mb-8 w-full border border-border/50 p-4 sm:p-6 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
-              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Submit Your Lab</h2>
+            <div className="mb-6 sm:mb-8 w-full border border-border/50 p-3 sm:p-4 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
+              <h2 className="text-base sm:text-lg font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Submit Your Lab</h2>
+              
+              {/* Suggested Labs */}
+              {suggestedLabs.length > 0 && (
+                <div className="mb-3 flex items-center gap-2 flex-wrap">
+                  <p className="text-xs text-muted-foreground">Suggested:</p>
+                  {suggestedLabs.map((suggestion) => (
+                    <button
+                      key={suggestion.lab_id}
+                      onClick={() => {
+                        setSelectedCourseId(suggestion.course_id);
+                        setSelectedLabId(suggestion.lab_id);
+                      }}
+                      className="px-2 py-1 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 transition-all duration-300 rounded-lg shadow-modern backdrop-blur-sm"
+                    >
+                      <span className="hidden sm:inline">{suggestion.course_name} • </span>Lab {suggestion.lab_number}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Course and Lab Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                 {/* Course Selector */}
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-foreground mb-2">
-                    Select Course
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                    Course
                   </label>
                   <select
                     value={selectedCourseId}
@@ -389,7 +409,7 @@ export default function DashboardPage() {
                       setSelectedCourseId(e.target.value);
                       setSelectedLabId(""); // Reset lab when course changes
                     }}
-                    className="w-full p-2 sm:p-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30"
+                    className="w-full p-2 text-sm border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30"
                   >
                     <option value="">Choose a course...</option>
                     {courses.map((course) => (
@@ -402,14 +422,14 @@ export default function DashboardPage() {
 
                 {/* Lab Selector */}
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-foreground mb-2">
-                    Select Lab
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                    Lab
                   </label>
                   <select
                     value={selectedLabId}
                     onChange={(e) => setSelectedLabId(e.target.value)}
                     disabled={!selectedCourseId}
-                    className="w-full p-2 sm:p-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30 disabled:bg-muted/50 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                    className="w-full p-2 text-sm border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30 disabled:bg-muted/50 disabled:text-muted-foreground disabled:cursor-not-allowed"
                   >
                     <option value="">Choose a lab...</option>
                     {selectedCourseId && labsByCourse.get(selectedCourseId)?.map((lab) => (
@@ -429,7 +449,7 @@ export default function DashboardPage() {
                   }
                 }}
                 disabled={!selectedLabId}
-                className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg transition-all duration-300 ${
+                className={`w-full py-2 px-4 text-sm font-semibold rounded-lg transition-all duration-300 ${
                   selectedLabId
                     ? "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
                     : "bg-muted/50 text-muted-foreground border border-border/50 cursor-not-allowed"
