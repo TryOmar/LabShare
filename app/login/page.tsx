@@ -111,8 +111,7 @@ export default function LoginPage() {
       }
 
       // Cookies are set by the server (httpOnly, secure, 7 days expiration)
-      // No need to store in localStorage - the cookie persists across sessions
-      // Redirect to terms page first (will redirect to dashboard if already accepted)
+      // Redirect to terms page (will show terms on every login)
       router.push("/terms");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
