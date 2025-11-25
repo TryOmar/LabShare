@@ -362,7 +362,7 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8 px-2 sm:px-4 animate-slide-up">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            Welcome, {student?.name}
+            Welcome, <span className="text-[#b92d33]">{student?.name}</span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground break-words">
             {track?.name} • {student?.email}
