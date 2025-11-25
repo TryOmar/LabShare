@@ -4,9 +4,11 @@ import { requireAuth } from "@/lib/auth";
 import { getDashboardAction } from "@/app/api/dashboard/action";
 import { getLabsAction } from "@/app/api/labs/action";
 import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
 
 export default async function DashboardPage() {
-  const authResult = await requireAuth();
+  const cookieStore = await cookies();
+  const authResult = await requireAuth(cookieStore);
   if ("error" in authResult) {
     redirect("/login");
   }
@@ -15,8 +17,8 @@ export default async function DashboardPage() {
   try {
     // Fetch data in parallel using the cached functions
     const [dashboardData, labsData] = await Promise.all([
-      getCachedDashboard(studentId),
-      getCachedLabs(studentId),
+      getCachedDashboard(studentId, cookieStore),
+      getCachedLabs(studentId, cookieStore),
     ]);
 
     // Handle errors from actions
@@ -53,9 +55,9 @@ export default async function DashboardPage() {
 }
 
 // Helper to cache dashboard data with studentId as key
-const getCachedDashboard = async (studentId: string) => {
+const getCachedDashboard = async (studentId: string, cookieStore: Awaited<ReturnType<typeof cookies>>) => {
   return unstable_cache(
-    async () => getDashboardAction(),
+    async () => getDashboardAction(cookieStore),
     ["dashboard", studentId],
     {
       tags: [`dashboard-${studentId}`],
@@ -65,10 +67,10 @@ const getCachedDashboard = async (studentId: string) => {
 };
 
 // Helper to cache labs data with studentId as key
-const getCachedLabs = async (studentId: string) => {
+const getCachedLabs = async (studentId: string, cookieStore: Awaited<ReturnType<typeof cookies>>) => {
   // this isn't needed but you know I am to lazy 
   return unstable_cache(
-    async () => getLabsAction(),
+    async () => getLabsAction(cookieStore),
     ["labs", studentId],
     {
       tags: [`labs-${studentId}`],

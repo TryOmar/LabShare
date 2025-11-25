@@ -2,16 +2,21 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+
 /**
  * Validates the studentId cookie and returns the authenticated student ID.
  * This ensures that API routes can only be accessed by authenticated users
  * and prevents cookie manipulation attacks.
  * 
+ * @param cookieStore - Optional cookie store to use. If not provided, will fetch from next/headers.
  * @returns The authenticated student ID, or null if not authenticated
  */
-export async function getAuthenticatedStudentId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const studentId = cookieStore.get("studentId")?.value;
+export async function getAuthenticatedStudentId(
+  cookieStore?: CookieStore
+): Promise<string | null> {
+  const cookieStoreToUse = cookieStore || await cookies();
+  const studentId = cookieStoreToUse.get("studentId")?.value;
   
   if (!studentId) {
     return null;
@@ -19,7 +24,7 @@ export async function getAuthenticatedStudentId(): Promise<string | null> {
 
   // Verify that the studentId exists in the database
   // This prevents using a manipulated cookie with a fake studentId
-  const supabase = await createClient();
+  const supabase = await createClient(cookieStoreToUse);
   const { data: student, error } = await supabase
     .from("students")
     .select("id")
@@ -37,13 +42,16 @@ export async function getAuthenticatedStudentId(): Promise<string | null> {
  * Validates authentication and returns an error response if not authenticated.
  * Use this in API routes that require authentication.
  * 
+ * @param cookieStore - Optional cookie store to use. If not provided, will fetch from next/headers.
  * @returns An object with either { studentId: string } or { error: NextResponse }
  */
-export async function requireAuth(): Promise<
+export async function requireAuth(
+  cookieStore?: CookieStore
+): Promise<
   | { studentId: string }
   | { error: NextResponse }
 > {
-  const studentId = await getAuthenticatedStudentId();
+  const studentId = await getAuthenticatedStudentId(cookieStore);
 
   if (!studentId) {
     return {

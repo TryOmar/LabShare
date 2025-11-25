@@ -3,9 +3,11 @@ import LabsClientPage from "./clientPage";
 import { requireAuth } from "@/lib/auth";
 import { getLabsAction } from "@/app/api/labs/action";
 import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
 
 export default async function LabsPage() {
-  const authResult = await requireAuth();
+  const cookieStore = await cookies();
+  const authResult = await requireAuth(cookieStore);
   
   if ("error" in authResult) {
     redirect("/login");
@@ -15,7 +17,7 @@ export default async function LabsPage() {
 
   try {
     // Fetch labs data using cached action
-    const labsData = await getCachedLabs(studentId);
+    const labsData = await getCachedLabs(studentId, cookieStore);
 
     if ("error" in labsData) {
        if (labsData.status === 401) {
@@ -49,9 +51,9 @@ export default async function LabsPage() {
 }
 
 // Helper to cache labs data with studentId as key
-const getCachedLabs = async (studentId: string) => {
+const getCachedLabs = async (studentId: string, cookieStore: Awaited<ReturnType<typeof cookies>>) => {
   return unstable_cache(
-    async () => getLabsAction(),
+    async () => getLabsAction(cookieStore),
     ["labs", studentId],
     {
       tags: [`labs-${studentId}`],

@@ -2,16 +2,19 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedStudentId } from "@/lib/auth";
+import { cookies } from "next/headers";
 
-export async function getDashboardAction() {
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+
+export async function getDashboardAction(cookieStore?: CookieStore) {
   try {
     // Validate authentication
-    const studentId = await getAuthenticatedStudentId();
+    const studentId = await getAuthenticatedStudentId(cookieStore);
     if (!studentId) {
       return { error: "Unauthorized", status: 401 };
     }
 
-    const supabase = await createClient();
+    const supabase = await createClient(cookieStore);
 
     // Get student info first (needed for track_id)
     const { data: studentData, error: studentError } = await supabase
