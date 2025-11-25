@@ -362,7 +362,7 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8 px-2 sm:px-4 animate-slide-up">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            Welcome, {student?.name}
+            Welcome, <span className="text-[#b92d33]">{student?.name}</span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground break-words">
             {track?.name} • {student?.email}
@@ -376,33 +376,6 @@ export default function DashboardPage() {
             {/* Submit Work Section */}
             <div className="mb-6 sm:mb-8 w-full border border-border/50 p-4 sm:p-6 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Submit Your Lab</h2>
-              
-              {/* Instructions */}
-              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-muted/50 border border-border/30 rounded-lg backdrop-blur-sm">
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Please ensure you have <span className="font-bold text-foreground">completed</span> the lab and had it <span className="font-bold text-foreground">reviewed</span> by the <span className="font-bold text-foreground">instructor</span> before uploading. Do not upload random files.
-                </p>
-              </div>
-
-              {/* Suggested Labs */}
-              {suggestedLabs.length > 0 && (
-                <div className="mb-4 flex items-center gap-2 flex-wrap">
-                  <p className="text-xs text-gray-600">Suggested Labs:</p>
-                  {suggestedLabs.map((suggestion) => (
-                    <button
-                      key={suggestion.lab_id}
-                      onClick={() => {
-                        setSelectedCourseId(suggestion.course_id);
-                        setSelectedLabId(suggestion.lab_id);
-                      }}
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 transition-all duration-300 rounded-lg shadow-modern backdrop-blur-sm"
-                    >
-                      <span className="hidden sm:inline">{suggestion.course_name} • </span>Lab {suggestion.lab_number}
-                    </button>
-                  ))}
-                </div>
-              )}
-
               {/* Course and Lab Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                 {/* Course Selector */}
