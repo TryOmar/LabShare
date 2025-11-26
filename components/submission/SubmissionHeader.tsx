@@ -55,7 +55,7 @@ export function SubmissionHeader({
       {/* Metadata */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 flex-wrap items-start sm:items-center">
         <span className="whitespace-nowrap">{submission?.view_count} views</span>
-        <span className="break-words whitespace-normal">
+        <span className="break-words">
           Created:{" "}
           {submission?.created_at && formatDateTime(submission.created_at)}
         </span>
