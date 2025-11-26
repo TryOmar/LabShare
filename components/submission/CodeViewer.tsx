@@ -190,8 +190,8 @@ export function CodeViewer({
         </div>
       ) : (
         <>
-          <div className="w-full overflow-x-auto bg-gray-50" style={{ maxWidth: '100%' }}>
-            <pre className="p-0 m-0 text-xs sm:text-sm leading-relaxed min-w-full" style={{ overflowX: 'auto' }}>
+          <div className="w-full overflow-x-auto bg-gray-50">
+            <pre className="p-0 m-0 text-xs sm:text-sm leading-relaxed min-w-full">
               <SyntaxHighlighter
                 language={mapLanguageToPrism(file.language)}
                 style={oneLight}
