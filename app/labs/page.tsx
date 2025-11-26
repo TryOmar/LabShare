@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import Navigation from "@/components/navigation";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 interface Course {
   id: string;
@@ -39,6 +47,7 @@ export default function LabsPage() {
   const [labs, setLabs] = useState<Map<string, Lab[]>>(new Map());
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -110,11 +119,64 @@ export default function LabsPage() {
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-4 sm:mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Labs</h1>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Labs</h1>
+          
+          {/* Mobile Course Selector Button */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                className="lg:hidden border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary shadow-modern backdrop-blur-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+                {courses.find(c => c.id === selectedCourse)?.name || "Select Course"}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[85vw] sm:w-[400px]">
+              <SheetHeader>
+                <SheetTitle>Courses</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-2">
+                {courses.map((course, index) => (
+                  <button
+                    key={course.id}
+                    onClick={() => {
+                      setSelectedCourse(course.id);
+                      router.replace(`/labs?course=${course.id}`);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left p-3 border rounded-lg text-sm transition-all duration-300 ${
+                      selectedCourse === course.id
+                        ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                        : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
+                    }`}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <p className="font-semibold break-words">{course.name}</p>
+                  </button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Courses Sidebar */}
-          <div>
+          {/* Desktop Courses Sidebar */}
+          <div className="hidden lg:block">
             <h2 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Courses</h2>
             <div className="space-y-2">
               {courses.map((course, index) => (

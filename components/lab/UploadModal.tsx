@@ -153,14 +153,14 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-gradient-card border border-border/50 p-5 sm:p-7 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-modern-xl backdrop-blur-sm animate-scale-in"
+          className="bg-gradient-card border border-border/50 p-4 sm:p-5 lg:p-7 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-modern-xl backdrop-blur-sm animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Upload Solution
           </h2>
 
-          <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-3 sm:space-y-4">
+          <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-3 sm:space-y-4 w-full min-w-0">
             {/* Title */}
             <div>
               <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">Solution Name</label>
@@ -202,7 +202,7 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDropWithFiles}
-                className={`border-2 border-dashed rounded-xl p-5 sm:p-7 lg:p-9 transition-all duration-300 ${
+                className={`border-2 border-dashed rounded-xl p-4 sm:p-5 lg:p-7 transition-all duration-300 w-full min-w-0 ${
                   isDragging 
                     ? 'border-primary bg-primary/10 scale-105 shadow-primary-lg' 
                     : 'border-border/50 bg-white/80 hover:bg-accent/30 hover:border-primary/40 shadow-modern backdrop-blur-sm'
@@ -284,13 +284,13 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
 
                 {/* Paste Code Area - Only show when user clicks paste or presses Ctrl+V */}
                 {showPasteArea && (
-                  <div className="space-y-2 mt-4 border-t border-border/30 pt-4">
+                  <div className="space-y-2 mt-4 border-t border-border/30 pt-4 w-full min-w-0">
                     <div className="flex justify-between items-center mb-2.5">
                       <label className="text-sm text-foreground font-semibold">Paste Code</label>
                       <button
                         type="button"
                         onClick={pasteHandler.handleCancelPaste}
-                        className="text-xs text-muted-foreground hover:text-primary underline transition-colors duration-200"
+                        className="text-xs text-muted-foreground hover:text-primary underline transition-colors duration-200 flex-shrink-0"
                       >
                         Cancel
                       </button>
@@ -309,22 +309,22 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                       }}
                       onPaste={pasteHandler.handleTextareaPaste}
                       placeholder="Paste code here (Ctrl+V)..."
-                      rows={4}
-                      className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm"
+                      rows={6}
+                      className="w-full min-w-0 px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-xs sm:text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm resize-y"
                     />
                     {pasteHandler.pastedContent && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full">
                         <input
                           type="text"
                           value={pasteHandler.pastedFileName}
                           onChange={(e) => pasteHandler.setPastedFileName(e.target.value)}
                           placeholder="File name (optional)"
-                          className="flex-1 px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                          className="flex-1 min-w-0 px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
                         />
                         <select
                           value={pasteHandler.language}
                           onChange={(e) => pasteHandler.setLanguage(e.target.value)}
-                          className="px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                          className="w-full sm:w-auto sm:min-w-[120px] px-3 py-2 border border-border/50 bg-white/80 text-foreground text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
                         >
                           <option value="text">text</option>
                           {Object.entries(DETECTED_LANGUAGES)
@@ -344,7 +344,7 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                             pasteHandler.setPastedFileName("");
                             pasteHandler.pasteTextareaRef.current?.focus();
                           }}
-                          className="px-4 py-2 gradient-primary text-primary-foreground font-semibold hover:gradient-primary-hover rounded-lg transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm"
+                          className="w-full sm:w-auto sm:min-w-[80px] px-4 py-2 gradient-primary text-primary-foreground font-semibold hover:gradient-primary-hover rounded-lg transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm whitespace-nowrap"
                         >
                           Add
                         </button>

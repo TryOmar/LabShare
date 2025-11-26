@@ -101,10 +101,17 @@ export function usePasteHandler({
     return () => window.removeEventListener('paste', handlePaste);
   }, [showPasteArea, onFilesPasted, setShowPasteArea]);
 
-  // Handle text paste in textarea - let normal paste behavior happen
+  // Handle text paste in textarea - ensure paste works correctly
   const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    // Normal paste behavior is allowed - React will handle it automatically
-    // We don't need to do anything special here
+    // Let normal paste behavior happen, but also auto-detect language
+    const pastedText = e.clipboardData?.getData('text/plain') || '';
+    if (pastedText.trim().length > 10) {
+      // Auto-detect language after a short delay to allow React to update the value
+      setTimeout(() => {
+        const detectedLang = detectLanguageFromContent(pastedText);
+        setLanguage(detectedLang);
+      }, 50);
+    }
   };
 
   // Cancel paste area
