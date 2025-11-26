@@ -11,6 +11,18 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "UI improvements: Simplified submit section, updated student name color to match brand, and improved header clarity",
+    suggestedBy: [],
+    implementedBy: ["@AhmedLotfi"],
+    date: "25 Nov 2025",
+  },
+  {
+    feature: "Secured authentication system with session-based and token-based authentication",
+    suggestedBy: ["@Abbas49", "@TryOmar", "@m10090"],
+    implementedBy: ["@KariMuhammad"],
+    date: "25 Nov 2025",
+  },
+  {
     feature: "Updated like button color from red to blue in the submission page",
     suggestedBy: ["@Omar-Ezzat-AbdAlmoaz"],
     implementedBy: ["@Omar-Ezzat-AbdAlmoaz"],
