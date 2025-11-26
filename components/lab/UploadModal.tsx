@@ -307,7 +307,6 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                           pasteHandler.setLanguage(detectedLang);
                         }
                       }}
-                      onPaste={pasteHandler.handleTextareaPaste}
                       placeholder="Paste code here (Ctrl+V)..."
                       rows={6}
                       className="w-full min-w-0 px-4 py-3 border border-border/50 bg-white/80 text-foreground font-mono text-xs sm:text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm resize-y"
