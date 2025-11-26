@@ -115,7 +115,7 @@ export function CodeViewer({
           )}
         </div>
         {!isEditing && (
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex flex-wrap gap-2 flex-shrink-0">
             {isOwner && (
               <button
                 onClick={onStartEdit}
@@ -180,7 +180,7 @@ export function CodeViewer({
           />
         </div>
       ) : showHtmlPreview && isHtml ? (
-        <div className="w-full h-[600px] border-t border-border/30 bg-white">
+        <div className="w-full h-[400px] sm:h-[500px] lg:h-[600px] border-t border-border/30 bg-white">
           <iframe
             srcDoc={file.content}
             className="w-full h-full border-0"
@@ -191,20 +191,25 @@ export function CodeViewer({
       ) : (
         <>
           <div className="w-full overflow-x-auto bg-gray-50">
-            <pre className="p-0 m-0 text-xs leading-relaxed min-w-full">
+            <pre className="p-0 m-0 text-xs sm:text-sm leading-relaxed min-w-full">
               <SyntaxHighlighter
                 language={mapLanguageToPrism(file.language)}
                 style={oneLight}
                 PreTag="div"
                 showLineNumbers={true}
-                wrapLongLines={true}
+                wrapLongLines={false}
                 customStyle={{
                   margin: 0,
                   background: "transparent",
-                  padding: "1rem",
-                  overflow: "visible",
+                  overflow: "auto",
                 }}
-                className="!p-4 text-xs leading-relaxed"
+                className="!p-3 sm:!p-4 text-xs sm:text-sm leading-relaxed"
+                codeTagProps={{
+                  style: {
+                    fontFamily: "monospace",
+                    fontSize: "inherit",
+                  }
+                }}
               >
                 {file.content}
               </SyntaxHighlighter>
@@ -214,7 +219,7 @@ export function CodeViewer({
           {/* User Input Section (for C++ files) */}
           {isCpp && (
             <div className="border-t border-border/30 bg-muted/20 p-3">
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-2 sm:mb-1.5">
                 <div className="flex items-center gap-1.5">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -232,7 +237,7 @@ export function CodeViewer({
                 <button
                   onClick={onRunCode}
                   disabled={isRunningCode}
-                  className="px-3 py-1.5 text-xs border border-border/50 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-400 hover:text-green-800 rounded-lg transition-all duration-200 shadow-modern disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  className="w-full sm:w-auto px-3 py-1.5 text-xs border border-border/50 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-400 hover:text-green-800 rounded-lg transition-all duration-200 shadow-modern disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                 >
                   {isRunningCode ? (
                     <>

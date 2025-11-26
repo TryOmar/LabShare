@@ -30,6 +30,14 @@ import { FileSidebar } from "@/components/submission/FileSidebar";
 import { CodeViewer } from "@/components/submission/CodeViewer";
 import { AttachmentViewer } from "@/components/submission/AttachmentViewer";
 import { UpvoteSection } from "@/components/submission/UpvoteSection";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function SubmissionPage() {
   const router = useRouter();
@@ -121,6 +129,9 @@ export default function SubmissionPage() {
     resetExecution: codeExecution.resetExecution,
     resetAllEditing: fileEditing.resetAllEditing,
   });
+
+  // Mobile sheet state
+  const [mobileFileSheetOpen, setMobileFileSheetOpen] = React.useState(false);
 
   // Handle start edit code file (needs to also select the file)
   const handleStartEditCodeFile = (
@@ -275,8 +286,101 @@ export default function SubmissionPage() {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Sidebar */}
-          <div className="w-full lg:w-auto">
+          {/* Mobile File Sidebar Button */}
+          <div className="lg:hidden">
+            <Sheet open={mobileFileSheetOpen} onOpenChange={setMobileFileSheetOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary shadow-modern backdrop-blur-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                  Files
+                  {selectedCodeFile && (
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[120px]">
+                      {selectedCodeFile.filename}
+                    </span>
+                  )}
+                  {selectedAttachment && !selectedCodeFile && (
+                    <span className="ml-auto text-xs text-muted-foreground truncate max-w-[120px]">
+                      {selectedAttachment.filename}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[85vw] sm:w-[400px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Files</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  {/* Add Files Button */}
+                  {isOwner && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => {
+                          dialogStates.setShowAddFilesModal(true);
+                        }}
+                        className="w-full px-4 py-2.5 border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 hover:text-primary text-sm font-semibold rounded-lg transition-all duration-300 shadow-modern hover:shadow-primary/10 backdrop-blur-sm"
+                      >
+                        + Add Files
+                      </button>
+                    </div>
+                  )}
+
+                  {/* File Sidebar */}
+                  <FileSidebar
+                    codeFiles={codeFiles}
+                    attachments={attachments}
+                    selectedCodeFile={selectedCodeFile}
+                    selectedAttachment={selectedAttachment}
+                    isOwner={isOwner}
+                    renamingCodeFileId={fileEditing.renamingCodeFileId}
+                    renamingAttachmentId={fileEditing.renamingAttachmentId}
+                    renameCodeFilename={fileEditing.renameCodeFilename}
+                    renameAttachmentFilename={fileEditing.renameAttachmentFilename}
+                    onSelectCodeFile={(file) => {
+                      fileSelection.handleSelectCodeFile(file);
+                      setMobileFileSheetOpen(false);
+                    }}
+                    onSelectAttachment={(attachment) => {
+                      fileSelection.handleSelectAttachment(attachment);
+                      setMobileFileSheetOpen(false);
+                    }}
+                    onStartEditCodeFile={(file) => handleStartEditCodeFile(file)}
+                    onStartRenameCodeFile={fileEditing.startRenameCodeFile}
+                    onCancelRenameCodeFile={fileEditing.cancelRenameCodeFile}
+                    onSaveCodeFileRename={fileOperations.saveCodeFileRename}
+                    onDeleteCodeFile={dialogStates.openDeleteCodeFileDialog}
+                    onStartRenameAttachment={fileEditing.startRenameAttachment}
+                    onCancelRenameAttachment={fileEditing.cancelRenameAttachment}
+                    onSaveAttachmentRename={fileOperations.saveAttachmentRename}
+                    onDeleteAttachment={dialogStates.openDeleteAttachmentDialog}
+                    onRenameCodeFilenameChange={fileEditing.setRenameCodeFilename}
+                    onRenameAttachmentFilenameChange={
+                      fileEditing.setRenameAttachmentFilename
+                    }
+                    onResetPreview={fileSelection.handleResetPreview}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-full lg:w-auto">
             {/* Add Files Button */}
             {isOwner && (
               <div className="mb-4">
@@ -320,7 +424,7 @@ export default function SubmissionPage() {
           </div>
 
           {/* Code Viewer + Attachments + Comments */}
-          <div className="lg:col-span-3 space-y-6 w-full min-w-0">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6 w-full min-w-0">
             {/* Code File Viewer */}
             {selectedCodeFile ? (
               <CodeViewer
@@ -381,10 +485,10 @@ export default function SubmissionPage() {
 
         {/* Actions */}
         {isOwner && (
-          <div className="mt-8 flex gap-3 animate-slide-up">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 animate-slide-up">
             <button
               onClick={() => dialogStates.setDeleteSubmissionDialogOpen(true)}
-              className="px-6 py-2.5 border border-destructive/50 text-destructive font-semibold rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-300 shadow-modern"
+              className="w-full sm:w-auto px-6 py-2.5 border border-destructive/50 text-destructive font-semibold rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-300 shadow-modern"
             >
               Delete Submission
             </button>

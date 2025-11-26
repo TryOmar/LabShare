@@ -281,7 +281,7 @@ export default function LabPage() {
                   className="border border-border/50 p-4 sm:p-5 rounded-xl hover:bg-accent/30 hover:border-primary/40 hover:shadow-modern cursor-pointer transition-all duration-300 hover-lift backdrop-blur-sm bg-gradient-card shadow-modern"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-4">
+                  <div className="flex flex-col gap-3 sm:gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm sm:text-base text-foreground break-words">
                         {submission.title}
@@ -290,7 +290,7 @@ export default function LabPage() {
                         by {submission.is_anonymous ? 'Anonymous' : (submission.students?.name || 'Unknown')}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       {submission.students?.id === student?.id && (
                         <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 border border-primary/30 rounded-lg whitespace-nowrap font-medium">
                           Your Solution

@@ -51,7 +51,11 @@ export default function Navigation({ student, track }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-sm glass shadow-modern">
       <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-        <div className="flex-1 min-w-0 flex items-center gap-3">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex-1 min-w-0 flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 text-left"
+          aria-label="Go to dashboard"
+        >
           <div className="flex-shrink-0">
             <img 
               src="/android-chrome-192x192.png" 
@@ -67,7 +71,7 @@ export default function Navigation({ student, track }: NavigationProps) {
               {track?.code} • {student?.name}
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex gap-2 lg:gap-3 flex-shrink-0">

@@ -208,7 +208,7 @@ export default function CommentsSection({
             className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground text-sm resize-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={submitting}
           />
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-3">
             <div className="flex items-center gap-2">
               <Switch
                 id="comment-anonymous"
@@ -223,10 +223,10 @@ export default function CommentsSection({
             <button
               type="submit"
               disabled={submitting || !newComment.trim()}
-              className="px-5 py-2.5 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm"
+              className="w-full sm:w-auto px-5 py-2.5 gradient-primary text-primary-foreground font-semibold rounded-lg hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-primary hover:shadow-primary-lg text-sm"
             >
               {submitting ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <div className="spinner h-4 w-4"></div>
                   Posting...
                 </span>
@@ -280,7 +280,7 @@ export default function CommentsSection({
                     </p>
                   </div>
                   {comment.student_id === studentId && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-shrink-0">
                       <div className="flex items-center gap-1">
                         <Switch
                           id={`comment-anonymous-${comment.id}`}
@@ -293,7 +293,7 @@ export default function CommentsSection({
                       </div>
                       <button
                         onClick={() => handleDeleteClick(comment.id)}
-                        className="ml-3 px-3 py-1.5 text-xs border border-destructive/50 text-destructive font-medium rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-200 flex-shrink-0 shadow-modern"
+                        className="w-full sm:w-auto sm:ml-3 px-3 py-1.5 text-xs border border-destructive/50 text-destructive font-medium rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-200 flex-shrink-0 shadow-modern"
                         aria-label="Delete comment"
                       >
                         Delete

@@ -370,9 +370,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start px-2 sm:px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-start px-2 sm:px-4">
           {/* Main Content */}
-          <div className="lg:col-span-2 w-full">
+          <div className="md:col-span-2 lg:col-span-2 w-full">
             {/* Submit Work Section */}
             <div className="mb-6 sm:mb-8 w-full border border-border/50 p-3 sm:p-4 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h2 className="text-base sm:text-lg font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Submit Your Lab</h2>
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                         setSelectedCourseId(suggestion.course_id);
                         setSelectedLabId(suggestion.lab_id);
                       }}
-                      className="px-2 py-1 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 transition-all duration-300 rounded-lg shadow-modern backdrop-blur-sm"
+                      className="px-2 py-1 text-xs border border-border/50 bg-white/80 text-foreground hover:bg-accent/50 hover:border-primary/40 transition-all duration-300 rounded-lg shadow-modern backdrop-blur-sm whitespace-nowrap"
                     >
                       <span className="hidden sm:inline">{suggestion.course_name} • </span>Lab {suggestion.lab_number}
                     </button>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               )}
 
               {/* Course and Lab Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 w-full">
                 {/* Course Selector */}
                 <div>
                   <label className="block text-xs font-semibold text-foreground mb-1.5">
@@ -464,7 +464,7 @@ export default function DashboardPage() {
               <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 sm:mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recent Courses</h2>
               
               {coursesWithSubmissions.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                   {coursesWithSubmissions.map((course, index) => (
                     <CourseCard key={course.id} course={course} router={router} currentStudentId={student?.id} index={index} />
                   ))}
@@ -479,7 +479,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Sidebar */}
-          <div ref={sidebarRef} className="lg:col-span-1">
+          <div ref={sidebarRef} className="md:col-span-1 lg:col-span-1">
             <div className="border border-border/50 p-3 sm:p-4 mb-3 sm:mb-4 rounded-xl shadow-modern backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h3 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Profile</h3>
               <div className="space-y-2 text-xs sm:text-sm">
