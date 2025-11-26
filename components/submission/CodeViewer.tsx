@@ -201,9 +201,7 @@ export function CodeViewer({
                 customStyle={{
                   margin: 0,
                   background: "transparent",
-                  padding: "0.75rem",
                   overflow: "auto",
-                  fontSize: "0.75rem",
                 }}
                 className="!p-3 sm:!p-4 text-xs sm:text-sm leading-relaxed"
                 codeTagProps={{
