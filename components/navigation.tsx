@@ -53,7 +53,7 @@ export default function Navigation({ student, track }: NavigationProps) {
       <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex-1 min-w-0 flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 cursor-pointer text-left"
+          className="flex-1 min-w-0 flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 text-left"
           aria-label="Go to dashboard"
         >
           <div className="flex-shrink-0">
