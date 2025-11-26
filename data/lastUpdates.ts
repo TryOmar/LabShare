@@ -12,7 +12,7 @@ export interface LastUpdate {
 export const lastUpdates: LastUpdate[] = [
   {
     feature: "UI improvements: Simplified submit section, updated student name color to match brand, and improved header clarity",
-    suggestedBy: [],
+    suggestedBy: ["@AhmedLotfi"],
     implementedBy: ["@AhmedLotfi"],
     date: "25 Nov 2025",
   },
