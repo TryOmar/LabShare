@@ -158,32 +158,12 @@ export default function CommentsSection({
     }
   };
 
-  const renderMarkdown = (content: string) => {
-    let html = content;
-
+  const renderComment = (content: string) => {
     // Escape HTML to prevent XSS
-    html = html
+    let html = content
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-
-    // Code blocks (triple backticks)
-    html = html.replace(
-      /```([\s\S]*?)```/g,
-      '<pre class="bg-muted/50 border border-border/30 rounded-lg p-3 my-2 overflow-x-auto"><code class="text-xs font-mono">$1</code></pre>'
-    );
-
-    // Inline code (single backticks)
-    html = html.replace(
-      /`([^`]+)`/g,
-      '<code class="bg-muted/50 border border-border/30 rounded px-1.5 py-0.5 text-xs font-mono text-primary">$1</code>'
-    );
-
-    // Bold (double asterisks)
-    html = html.replace(
-      /\*\*(.*?)\*\*/g,
-      '<strong class="font-bold text-foreground">$1</strong>'
-    );
 
     // Convert line breaks to <br>
     html = html.replace(/\n/g, "<br>");
@@ -203,7 +183,7 @@ export default function CommentsSection({
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment... (supports **bold**, `code`, and ```code blocks```)"
+            placeholder="Add a comment..."
             rows={4}
             className="w-full px-4 py-3 border border-border/50 bg-white/80 text-foreground text-sm resize-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 shadow-modern backdrop-blur-sm hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={submitting}
@@ -303,7 +283,7 @@ export default function CommentsSection({
                 </div>
                 <div
                   className="text-sm text-foreground leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(comment.content) }}
+                  dangerouslySetInnerHTML={{ __html: renderComment(comment.content) }}
                 />
               </div>
             ))
