@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { processAnonymousContent } from "@/lib/anonymity";
+import { processCommentCensoring } from "@/lib/censor";
 
 /**
  * PATCH /api/submission/[id]/comments/[commentId]
@@ -55,7 +56,7 @@ export async function PATCH(
       );
     }
 
-    // Update anonymity
+    // Update anonymity only (is_censored calculated on-the-fly, not stored)
     const { data: updatedComment, error: updateError } = await supabase
       .from("comments")
       .update({ 
@@ -75,9 +76,14 @@ export async function PATCH(
     }
 
     // Process anonymous display logic
-    const processedComment = updatedComment 
+    let processedComment = updatedComment 
       ? processAnonymousContent(updatedComment, studentId)
       : null;
+
+    // Censor content on-the-fly when returning to client
+    if (processedComment) {
+      processedComment = processCommentCensoring(processedComment);
+    }
 
     return NextResponse.json({
       comment: processedComment,

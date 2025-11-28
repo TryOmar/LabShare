@@ -59,8 +59,65 @@ const BAD_WORDS = [
   "bitch", "b!tch", "dick", "d1ck", "dic", "cock", "c0ck", "pussy",
   "trash", "loser", "idiot", "stupid", "moron",
   "porn", "pornhub", "xxx", "xnxx", "disck", "anus",
-  "test", "test2"
 ];
+
+// Precompute sorted bad words array (longest first) for performance
+// This is computed once at module load time instead of on every function call
+const SORTED_BAD_WORDS = [...BAD_WORDS].sort((a, b) => b.length - a.length);
+
+/**
+ * Normalizes text by:
+ * - Normalizing Unicode characters (handles different Arabic representations)
+ * - Removing zero-width characters that could bypass filters
+ * 
+ * @param text - The text to normalize
+ * @returns Normalized text
+ */
+function normalizeText(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+  
+  // Unicode normalization (handles Arabic text variations)
+  // NFKC: Compatibility Decomposition, followed by Canonical Composition
+  let normalized = text.normalize('NFKC');
+  
+  // Remove zero-width characters that could bypass filters
+  // U+200B: zero-width space, U+200C: zero-width non-joiner, U+200D: zero-width joiner
+  // U+FEFF: zero-width no-break space, U+2060: word joiner
+  normalized = normalized.replace(/[\u200B-\u200D\uFEFF\u2060]/g, '');
+  
+  // Remove other potentially problematic invisible characters
+  // U+200E: left-to-right mark, U+200F: right-to-left mark
+  normalized = normalized.replace(/[\u200E\u200F]/g, '');
+  
+  return normalized;
+}
+
+/**
+ * Creates a regex pattern for a bad word, handling Arabic vs English/transliterated differently.
+ * Extracted to reduce code duplication between containsBadWords and censorText.
+ * 
+ * @param badWord - The bad word to create a regex for
+ * @returns A regex pattern for matching the bad word
+ */
+function createBadWordRegex(badWord: string): RegExp {
+  // Escape special regex characters in the bad word
+  const escapedWord = badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Check if the word contains Arabic characters
+  const hasArabic = /[\u0600-\u06FF]/.test(badWord);
+  
+  // For Arabic words/phrases, match directly (no word boundaries needed)
+  // For English/transliterated words, use word boundaries to avoid partial matches
+  if (hasArabic) {
+    // Arabic: match as-is, case-insensitive flag doesn't affect Arabic
+    return new RegExp(escapedWord, 'gi');
+  } else {
+    // English/transliterated: use word boundaries to match whole words only
+    return new RegExp(`\\b${escapedWord}\\b`, 'gi');
+  }
+}
 
 /**
  * Replaces a word with asterisks while preserving its length.
@@ -80,32 +137,17 @@ export function containsBadWords(text: string): boolean {
     return false;
   }
 
-  // Sort bad words by length (longest first) to handle overlapping words correctly
-  const sortedBadWords = [...BAD_WORDS].sort((a, b) => b.length - a.length);
+  // Normalize text to handle Unicode variations and zero-width characters
+  const normalizedText = normalizeText(text);
 
-  // Check each bad word
-  for (const badWord of sortedBadWords) {
-    // Escape special regex characters in the bad word
-    const escapedWord = badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
-    // Check if the word contains Arabic characters
-    const hasArabic = /[\u0600-\u06FF]/.test(badWord);
-    
-    // For Arabic words/phrases, match directly (no word boundaries needed)
-    // For English/transliterated words, use word boundaries to avoid partial matches
-    let regex: RegExp;
-    
-    if (hasArabic) {
-      // Arabic: match as-is, case-insensitive flag doesn't affect Arabic
-      regex = new RegExp(escapedWord, 'gi');
-    } else {
-      // English/transliterated: use word boundaries to match whole words only
-      regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-    }
+  // Use precomputed sorted bad words array (longest first)
+  // This ensures phrases are matched before individual words
+  for (const badWord of SORTED_BAD_WORDS) {
+    const regex = createBadWordRegex(badWord);
     
     // Use search() instead of test() to avoid regex state issues with global flag
     // search() returns -1 if no match, or index if found (no state maintained)
-    if (text.search(regex) !== -1) {
+    if (normalizedText.search(regex) !== -1) {
       return true;
     }
   }
@@ -116,6 +158,7 @@ export function containsBadWords(text: string): boolean {
 /**
  * Censors bad words in the given text.
  * Replaces bad words with asterisks while preserving word length.
+ * Censors ALL content including code blocks to maintain consistent filtering.
  * 
  * @param text - The text to censor
  * @returns The censored text with bad words replaced by asterisks
@@ -125,37 +168,59 @@ export function censorText(text: string): string {
     return text;
   }
 
-  let censoredText = text;
+  // Normalize text to handle Unicode variations and zero-width characters
+  let censoredText = normalizeText(text);
 
-  // Sort bad words by length (longest first) to handle overlapping words correctly
+  // Use precomputed sorted bad words array (longest first)
   // This ensures phrases are matched before individual words
-  const sortedBadWords = [...BAD_WORDS].sort((a, b) => b.length - a.length);
-
-  // Replace each bad word (case-insensitive for English words)
-  sortedBadWords.forEach(badWord => {
-    // Escape special regex characters in the bad word
-    const escapedWord = badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const badWord of SORTED_BAD_WORDS) {
+    const regex = createBadWordRegex(badWord);
     
-    // Check if the word contains Arabic characters
-    const hasArabic = /[\u0600-\u06FF]/.test(badWord);
-    
-    // For Arabic words/phrases, match directly (no word boundaries needed)
-    // For English/transliterated words, use word boundaries to avoid partial matches
-    let regex: RegExp;
-    
-    if (hasArabic) {
-      // Arabic: match as-is, case-insensitive flag doesn't affect Arabic
-      regex = new RegExp(escapedWord, 'gi');
-    } else {
-      // English/transliterated: use word boundaries to match whole words only
-      regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-    }
-    
-    censoredText = censoredText.replace(regex, (match) => {
+    censoredText = censoredText.replace(regex, (match: string) => {
       return replaceWithAsterisks(match);
     });
-  });
+  }
 
   return censoredText;
 }
 
+/**
+ * Processes a comment by censoring its content on-the-fly.
+ * This function takes a comment object with a content field, censors the content,
+ * and returns a new object with the censored content and an is_censored flag.
+ * 
+ * @param comment - Comment object with content field
+ * @returns Comment with censored content and is_censored flag
+ */
+export function processCommentCensoring<T extends { content: string }>(
+  comment: T
+): T & { is_censored: boolean } {
+  const originalContent = comment.content;
+  
+  // Normalize original content first to ensure accurate comparison
+  // This prevents false positives when normalization changes text structure
+  const normalizedOriginal = normalizeText(originalContent);
+  const censoredContent = censorText(originalContent);
+  
+  // Compare normalized versions to check if actual censoring occurred
+  // (not just normalization changes)
+  const isCensored = censoredContent !== normalizedOriginal;
+  
+  return {
+    ...comment,
+    content: censoredContent,
+    is_censored: isCensored, // Always calculated fresh from content
+  };
+}
+
+/**
+ * Processes an array of comments by censoring their content on-the-fly.
+ * 
+ * @param comments - Array of comment objects with content field
+ * @returns Array of comments with censored content and is_censored flags
+ */
+export function processCommentsCensoring<T extends { content: string }>(
+  comments: T[]
+): Array<T & { is_censored: boolean }> {
+  return comments.map(processCommentCensoring);
+}
