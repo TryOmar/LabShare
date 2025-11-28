@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { processAnonymousContentArray, processAnonymousContent } from "@/lib/anonymity";
+import { censorText, containsBadWords } from "@/lib/censor";
 
 /**
  * GET /api/submission/[id]/comments
@@ -83,15 +84,21 @@ export async function POST(
 
     const supabase = await createClient();
 
-    // Insert comment
+    // Censor the content and check if it was censored
+    const originalContent = content.trim();
+    const censoredContent = censorText(originalContent);
+    const isCensored = censoredContent !== originalContent;
+
+    // Insert comment with censored content
     const { data: commentData, error: commentError } = await supabase
       .from("comments")
       .insert([
         {
           submission_id: submissionId,
           student_id: studentId,
-          content: content.trim(),
+          content: censoredContent,
           is_anonymous: isAnonymous === true,
+          is_censored: isCensored,
         },
       ])
       .select("*, students(id, name)")
