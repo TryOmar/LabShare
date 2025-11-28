@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
+import { toast } from "sonner";
 
 interface Comment {
   id: string;
@@ -13,6 +14,7 @@ interface Comment {
   created_at: string;
   updated_at: string;
   is_anonymous?: boolean;
+  is_censored?: boolean;
   students?: {
     id: string;
     name: string;
@@ -85,15 +87,32 @@ export default function CommentsSection({
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to add comment");
+        toast.error("Error", {
+          description: data.error || "Failed to add comment. Please try again.",
+        });
+        return;
       }
 
       setNewComment("");
       setIsAnonymous(false);
       await loadComments();
+      
+      // Show appropriate message based on whether comment was censored
+      if (data.comment?.is_censored) {
+        toast.warning("Comment Posted", {
+          description: "Your comment contained inappropriate content and has been censored.",
+        });
+      } else {
+        toast.success("Comment posted successfully!");
+      }
     } catch (err) {
       console.error("Error adding comment:", err);
+      toast.error("Error", {
+        description: "An error occurred while adding your comment. Please try again.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -243,6 +262,30 @@ export default function CommentsSection({
                 className="border border-border/50 p-4 sm:p-5 rounded-xl bg-white/80 backdrop-blur-sm hover:border-primary/30 hover:shadow-modern transition-all duration-300 animate-fade-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
+                {/* Censored Message */}
+                {comment.is_censored && (
+                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-amber-50/90 to-orange-50/90 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-800/50 backdrop-blur-md shadow-modern">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                        This comment contained inappropriate content and has been censored.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

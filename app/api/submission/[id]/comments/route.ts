@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { processAnonymousContentArray, processAnonymousContent } from "@/lib/anonymity";
+import { processCommentCensoring, processCommentsCensoring } from "@/lib/censor";
 
 /**
  * GET /api/submission/[id]/comments
@@ -40,7 +41,10 @@ export async function GET(
     }
 
     // Hide student info for anonymous comments (unless user is the owner)
-    const processedComments = processAnonymousContentArray(commentsData || [], currentStudentId);
+    let processedComments = processAnonymousContentArray(commentsData || [], currentStudentId);
+    
+    // Censor comments on-the-fly when returning to client
+    processedComments = processCommentsCensoring(processedComments);
 
     return NextResponse.json({
       comments: processedComments,
@@ -83,14 +87,17 @@ export async function POST(
 
     const supabase = await createClient();
 
-    // Insert comment
+    // Store original content in database (not censored)
+    const originalContent = content.trim();
+
+    // Insert comment with original content (no is_censored flag - calculated on-the-fly)
     const { data: commentData, error: commentError } = await supabase
       .from("comments")
       .insert([
         {
           submission_id: submissionId,
           student_id: studentId,
-          content: content.trim(),
+          content: originalContent, // Store original content
           is_anonymous: isAnonymous === true,
         },
       ])
@@ -106,9 +113,14 @@ export async function POST(
     }
 
     // Process anonymous display logic
-    const processedComment = commentData 
+    let processedComment = commentData 
       ? processAnonymousContent(commentData, studentId)
       : null;
+
+    // Censor content on-the-fly when returning to client
+    if (processedComment) {
+      processedComment = processCommentCensoring(processedComment);
+    }
 
     return NextResponse.json({
       comment: processedComment,
