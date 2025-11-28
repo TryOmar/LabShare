@@ -93,7 +93,6 @@ export default function CommentsSection({
         toast.error("Error", {
           description: data.error || "Failed to add comment. Please try again.",
         });
-        setNewComment("");
         return;
       }
 

@@ -10,7 +10,7 @@ const BAD_WORDS = [
   "معرص", "متناك", "منيك",  "وضيع", "حقير", "سافل", "بايظ", "مسحولين", "مجرم",
   "وسخان", "سيس", "سيساوي", "هلفوت", "منحط",
   "بضان", "بضانو", "بضاني", "بضنت", "بضنتني", "بضين", "اتبضن", "اتبضنت",
-  "خرا", "خخ", "شخر", "علقة", "كس", "كسين", "طيزك", "زبك",
+  "خرا", "شخر", "علقة", "كسين", "طيزك", "زبك",
   "شرموط", "شرموطة", "شرموطه", "ِشرموطه", "الشرموط", "العرص", "القحبة",
   "المتناكه", "المنيوك", "النيك", "معرصين",
   
@@ -33,7 +33,7 @@ const BAD_WORDS = [
   
   // Arabic transliterated (root forms)
   "a7a", "a7ba", "ga7ba", "labwa", "kos", "KOSM", "ksm", "qosm", "somk", "tnak",
-  "mnik", "mnyk", "mnayk", "manyak", "zob", "zb", "zbr", "zobr",
+  "mnik", "mnyk", "mnayk", "manyak", "zob", "zbr", "zobr",
   "2rs", "3rs", "4rs", "5rs", "m3rs", "ma3rs", "5awl", "khwl", "khwel", "khoool",
   "mtna", "mtnak", "kosmk", "ksmk", "qosmk", "hnekk", "hneko", "ksomen",
   "omak", "omk", "pitnak", "anek", "betnak", "bitnak", "bytnak",
@@ -55,10 +55,9 @@ const BAD_WORDS = [
   "5awlll", "5awwwl", "3rsss", "3rrrs", "m3rrs", "m3rss",
   
   // English root insults
-  "fuck", "fuk", "fk", "shit", "sh1t", "shet",
-  "bitch", "b!tch", "dick", "d1ck", "dic", "cock", "c0ck", "pussy",
-  "trash", "loser", "idiot", "stupid", "moron",
-  "porn", "pornhub", "xxx", "xnxx", "disck", "anus",
+  "fuck", "fuk", "shit", "sh1t", "shet",
+  "bitch", "b!tch", "dick", "d1ck", "cock", "c0ck", "pussy",
+  "porn", "pornhub", "xxx", "xnxx", "anus",
 ];
 
 // Precompute sorted bad words array (longest first) for performance
@@ -66,37 +65,7 @@ const BAD_WORDS = [
 const SORTED_BAD_WORDS = [...BAD_WORDS].sort((a, b) => b.length - a.length);
 
 /**
- * Normalizes text by:
- * - Normalizing Unicode characters (handles different Arabic representations)
- * - Removing zero-width characters that could bypass filters
- * 
- * @param text - The text to normalize
- * @returns Normalized text
- */
-function normalizeText(text: string): string {
-  if (!text || typeof text !== 'string') {
-    return text;
-  }
-  
-  // Unicode normalization (handles Arabic text variations)
-  // NFKC: Compatibility Decomposition, followed by Canonical Composition
-  let normalized = text.normalize('NFKC');
-  
-  // Remove zero-width characters that could bypass filters
-  // U+200B: zero-width space, U+200C: zero-width non-joiner, U+200D: zero-width joiner
-  // U+FEFF: zero-width no-break space, U+2060: word joiner
-  normalized = normalized.replace(/[\u200B-\u200D\uFEFF\u2060]/g, '');
-  
-  // Remove other potentially problematic invisible characters
-  // U+200E: left-to-right mark, U+200F: right-to-left mark
-  normalized = normalized.replace(/[\u200E\u200F]/g, '');
-  
-  return normalized;
-}
-
-/**
  * Creates a regex pattern for a bad word, handling Arabic vs English/transliterated differently.
- * Extracted to reduce code duplication between containsBadWords and censorText.
  * 
  * @param badWord - The bad word to create a regex for
  * @returns A regex pattern for matching the bad word
@@ -117,6 +86,42 @@ function createBadWordRegex(badWord: string): RegExp {
     // English/transliterated: use word boundaries to match whole words only
     return new RegExp(`\\b${escapedWord}\\b`, 'gi');
   }
+}
+
+// Precompute regex patterns for all bad words at module load time
+// This significantly improves performance by avoiding regex creation in loops
+const SORTED_BAD_WORD_REGEXES = SORTED_BAD_WORDS.map(word => ({
+  word,
+  regex: createBadWordRegex(word),
+}));
+
+/**
+ * Normalizes text by:
+ * - Normalizing Unicode characters (handles different Arabic representations)
+ * - Removing zero-width characters that could bypass filters
+ * 
+ * @param text - The text to normalize
+ * @returns Normalized text
+ */
+function normalizeText(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
+  
+  // Unicode normalization (handles Arabic text variations)
+  // NFKC: Compatibility Decomposition, followed by Canonical Composition
+  let normalized = text.normalize('NFKC');
+  
+  // Remove zero-width characters that could bypass filters
+  // U+200B: zero-width space, U+200C: zero-width non-joiner, U+200D: zero-width joiner
+  // U+FEFF: zero-width no-break space, U+2060: word joiner
+  normalized = normalized.replace(/[\u200B-\u200D\uFEFF\u2060]/g, '');
+  
+  // Remove other potentially problematic invisible characters
+  // U+200E: left-to-right mark, U+200F: right-to-left mark
+  normalized = normalized.replace(/[\u200E\u200F]/g, '');
+  
+  return normalized;
 }
 
 /**
@@ -140,11 +145,9 @@ export function containsBadWords(text: string): boolean {
   // Normalize text to handle Unicode variations and zero-width characters
   const normalizedText = normalizeText(text);
 
-  // Use precomputed sorted bad words array (longest first)
+  // Use precomputed regex patterns (longest first)
   // This ensures phrases are matched before individual words
-  for (const badWord of SORTED_BAD_WORDS) {
-    const regex = createBadWordRegex(badWord);
-    
+  for (const { regex } of SORTED_BAD_WORD_REGEXES) {
     // Use search() instead of test() to avoid regex state issues with global flag
     // search() returns -1 if no match, or index if found (no state maintained)
     if (normalizedText.search(regex) !== -1) {
@@ -171,11 +174,9 @@ export function censorText(text: string): string {
   // Normalize text to handle Unicode variations and zero-width characters
   let censoredText = normalizeText(text);
 
-  // Use precomputed sorted bad words array (longest first)
+  // Use precomputed regex patterns (longest first)
   // This ensures phrases are matched before individual words
-  for (const badWord of SORTED_BAD_WORDS) {
-    const regex = createBadWordRegex(badWord);
-    
+  for (const { regex } of SORTED_BAD_WORD_REGEXES) {
     censoredText = censoredText.replace(regex, (match: string) => {
       return replaceWithAsterisks(match);
     });
