@@ -11,8 +11,8 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
-    feature: "Censor utility with bad words list and detection/censoring functions",
-    suggestedBy: ["@Deiaamohamed","@KeroRaed"],
+    feature: "Added automatic bad words censoring for comments",
+    suggestedBy: ["@DeiaaMohamed"],
     implementedBy: ["@DeiaaMohamed"],
     date: "28 Nov 2025",
   },
