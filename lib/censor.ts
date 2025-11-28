@@ -3,21 +3,63 @@
  */
 
 // Bad words list (case-insensitive matching)
+// Organized by root forms and variations to catch multiple forms
 const BAD_WORDS = [
-  // Arabic/transliterated words
-  "kosmk", "ksmk", "somk", "tnak", "احا", "المتهاك", "دبري", "ذبري", "ذبي", 
-  "ذوبر", "زاني", "زوبر", "سيسى", "سيسي", "شرمط", "عرص", "قحب", "كسمك", 
-  "كسمين", "كوسم", "كوسمك", "متناك", "نيك", "وسخة", "وسخه",
+  // Arabic root insults (will catch variations)
+  "احا", "أحا", "خول", "عرص", "قحب", "شرمط", "زبي", "زنا", "وسخ", "وسخة",
+  "معرص", "متناك", "منيك",  "وضيع", "حقير", "سافل", "بايظ", "مسحولين", "مجرم",
+  "وسخان", "سيس", "سيساوي", "هلفوت", "منحط",
+  "بضان", "بضانو", "بضاني", "بضنت", "بضنتني", "بضين", "اتبضن", "اتبضنت",
+  "خرا", "خخ", "شخر", "علقة", "كس", "كسين", "طيزك", "زبك",
+  "شرموط", "شرموطة", "شرموطه", "ِشرموطه", "الشرموط", "العرص", "القحبة",
+  "المتناكه", "المنيوك", "النيك", "معرصين",
   
-  // English/transliterated words
-  "anek", "betnak", "bitnak", "bytnak", "cock", "dick", "disck", "fuck", 
-  "ga7ba", "hnekk", "hneko", "ksomen", "labwa", "mnik", "omak", "omk", 
-  "pitnak", "pornhub", "pussy", "qosmk", "sharmot", "sharmota", "sharmt", 
-  "zbory", "zobrey", "zobry", "zobrعرص", "المتهاكة", "المتهاكه", "امك عندى", 
-  "خول", "دوبري", "ذبري", "ذبي", "زاني", "زبي", "زنا", "زوبري", "سيسي", 
-  "شراميط", "شرمط", "عندي امك", "قحبه", "كس امك", "كسم", "كسمك", "كسمن", 
-  "كسمين", "كوس امك", "متناكه", "معرص", "منايك", "منيك", "منيوك", "منيوكه", 
-  "ميتين امك", "نيكك", "نيكه", "و علق", "ولاد وسخه", "يعرصك سمك"
+  // Arabic phrases and compound insults
+  "ابن الكلب", "يابن الكلب", "يا كلب", "يا حمار", "امك", "اختك", "ابوك",
+  "عيلة بايظة", "وسختك", "ولاد وسخه", "يا عرص", "يعرصك",
+  "يخرب بيتك", "يلعن شكلك", "اقلع", "انقلع", "غور", "غور بقى",
+  "قلة ادب", "قلة ذوق", "عديم الكرامة",
+  "المتهاك", "المتهاكة", "المتهاكه", "امك عندى", "عندي امك",
+  "دبري", "ذبري", "ذبي", "ذوبر", "زاني", "زوبر", "زوبري",
+  "سيسى", "سيسي", "شراميط", "كسم", "كسمك", "كسمين", "كسمن",
+  "كوسم", "كوسمك", "كوس امك", "كس امك", "متناكه", "منايك",
+  "منيوك", "منيوكه", "ميتين امك", "نيك", "نيكك", "نيكه",
+  "و علق", "يعرصك سمك",
+  "ابن العاهره", "ابن المره", "ابن الوخسة", "ابن الوسخه",
+  "ابن متناكة", "ابن وسخة", "بنت المتناكه", "بنت متناكة",
+  "اين متناكة", "بيعرصو", "تتشرمط", "تنيك", "تنيكك",
+  "دين امك", "عيل معرص", "قلع اللباس", "كسختك",
+  "ناكو ليه", "هتنيك", "هفشخها",
+  
+  // Arabic transliterated (root forms)
+  "a7a", "a7ba", "ga7ba", "labwa", "kos", "KOSM", "ksm", "qosm", "somk", "tnak",
+  "mnik", "mnyk", "mnayk", "manyak", "zob", "zb", "zbr", "zobr",
+  "2rs", "3rs", "4rs", "5rs", "m3rs", "ma3rs", "5awl", "khwl", "khwel", "khoool",
+  "mtna", "mtnak", "kosmk", "ksmk", "qosmk", "hnekk", "hneko", "ksomen",
+  "omak", "omk", "pitnak", "anek", "betnak", "bitnak", "bytnak",
+  "sharmot", "sharmota", "sharmt", "zbory", "zobrey", "zobry",
+  "nek", "YL3AN DEN", "بينينق",
+  
+  // Arabic transliterated with obfuscation
+  "3r$", "3r5", "m3r$", "m3r5", "5@wl", "5@w1", "5@wll", "5*w*l",
+  "mtn@k", "mtn@q", "mtna*",
+  
+  // Arabic transliterated with spaces (to bypass filters)
+  "ك س م", "م ن ي ك", "م ت ن ا ك", "ع ر ص", "خ و ل", "و س خ",
+  "3 r s", "m 3 r s", "5 a w l", "m t n a k",
+  
+  // Extended variations (repeated letters to bypass filters)
+  "احاا", "ااحا", "اااحا", "خووول", "خوول", "خوووول",
+  "عرصص", "عرصسس", "قححب", "قححبب", "شرمطط", "شرمططط",
+  "وسخخ", "وسخخخ", "mtnakkk", "mtnnaak", "mtnakkkk",
+  "5awlll", "5awwwl", "3rsss", "3rrrs", "m3rrs", "m3rss",
+  
+  // English root insults
+  "fuck", "fuk", "fk", "shit", "sh1t", "shet",
+  "bitch", "b!tch", "dick", "d1ck", "dic", "cock", "c0ck", "pussy",
+  "trash", "loser", "idiot", "stupid", "moron",
+  "porn", "pornhub", "xxx", "xnxx", "disck", "anus",
+  "test", "test2"
 ];
 
 /**
