@@ -103,8 +103,9 @@ export function containsBadWords(text: string): boolean {
       regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
     }
     
-    // If we find a match, return true immediately
-    if (regex.test(text)) {
+    // Use search() instead of test() to avoid regex state issues with global flag
+    // search() returns -1 if no match, or index if found (no state maintained)
+    if (text.search(regex) !== -1) {
       return true;
     }
   }
