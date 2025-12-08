@@ -462,7 +462,7 @@ export default function DashboardPage() {
             {/* Courses Section */}
             <div ref={coursesBoxRef} className="mb-6 sm:mb-8 w-full border border-border/50 p-4 sm:p-6 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recent Courses</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recent Submissions</h2>
                 {coursesWithSubmissions.length > 3 && (
                   <div className="flex items-center gap-2">
                     <button
