@@ -11,6 +11,12 @@ export interface LastUpdate {
  */
 export const lastUpdates: LastUpdate[] = [
   {
+    feature: "Added new courses: Advanced SQL Server Programming, Red Hat System Administration I, HTML5 & CSS3, Adobe Photoshop Web",
+    suggestedBy: "@TryOmar",
+    implementedBy: "@TryOmar",
+    date: "08 Dec 2025",
+  },
+  {
     feature: "Added automatic bad words censoring for comments",
     suggestedBy: ["@DeiaaMohamed"],
     implementedBy: ["@DeiaaMohamed"],
