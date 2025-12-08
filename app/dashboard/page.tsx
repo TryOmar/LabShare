@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Navigation from "@/components/navigation";
 import LastUpdates from "@/components/last-updates";
 import { formatDateTime } from "@/lib/utils";
@@ -86,19 +87,19 @@ const formatUploadTimestamp = (date: string | Date): string => {
 };
 
 // Course Card Component
-const CourseCard = ({ 
-  course, 
+const CourseCard = ({
+  course,
   router,
   currentStudentId,
   index = 0,
-}: { 
-  course: Course; 
+}: {
+  course: Course;
   router: { push: (path: string) => void };
   currentStudentId?: string;
   index?: number;
 }) => {
   const submissions = course.submissions || [];
-  const recentSubmissions = submissions.slice(0, 10);
+  const recentSubmissions = submissions.slice(0, 3);
 
   return (
     <div
@@ -133,11 +134,10 @@ const CourseCard = ({
                 return (
                   <div
                     key={submission.id}
-                    className={`p-2 sm:p-3 border border-border/50 rounded-lg ${
-                      isLocked
-                        ? "bg-muted/30 opacity-60"
-                        : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm hover-lift"
-                    } transition-all duration-300 animate-fade-in`}
+                    className={`p-2 sm:p-3 border border-border/50 rounded-lg ${isLocked
+                      ? "bg-muted/30 opacity-60"
+                      : "bg-white/80 hover:bg-accent/30 backdrop-blur-sm hover-lift"
+                      } transition-all duration-300 animate-fade-in`}
                     style={{ animationDelay: `${submissionIndex * 0.05}s` }}
                   >
                     {/* Lab Number and Title */}
@@ -147,8 +147,8 @@ const CourseCard = ({
                       </h4>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {submission.student_id === currentStudentId && (
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 font-semibold border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 transition-colors duration-200 backdrop-blur-sm"
                           >
                             You
@@ -200,13 +200,12 @@ const CourseCard = ({
                           router.push(`/submission/${submission.id}`);
                         }
                       }}
-                      className={`w-full py-2 sm:py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 ${
-                        isLocked
-                          ? "gradient-primary text-primary-foreground hover:gradient-primary-hover shadow-primary hover:shadow-primary-lg"
-                          : "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
-                      }`}
+                      className={`w-full py-2 sm:py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 ${isLocked
+                        ? "gradient-primary text-primary-foreground hover:gradient-primary-hover shadow-primary hover:shadow-primary-lg"
+                        : "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
+                        }`}
                     >
-                      {isLocked 
+                      {isLocked
                         ? (labNumber ? `Submit Lab ${labNumber} to Unlock` : 'Submit to Unlock')
                         : 'View Submission'
                       }
@@ -215,7 +214,7 @@ const CourseCard = ({
                 );
               })}
             </div>
-            {submissions.length > 10 && (
+            {submissions.length > 3 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -245,7 +244,7 @@ const CourseCard = ({
 
 export default function DashboardPage() {
   const router = useRouter();
-  
+
   // State
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
@@ -253,7 +252,7 @@ export default function DashboardPage() {
   const [coursesWithSubmissions, setCoursesWithSubmissions] = useState<Course[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Submission form state
   const [labsByCourse, setLabsByCourse] = useState<Map<string, Lab[]>>(new Map());
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
@@ -265,6 +264,8 @@ export default function DashboardPage() {
     course_id: string;
     course_name: string;
   }>>([]);
+
+  const [courseStartIndex, setCourseStartIndex] = useState(0);
 
   // Refs
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -281,12 +282,12 @@ export default function DashboardPage() {
     matchHeights();
     window.addEventListener('resize', matchHeights);
     const timeout = setTimeout(matchHeights, 100);
-    
+
     return () => {
       window.removeEventListener('resize', matchHeights);
       clearTimeout(timeout);
     };
-  }, [coursesWithSubmissions.length]);
+  }, [coursesWithSubmissions.length, courseStartIndex]);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -314,7 +315,7 @@ export default function DashboardPage() {
         }
 
         const data = await dashboardResponse.json();
-        
+
         setStudent(data.student);
         setTrack(data.track);
         setCourses(data.courses || []);
@@ -376,7 +377,7 @@ export default function DashboardPage() {
             {/* Submit Work Section */}
             <div className="mb-6 sm:mb-8 w-full border border-border/50 p-3 sm:p-4 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
               <h2 className="text-base sm:text-lg font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Submit Your Lab</h2>
-              
+
               {/* Suggested Labs */}
               {suggestedLabs.length > 0 && (
                 <div className="mb-3 flex items-center gap-2 flex-wrap">
@@ -449,11 +450,10 @@ export default function DashboardPage() {
                   }
                 }}
                 disabled={!selectedLabId}
-                className={`w-full py-2 px-4 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                  selectedLabId
-                    ? "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
-                    : "bg-muted/50 text-muted-foreground border border-border/50 cursor-not-allowed"
-                }`}
+                className={`w-full py-2 px-4 text-sm font-semibold rounded-lg transition-all duration-300 ${selectedLabId
+                  ? "gradient-primary text-primary-foreground hover:gradient-primary-hover hover:scale-[1.02] active:scale-[0.98] shadow-primary hover:shadow-primary-lg"
+                  : "bg-muted/50 text-muted-foreground border border-border/50 cursor-not-allowed"
+                  }`}
               >
                 Continue to Upload
               </button>
@@ -461,11 +461,31 @@ export default function DashboardPage() {
 
             {/* Courses Section */}
             <div ref={coursesBoxRef} className="mb-6 sm:mb-8 w-full border border-border/50 p-4 sm:p-6 rounded-xl shadow-modern hover:shadow-modern-lg transition-shadow duration-300 backdrop-blur-sm bg-gradient-card animate-slide-up">
-              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4 sm:mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recent Courses</h2>
-              
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Recent Courses</h2>
+                {coursesWithSubmissions.length > 3 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCourseStartIndex(prev => Math.max(0, prev - 1))}
+                      disabled={courseStartIndex === 0}
+                      className="p-1.5 rounded-full hover:bg-accent/50 text-foreground/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setCourseStartIndex(prev => Math.min(coursesWithSubmissions.length - 3, prev + 1))}
+                      disabled={courseStartIndex >= coursesWithSubmissions.length - 3}
+                      className="p-1.5 rounded-full hover:bg-accent/50 text-foreground/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {coursesWithSubmissions.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-                  {coursesWithSubmissions.map((course, index) => (
+                  {coursesWithSubmissions.slice(courseStartIndex, courseStartIndex + 3).map((course, index) => (
                     <CourseCard key={course.id} course={course} router={router} currentStudentId={student?.id} index={index} />
                   ))}
                 </div>
