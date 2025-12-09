@@ -9,6 +9,7 @@ import type {
 } from "@/lib/submission/types";
 import {
   updateSubmissionAnonymity,
+  updateSubmissionTitle,
   updateCodeFile,
   renameCodeFile as renameCodeFileApi,
   deleteCodeFile as deleteCodeFileApi,
@@ -48,6 +49,7 @@ export function useSubmissionMutations({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [isRunningCode, setIsRunningCode] = useState(false);
+  const [isRenamingSubmission, setIsRenamingSubmission] = useState(false);
 
   const handleToggleAnonymity = async (currentValue: boolean) => {
     if (!submission) return;
@@ -62,6 +64,28 @@ export function useSubmissionMutations({
     } catch (err) {
       console.error("Error updating submission anonymity:", err);
       toast.error("Failed to update anonymity setting. Please try again.");
+    }
+  };
+
+  const handleRenameSubmission = async (newTitle: string) => {
+    if (!submission) return;
+
+    setIsRenamingSubmission(true);
+    try {
+      const updatedSubmission = await updateSubmissionTitle(
+        submissionId,
+        newTitle
+      );
+      setSubmission(updatedSubmission);
+      toast.success("Submission renamed successfully!");
+    } catch (err) {
+      console.error("Error renaming submission:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to rename submission"
+      );
+      throw err;
+    } finally {
+      setIsRenamingSubmission(false);
     }
   };
 
@@ -260,7 +284,9 @@ export function useSubmissionMutations({
     isDeleting,
     isUpvoting,
     isRunningCode,
+    isRenamingSubmission,
     handleToggleAnonymity,
+    handleRenameSubmission,
     handleToggleUpvote,
     handleDeleteSubmission,
     handleUpdateCodeFile,
