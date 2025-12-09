@@ -168,7 +168,7 @@ export async function GET(
 
 /**
  * PATCH /api/submission/[id]
- * Updates a submission's anonymity setting.
+ * Updates a submission's title and/or anonymity setting.
  * Only the owner can update their submission.
  */
 export async function PATCH(
@@ -185,13 +185,45 @@ export async function PATCH(
     const { id: submissionId } = await params;
 
     const body = await request.json();
-    const { isAnonymous } = body;
+    const { isAnonymous, title } = body;
 
-    if (typeof isAnonymous !== "boolean") {
+    // Validate at least one field is provided
+    if (isAnonymous === undefined && title === undefined) {
+      return NextResponse.json(
+        { error: "At least one field (isAnonymous or title) must be provided" },
+        { status: 400 }
+      );
+    }
+
+    // Validate isAnonymous if provided
+    if (isAnonymous !== undefined && typeof isAnonymous !== "boolean") {
       return NextResponse.json(
         { error: "isAnonymous must be a boolean" },
         { status: 400 }
       );
+    }
+
+    // Validate title if provided
+    if (title !== undefined) {
+      if (typeof title !== "string") {
+        return NextResponse.json(
+          { error: "title must be a string" },
+          { status: 400 }
+        );
+      }
+      const trimmedTitle = title.trim();
+      if (trimmedTitle.length === 0) {
+        return NextResponse.json(
+          { error: "title cannot be empty" },
+          { status: 400 }
+        );
+      }
+      if (trimmedTitle.length > 100) {
+        return NextResponse.json(
+          { error: "title cannot exceed 100 characters" },
+          { status: 400 }
+        );
+      }
     }
 
     const supabase = await createClient();
@@ -218,13 +250,21 @@ export async function PATCH(
       );
     }
 
-    // Update anonymity
+    // Build update object dynamically
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (isAnonymous !== undefined) {
+      updateData.is_anonymous = isAnonymous;
+    }
+    if (title !== undefined) {
+      updateData.title = title.trim();
+    }
+
+    // Update submission
     const { data: updatedSubmission, error: updateError } = await supabase
       .from("submissions")
-      .update({
-        is_anonymous: isAnonymous,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", submissionId)
       .select("*, students(id, name, email)")
       .single();

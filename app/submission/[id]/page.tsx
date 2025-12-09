@@ -70,7 +70,9 @@ export default function SubmissionPage() {
     isDeleting,
     isUpvoting,
     isRunningCode,
+    isRenamingSubmission,
     handleToggleAnonymity,
+    handleRenameSubmission,
     handleToggleUpvote,
     handleDeleteSubmission,
     handleUpdateCodeFile,
@@ -279,8 +281,10 @@ export default function SubmissionPage() {
           isOwner={isOwner}
           student={student}
           isUpvoting={isUpvoting}
+          isRenamingSubmission={isRenamingSubmission}
           onToggleAnonymity={handleToggleAnonymity}
           onToggleUpvote={handleToggleUpvote}
+          onRenameSubmission={handleRenameSubmission}
           onBack={() => router.back()}
         />
 

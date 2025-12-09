@@ -55,7 +55,7 @@ export async function fetchSubmission(
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.error ||
-          "Access denied. You must submit a solution for this lab before viewing other submissions."
+        "Access denied. You must submit a solution for this lab before viewing other submissions."
       );
     }
     throw new Error(`Failed to load submission: ${response.statusText}`);
@@ -85,6 +85,33 @@ export async function updateSubmissionAnonymity(
 
   if (!response.ok) {
     throw new Error("Failed to update submission anonymity");
+  }
+
+  const data = await response.json();
+  return data.submission;
+}
+
+/**
+ * Update submission title (rename submission)
+ */
+export async function updateSubmissionTitle(
+  submissionId: string,
+  title: string
+): Promise<Submission> {
+  const response = await fetch(`/api/submission/${submissionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      title,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to update submission title");
   }
 
   const data = await response.json();
