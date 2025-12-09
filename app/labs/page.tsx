@@ -11,13 +11,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Accordion } from "@/components/ui/accordion";
+import { LabAccordionItem } from "@/components/lab/LabAccordionItem";
 
+/**
+ * Course data structure
+ */
 interface Course {
   id: string;
   name: string;
   description: string;
 }
 
+/**
+ * Lab data structure
+ */
 interface Lab {
   id: string;
   course_id: string;
@@ -25,8 +33,15 @@ interface Lab {
   title: string;
   description: string;
   hasSubmission?: boolean;
+  submissionCount?: number;
+  latestSubmissionDate?: string | null;
+  topUpvotes?: number;
+  totalViews?: number;
 }
 
+/**
+ * Student data structure
+ */
 interface Student {
   id: string;
   name: string;
@@ -34,18 +49,27 @@ interface Student {
   track_id: string;
 }
 
+/**
+ * Track data structure
+ */
 interface Track {
   id: string;
   code: string;
   name: string;
 }
 
+/**
+ * LabsPage displays all available labs in an accordion format.
+ * Users can expand labs to see submission previews without being redirected.
+ * Only clicking on a specific submission triggers the lock check.
+ */
 export default function LabsPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [labs, setLabs] = useState<Map<string, Lab[]>>(new Map());
   const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [expandedLabs, setExpandedLabs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -69,11 +93,11 @@ export default function LabsPage() {
         }
 
         const data = await response.json();
-        
+
         setStudent(data.student);
         setTrack(data.track);
         setCourses(data.courses || []);
-        
+
         // Convert labsByCourse object to Map
         const labsMap = new Map<string, Lab[]>();
         Object.entries(data.labsByCourse || {}).forEach(([courseId, labsList]) => {
@@ -121,7 +145,7 @@ export default function LabsPage() {
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text animate-slide-up">Labs</h1>
-          
+
           {/* Mobile Course Selector Button */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -156,14 +180,14 @@ export default function LabsPage() {
                     key={course.id}
                     onClick={() => {
                       setSelectedCourse(course.id);
+                      setExpandedLabs([]); // Reset expanded labs when switching courses
                       router.replace(`/labs?course=${course.id}`);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left p-3 border rounded-lg text-sm transition-all duration-300 ${
-                      selectedCourse === course.id
-                        ? "gradient-primary text-primary-foreground border-primary shadow-primary"
-                        : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
-                    }`}
+                    className={`w-full text-left p-3 border rounded-lg text-sm transition-all duration-300 ${selectedCourse === course.id
+                      ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                      : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
+                      }`}
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <p className="font-semibold break-words">{course.name}</p>
@@ -184,13 +208,13 @@ export default function LabsPage() {
                   key={course.id}
                   onClick={() => {
                     setSelectedCourse(course.id);
+                    setExpandedLabs([]); // Reset expanded labs when switching courses
                     router.replace(`/labs?course=${course.id}`);
                   }}
-                  className={`w-full text-left p-2 sm:p-3 border rounded-lg text-xs sm:text-sm transition-all duration-300 ${
-                    selectedCourse === course.id
-                      ? "gradient-primary text-primary-foreground border-primary shadow-primary"
-                      : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
-                  }`}
+                  className={`w-full text-left p-2 sm:p-3 border rounded-lg text-xs sm:text-sm transition-all duration-300 ${selectedCourse === course.id
+                    ? "gradient-primary text-primary-foreground border-primary shadow-primary"
+                    : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
+                    }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <p className="font-semibold break-words">{course.name}</p>
@@ -199,72 +223,44 @@ export default function LabsPage() {
             </div>
           </div>
 
-          {/* Labs List */}
+          {/* Labs Accordion */}
           <div className="lg:col-span-3">
             {selectedLabs && selectedLabs.length > 0 ? (
-              <div className="space-y-2 sm:space-y-3">
-                {selectedLabs.map((lab, index) => {
-                  const isLocked = !lab.hasSubmission;
-                  return (
-                    <div
-                      key={lab.id}
-                      onClick={() => {
-                        if (!isLocked) {
-                          router.push(`/lab/${lab.id}`);
-                        } else {
-                          router.push(`/lab/${lab.id}/locked`);
-                        }
-                      }}
-                      className={`border border-border/50 p-3 sm:p-4 rounded-xl relative cursor-pointer transition-all duration-300 animate-fade-in ${
-                        isLocked
-                          ? "bg-muted/30 opacity-60"
-                          : "bg-gradient-card hover:bg-accent/30 hover:border-primary/40 hover:shadow-modern backdrop-blur-sm shadow-modern"
-                      }`}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <div className="flex justify-between items-start gap-2 sm:gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`font-semibold text-sm sm:text-base ${isLocked ? "text-muted-foreground" : "text-foreground"} break-words`}>
-                              Lab {lab.lab_number}: {lab.title}
-                            </h3>
-                            {isLocked && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                          {lab.description && (
-                            <p className={`text-xs sm:text-sm mt-1 ${isLocked ? "text-muted-foreground/60" : "text-muted-foreground"} break-words`}>
-                              {lab.description}
-                            </p>
-                          )}
-                        </div>
-                        <span className={`text-xs px-2 py-1 border rounded-lg flex-shrink-0 whitespace-nowrap ${
-                          isLocked 
-                            ? "bg-muted/50 text-muted-foreground border-border/50" 
-                            : "bg-primary/10 text-primary border-primary/30 font-medium"
-                        }`}>
-                          Lab {lab.lab_number}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <Accordion
+                type="multiple"
+                value={expandedLabs}
+                onValueChange={setExpandedLabs}
+                className="space-y-0"
+              >
+                {selectedLabs.map((lab, index) => (
+                  <LabAccordionItem
+                    key={lab.id}
+                    lab={lab}
+                    index={index}
+                    isExpanded={expandedLabs.includes(lab.id)}
+                  />
+                ))}
+              </Accordion>
             ) : (
-              <p className="text-sm sm:text-base text-muted-foreground">No labs available for this course</p>
+              <div className="border border-border/50 rounded-xl p-6 sm:p-8 bg-gradient-card shadow-modern backdrop-blur-sm text-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  No labs available for this course
+                </p>
+              </div>
             )}
           </div>
         </div>

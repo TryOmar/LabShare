@@ -54,10 +54,10 @@ export async function GET(request: NextRequest) {
 
     // Get labs for each course with submission status - PARALLELIZED & DB-LEVEL OPTIMIZED
     const courseIds = coursesList.map((course: any) => course.id);
-    
+
     // Fetch all labs for all courses in parallel with a single query
-    // Fetch user submissions separately to check submission status (database-level)
-    const [labsResult, submissionsResult] = await Promise.all([
+    // Fetch user submissions and all submissions stats (database-level)
+    const [labsResult, userSubmissionsResult, allSubmissionsResult] = await Promise.all([
       supabase
         .from("labs")
         .select("*")
@@ -67,11 +67,16 @@ export async function GET(request: NextRequest) {
       supabase
         .from("submissions")
         .select("lab_id")
-        .eq("student_id", studentId)
+        .eq("student_id", studentId),
+      // Fetch all submissions to calculate stats per lab
+      supabase
+        .from("submissions")
+        .select("lab_id, created_at, upvote_count, view_count")
     ]);
 
     const { data: allLabsData, error: allLabsError } = labsResult;
-    const { data: userSubmissions } = submissionsResult;
+    const { data: userSubmissions } = userSubmissionsResult;
+    const { data: allSubmissions } = allSubmissionsResult;
 
     if (allLabsError) {
       console.error("Error fetching labs:", allLabsError);
@@ -86,16 +91,60 @@ export async function GET(request: NextRequest) {
       (userSubmissions || []).map((s: any) => s.lab_id)
     );
 
+    // Calculate submission stats per lab
+    const labStats: Record<string, {
+      submissionCount: number;
+      latestSubmissionDate: string | null;
+      topUpvotes: number;
+      totalViews: number;
+    }> = {};
+
+    (allSubmissions || []).forEach((submission: any) => {
+      const labId = submission.lab_id;
+      if (!labStats[labId]) {
+        labStats[labId] = {
+          submissionCount: 0,
+          latestSubmissionDate: null,
+          topUpvotes: 0,
+          totalViews: 0,
+        };
+      }
+
+      labStats[labId].submissionCount++;
+      labStats[labId].totalViews += submission.view_count || 0;
+
+      // Track latest submission date
+      if (!labStats[labId].latestSubmissionDate ||
+        new Date(submission.created_at) > new Date(labStats[labId].latestSubmissionDate)) {
+        labStats[labId].latestSubmissionDate = submission.created_at;
+      }
+
+      // Track highest upvote count
+      if ((submission.upvote_count || 0) > labStats[labId].topUpvotes) {
+        labStats[labId].topUpvotes = submission.upvote_count || 0;
+      }
+    });
+
     // Group labs by course - database already sorted by course_id and lab_number
-    // Minimal JS processing: just grouping and adding hasSubmission flag
+    // Add hasSubmission flag and submission stats
     const labsByCourse: Record<string, any[]> = {};
     (allLabsData || []).forEach((lab: any) => {
       if (!labsByCourse[lab.course_id]) {
         labsByCourse[lab.course_id] = [];
       }
+      const stats = labStats[lab.id] || {
+        submissionCount: 0,
+        latestSubmissionDate: null,
+        topUpvotes: 0,
+        totalViews: 0,
+      };
       labsByCourse[lab.course_id].push({
         ...lab,
         hasSubmission: submittedLabIds.has(lab.id),
+        submissionCount: stats.submissionCount,
+        latestSubmissionDate: stats.latestSubmissionDate,
+        topUpvotes: stats.topUpvotes,
+        totalViews: stats.totalViews,
       });
     });
 
