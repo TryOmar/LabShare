@@ -1,10 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import { Resend } from "resend";
 import pg from "pg";
 
 const { Client } = pg;
+
+/**
+ * GET /api/admin/students
+ * Returns all students with their admin status (admin only).
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+
+    const supabase = await createClient();
+
+    // Check admin status
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    // Get all students with track info
+    const { data: students, error: studentsError } = await supabase
+      .from("students")
+      .select("id, name, email, track_id, created_at, tracks(id, code, name)")
+      .order("created_at", { ascending: false });
+
+    if (studentsError) {
+      console.error("Error fetching students:", studentsError);
+      return NextResponse.json(
+        { error: "Failed to fetch students" },
+        { status: 500 }
+      );
+    }
+
+    // Get all admin emails
+    const { data: admins, error: adminsError } = await supabase
+      .from("admins")
+      .select("email");
+
+    if (adminsError) {
+      console.error("Error fetching admins:", adminsError);
+    }
+
+    // Create a set of admin emails (lowercase for case-insensitive comparison)
+    const adminEmails = new Set(
+      (admins || []).map((a: any) => a.email.toLowerCase())
+    );
+
+    // Add isAdmin flag to each student
+    const studentsWithAdmin = (students || []).map((student: any) => ({
+      ...student,
+      isAdmin: adminEmails.has(student.email.toLowerCase()),
+    }));
+
+    return NextResponse.json({
+      students: studentsWithAdmin,
+    });
+  } catch (error: any) {
+    console.error("Error in students API:", error);
+    return NextResponse.json(
+      { error: "An error occurred", message: error.message },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/admin/students
@@ -21,28 +91,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Get student email
-    const { data: student, error: studentError } = await supabase
-      .from("students")
-      .select("email")
-      .eq("id", studentId)
-      .single();
-
-    if (studentError || !student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if user is admin
-    const { data: admin, error: adminError } = await supabase
-      .from("admins")
-      .select("email")
-      .ilike("email", student.email)
-      .single();
-
-    if (adminError || !admin) {
+    // Check admin status
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+    if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized: Admin access required" },
         { status: 403 }
@@ -50,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { name, email, trackCode } = await request.json();
+    const { name, email, trackCode, makeAdmin } = await request.json();
 
     if (!name || !email || !trackCode) {
       return NextResponse.json(
@@ -103,7 +154,7 @@ export async function POST(request: NextRequest) {
 
     if (existingStudent) {
       return NextResponse.json(
-        { 
+        {
           error: "Student already exists",
           message: `Student with email ${email} already exists.`,
           student: existingStudent
@@ -135,10 +186,22 @@ export async function POST(request: NextRequest) {
 
       const newStudent = result.rows[0];
 
+      // If makeAdmin is true, add to admins table
+      if (makeAdmin) {
+        try {
+          await dbClient.query(
+            `INSERT INTO admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+            [email]
+          );
+        } catch (adminErr) {
+          console.error("Error adding admin:", adminErr);
+        }
+      }
+
       // Send notification email
       try {
         const resend = new Resend(RESEND_API_KEY);
-        
+
         await resend.emails.send({
           from: 'LabShare@tryomar.me',
           to: email,
@@ -189,15 +252,16 @@ export async function POST(request: NextRequest) {
           name: newStudent.name,
           email: newStudent.email,
           track: track.name,
+          isAdmin: makeAdmin || false,
           createdAt: newStudent.created_at,
         },
       });
     } catch (dbError: any) {
       await dbClient.end();
-      
+
       if (dbError.code === '23505') {
         return NextResponse.json(
-          { 
+          {
             error: "Student already exists",
             message: `Student with email ${email} already exists in the database.`
           },
@@ -220,3 +284,356 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * PATCH /api/admin/students
+ * Updates a student's details or admin status (admin only).
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+
+    const supabase = await createClient();
+
+    // Check admin status
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { targetStudentId } = body;
+
+    if (!targetStudentId) {
+      return NextResponse.json(
+        { error: "Student ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get the current student data
+    const { data: currentStudent, error: studentError } = await supabase
+      .from("students")
+      .select("email, name, track_id")
+      .eq("id", targetStudentId)
+      .single();
+
+    if (studentError || !currentStudent) {
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
+    }
+
+    const DATABASE_URL = process.env.DATABASE_URL?.trim();
+    if (!DATABASE_URL) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const dbClient = new Client({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+
+    try {
+      await dbClient.connect();
+
+      // Check if this is an admin status toggle request
+      if (typeof body.isAdmin === "boolean") {
+        const setAdmin = body.isAdmin;
+
+        if (setAdmin) {
+          // Add to admins table
+          await dbClient.query(
+            `INSERT INTO admins (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+            [currentStudent.email]
+          );
+        } else {
+          // Remove from admins table
+          await dbClient.query(
+            `DELETE FROM admins WHERE lower(email) = lower($1)`,
+            [currentStudent.email]
+          );
+        }
+
+        await dbClient.end();
+
+        return NextResponse.json({
+          success: true,
+          message: setAdmin ? "Admin privileges granted." : "Admin privileges revoked.",
+        });
+      }
+
+      // Check if this is a student details update request
+      if (body.name || body.email || body.trackCode) {
+        const { name, email, trackCode } = body;
+
+        // Prepare update data
+        const updates: any = {};
+        const updateParams: any[] = [];
+        let paramIndex = 1;
+
+        if (name) {
+          updates.name = name.trim();
+          updateParams.push(updates.name);
+        }
+
+        if (email) {
+          const newEmail = email.trim();
+          // Check for duplicate email if email is changing
+          if (newEmail.toLowerCase() !== currentStudent.email.toLowerCase()) {
+            const emailCheck = await dbClient.query(
+              "SELECT id FROM students WHERE lower(email) = lower($1) AND id != $2",
+              [newEmail, targetStudentId]
+            );
+
+            if (emailCheck.rows.length > 0) {
+              await dbClient.end();
+              return NextResponse.json(
+                { error: "Email already in use", message: `The email ${newEmail} is already used by another student.` },
+                { status: 409 }
+              );
+            }
+          }
+          updates.email = newEmail;
+          updateParams.push(updates.email);
+        }
+
+        if (trackCode) {
+          // Get track ID
+          const trackRes = await dbClient.query(
+            "SELECT id FROM tracks WHERE code = $1",
+            [trackCode]
+          );
+
+          if (trackRes.rows.length === 0) {
+            await dbClient.end();
+            return NextResponse.json(
+              { error: "Track not found" },
+              { status: 404 }
+            );
+          }
+          updates.track_id = trackRes.rows[0].id;
+          updateParams.push(updates.track_id);
+        }
+
+        if (updateParams.length === 0) {
+          await dbClient.end();
+          return NextResponse.json(
+            { error: "No fields to update" },
+            { status: 400 }
+          );
+        }
+
+        // Construct dynamic UPDATE query
+        const setClause = Object.keys(updates)
+          .map((key, idx) => `${key} = $${idx + 1}`)
+          .join(", ");
+
+        // Add ID parameter at the end
+        updateParams.push(targetStudentId);
+
+        await dbClient.query(
+          `UPDATE students SET ${setClause} WHERE id = $${updateParams.length}`,
+          updateParams
+        );
+
+        // If email changed, we might need to update admins table if user is an admin
+        // Note: The admins table is separate and links by email, so if email changes in students,
+        // it should ideally also change in admins table to maintain admin status.
+        if (updates.email && updates.email.toLowerCase() !== currentStudent.email.toLowerCase()) {
+          // Check if old email was admin
+          const adminCheck = await dbClient.query(
+            "SELECT id FROM admins WHERE lower(email) = lower($1)",
+            [currentStudent.email]
+          );
+
+          if (adminCheck.rows.length > 0) {
+            // Update admin email too
+            await dbClient.query(
+              "UPDATE admins SET email = $1 WHERE lower(email) = lower($2)",
+              [updates.email, currentStudent.email]
+            );
+          }
+        }
+
+        await dbClient.end();
+
+        return NextResponse.json({
+          success: true,
+          message: "Student details updated successfully.",
+        });
+      }
+
+      await dbClient.end();
+      return NextResponse.json(
+        { error: "Invalid update request" },
+        { status: 400 }
+      );
+
+    } catch (dbError: any) {
+      await dbClient.end();
+      console.error("Database error:", dbError);
+      return NextResponse.json(
+        { error: "Failed to update student", message: dbError.message },
+        { status: 500 }
+      );
+    }
+  } catch (error: any) {
+    console.error("Error in update student API:", error);
+    return NextResponse.json(
+      { error: "An error occurred", message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/admin/students
+ * Deletes a student (admin only).
+ * Prevents deletion if student has any submissions.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const authResult = await requireAuth();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    const studentId = authResult.studentId;
+
+    const supabase = await createClient();
+
+    // Check admin status
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const targetStudentId = searchParams.get("id");
+
+    if (!targetStudentId) {
+      return NextResponse.json(
+        { error: "Student ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Prevent self-deletion
+    if (targetStudentId === studentId) {
+      return NextResponse.json(
+        { error: "Cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+
+    // Check if student has any submissions
+    const { data: submissions, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("id")
+      .eq("student_id", targetStudentId);
+
+    if (submissionsError) {
+      console.error("Error checking submissions:", submissionsError);
+      return NextResponse.json(
+        { error: "Failed to check student submissions" },
+        { status: 500 }
+      );
+    }
+
+    if (submissions && submissions.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Cannot delete student with submissions",
+          message: `This student has ${submissions.length} submission(s). Please delete their submissions first before removing the student.`,
+          submissionCount: submissions.length
+        },
+        { status: 409 }
+      );
+    }
+
+    const DATABASE_URL = process.env.DATABASE_URL?.trim();
+    if (!DATABASE_URL) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    // Get student email first (for admin removal)
+    const { data: student } = await supabase
+      .from("students")
+      .select("email, name")
+      .eq("id", targetStudentId)
+      .single();
+
+    if (!student) {
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
+    }
+
+    const dbClient = new Client({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+
+    try {
+      await dbClient.connect();
+
+      // Remove from admins table if present
+      if (student?.email) {
+        await dbClient.query(
+          `DELETE FROM admins WHERE lower(email) = lower($1)`,
+          [student.email]
+        );
+      }
+
+      // Delete the student
+      const result = await dbClient.query(
+        `DELETE FROM students WHERE id = $1 RETURNING id`,
+        [targetStudentId]
+      );
+
+      await dbClient.end();
+
+      if (result.rows.length === 0) {
+        return NextResponse.json(
+          { error: "Student not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Student "${student.name}" deleted successfully.`,
+      });
+    } catch (dbError: any) {
+      await dbClient.end();
+      console.error("Database error:", dbError);
+      return NextResponse.json(
+        { error: "Failed to delete student", message: dbError.message },
+        { status: 500 }
+      );
+    }
+  } catch (error: any) {
+    console.error("Error in delete student API:", error);
+    return NextResponse.json(
+      { error: "An error occurred", message: error.message },
+      { status: 500 }
+    );
+  }
+}
