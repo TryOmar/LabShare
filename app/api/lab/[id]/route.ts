@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import { processAnonymousContentArray } from "@/lib/anonymity";
 
 /**
@@ -63,8 +64,11 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const isUploadRequest = searchParams.get("upload") === "true";
 
-    // Security check: User must have submitted this lab to access it (unless it's an upload request)
-    if (!userSubmissionData && !isUploadRequest) {
+    // Check if user is an admin
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+
+    // Security check: User must have submitted this lab to access it (unless it's an upload request or admin)
+    if (!userSubmissionData && !isUploadRequest && !isAdmin) {
       return NextResponse.json(
         { error: "Access denied. You must submit a solution for this lab before accessing it." },
         { status: 403 }
@@ -85,8 +89,8 @@ export async function GET(
       .select("*, students(id, name, email)")
       .eq("lab_id", labId);
 
-    // If not unlocked and hasn't submitted, show only own (unless it's an upload request)
-    if (!labUnlock && !userSubmissionData && !isUploadRequest) {
+    // If not unlocked and hasn't submitted, show only own (unless it's an upload request or user is admin)
+    if (!labUnlock && !userSubmissionData && !isUploadRequest && !isAdmin) {
       submissionsQuery = submissionsQuery.eq("student_id", studentId);
     }
 
@@ -114,6 +118,7 @@ export async function GET(
       track: studentData.tracks,
       userSubmission: userSubmissionData || null,
       submissions: processedSubmissions,
+      isAdmin,
     });
   } catch (error) {
     console.error("Error in lab API:", error);

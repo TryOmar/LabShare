@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { checkIsAdmin } from "@/lib/auth/admin";
 
 /**
  * Submission preview for labs page accordion
@@ -52,6 +53,9 @@ export async function GET(request: NextRequest) {
 
         const hasSubmitted = !!userSubmission;
 
+        // Check if user is an admin
+        const isAdmin = await checkIsAdmin(supabase, studentId);
+
         // Get all submissions for this lab (preview only)
         const { data: submissions, error: submissionsError } = await supabase
             .from("submissions")
@@ -94,6 +98,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             submissions: processedSubmissions,
             hasSubmitted,
+            isAdmin,
             totalCount: processedSubmissions.length,
         });
     } catch (error) {

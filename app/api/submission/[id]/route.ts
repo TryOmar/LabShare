@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import {
   getAttachmentDownloadUrl,
   deleteSubmissionFolder,
@@ -65,8 +66,12 @@ export async function GET(
 
     const isOwner = processedSubmission.student_id === studentId;
 
+    // Check if user is an admin
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+
     // Security check: User must have submitted a solution for this lab to view any submission
-    if (!isOwner) {
+    // Admins can bypass this requirement
+    if (!isOwner && !isAdmin) {
       const { data: userSubmission } = await supabase
         .from("submissions")
         .select("id")
@@ -157,6 +162,7 @@ export async function GET(
       student: studentData,
       track: studentData.tracks,
       isOwner,
+      isAdmin,
       codeFiles: codeFiles || [],
       attachments: attachmentsWithUrls,
     });
@@ -325,8 +331,11 @@ export async function DELETE(
       );
     }
 
-    // Verify ownership
-    if (submissionData.student_id !== studentId) {
+    // Check if user is an admin
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+
+    // Verify ownership or admin status
+    if (submissionData.student_id !== studentId && !isAdmin) {
       return NextResponse.json(
         { error: "Forbidden: Cannot delete other users' submissions" },
         { status: 403 }

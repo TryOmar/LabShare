@@ -25,6 +25,7 @@ interface UseSubmissionMutationsProps {
   submission: Submission | null;
   setSubmission: (submission: Submission | null) => void;
   isOwner: boolean;
+  isAdmin: boolean;
   selectedCodeFile: CodeFile | null;
   setSelectedCodeFile: (file: CodeFile | null) => void;
   selectedAttachment: Attachment | null;
@@ -38,6 +39,7 @@ export function useSubmissionMutations({
   submission,
   setSubmission,
   isOwner,
+  isAdmin,
   selectedCodeFile,
   setSelectedCodeFile,
   selectedAttachment,

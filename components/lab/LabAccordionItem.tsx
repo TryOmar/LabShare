@@ -55,6 +55,7 @@ export function LabAccordionItem({ lab, index, isExpanded }: LabAccordionItemPro
     const router = useRouter();
     const [submissions, setSubmissions] = useState<SubmissionPreview[]>([]);
     const [hasSubmitted, setHasSubmitted] = useState(lab.hasSubmission || false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
     const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -77,6 +78,7 @@ export function LabAccordionItem({ lab, index, isExpanded }: LabAccordionItemPro
                 const data = await response.json();
                 setSubmissions(data.submissions || []);
                 setHasSubmitted(data.hasSubmitted);
+                setIsAdmin(data.isAdmin || false);
                 setHasLoaded(true);
             }
         } catch (error) {
@@ -87,8 +89,8 @@ export function LabAccordionItem({ lab, index, isExpanded }: LabAccordionItemPro
     };
 
     const handleSubmissionClick = (submissionId: string) => {
-        if (hasSubmitted) {
-            // User has submitted - allow access to full submission
+        if (hasSubmitted || isAdmin) {
+            // User has submitted or is admin - allow access to full submission
             router.push(`/submission/${submissionId}`);
         } else {
             // User hasn't submitted - redirect to locked page
@@ -98,8 +100,8 @@ export function LabAccordionItem({ lab, index, isExpanded }: LabAccordionItemPro
 
     const handleUploadClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (hasSubmitted) {
-            // User already submitted - go to lab page to edit
+        if (hasSubmitted || isAdmin) {
+            // User already submitted or is admin - go to lab page to edit/view
             router.push(`/lab/${lab.id}`);
         } else {
             // User hasn't submitted - go to locked page first
@@ -132,7 +134,8 @@ export function LabAccordionItem({ lab, index, isExpanded }: LabAccordionItemPro
         return formatDate(dateString);
     };
 
-    const isLocked = !hasSubmitted;
+    // Lab is unlocked if user has submitted OR is an admin
+    const isLocked = !hasSubmitted && !isAdmin;
 
     return (
         <AccordionItem

@@ -18,6 +18,7 @@ interface UseSubmissionResult {
   student: Student | null;
   track: Track | null;
   isOwner: boolean;
+  isAdmin: boolean;
   loading: boolean;
   error: string;
   setSubmission: (submission: Submission | null) => void;
@@ -38,6 +39,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
   const [student, setStudent] = useState<Student | null>(null);
   const [track, setTrack] = useState<Track | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const router = useRouter();
@@ -50,6 +52,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
       setStudent(data.student);
       setTrack(data.track);
       setIsOwner(data.isOwner);
+      setIsAdmin(data.isAdmin || false);
       setCodeFiles(data.codeFiles || []);
       setAttachments(data.attachments || []);
 
@@ -142,6 +145,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
     student,
     track,
     isOwner,
+    isAdmin,
     loading,
     error,
     setSubmission,
