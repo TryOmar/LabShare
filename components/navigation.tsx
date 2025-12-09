@@ -57,9 +57,9 @@ export default function Navigation({ student, track }: NavigationProps) {
           aria-label="Go to dashboard"
         >
           <div className="flex-shrink-0">
-            <img 
-              src="/android-chrome-192x192.png" 
-              alt="Lab Sharing Logo" 
+            <img
+              src="/android-chrome-192x192.png"
+              alt="Lab Sharing Logo"
               className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
             />
           </div>
@@ -77,11 +77,11 @@ export default function Navigation({ student, track }: NavigationProps) {
         <div className="hidden md:flex gap-2 lg:gap-3 flex-shrink-0">
           {isAdmin && (
             <button
-              onClick={() => router.push("/admin/add-student")}
-              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-border/50 rounded-lg hover:bg-accent/50 hover:border-primary/30 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
-              aria-label="Add student"
+              onClick={() => router.push("/admin")}
+              className="px-4 lg:px-5 py-2 text-sm lg:text-base text-foreground font-medium border border-primary/50 rounded-lg bg-primary/5 hover:bg-primary/10 hover:border-primary/50 hover:text-primary backdrop-blur-sm transition-all duration-300 whitespace-nowrap shadow-modern hover:shadow-primary/10"
+              aria-label="Admin dashboard"
             >
-              Add Student
+              Admin
             </button>
           )}
           <button
@@ -158,22 +158,21 @@ export default function Navigation({ student, track }: NavigationProps) {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden border-t border-border/50 glass overflow-hidden transition-all duration-500 ease-out ${
-          mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        }`}
+        className={`md:hidden border-t border-border/50 glass overflow-hidden transition-all duration-500 ease-out ${mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
         aria-hidden={!mobileMenuOpen}
       >
         <div className="flex flex-col animate-slide-up">
           {isAdmin && (
             <button
               onClick={() => {
-                router.push("/admin/add-student");
+                router.push("/admin");
                 setMobileMenuOpen(false);
               }}
-              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 hover:bg-accent/50 hover:text-primary transition-all duration-300"
-              aria-label="Add student"
+              className="px-6 py-4 text-left text-foreground font-medium border-b border-border/30 bg-primary/5 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+              aria-label="Admin dashboard"
             >
-              Add Student
+              Admin
             </button>
           )}
           <button
