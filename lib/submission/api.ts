@@ -12,6 +12,7 @@ export interface SubmissionData {
   student: Student | null;
   track: Track | null;
   isOwner: boolean;
+  isAdmin: boolean;
   codeFiles: CodeFile[];
   attachments: Attachment[];
 }

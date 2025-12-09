@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import { processAnonymousContentArray } from "@/lib/anonymity";
 
 /**
@@ -89,6 +90,9 @@ export async function GET(request: NextRequest) {
       (userSubmissions || []).map((s: any) => s.lab_id)
     );
 
+    // Check if user is an admin (admins have access to all submissions)
+    const isAdmin = await checkIsAdmin(supabase, studentId);
+
     // Get lab IDs filtered by course_id in SQL - all filtering in database
     const { data: labsData, error: labsError } = await supabase
       .from("labs")
@@ -137,10 +141,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Add hasAccess flag to each submission and handle anonymous display
+    // Admins have access to all submissions
     const submissionsWithAccess = (submissionData || []).map(
       (submission: any) => {
         const isOwner = submission.student_id === studentId;
-        const hasAccess = isOwner || solvedLabIds.has(submission.lab_id);
+        const hasAccess = isOwner || solvedLabIds.has(submission.lab_id) || isAdmin;
 
         return {
           ...submission,

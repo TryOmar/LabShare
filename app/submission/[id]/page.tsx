@@ -54,6 +54,7 @@ export default function SubmissionPage() {
     student,
     track,
     isOwner,
+    isAdmin,
     loading,
     error,
     setSubmission,
@@ -86,6 +87,7 @@ export default function SubmissionPage() {
     submission,
     setSubmission,
     isOwner,
+    isAdmin,
     selectedCodeFile,
     setSelectedCodeFile,
     selectedAttachment,
@@ -488,13 +490,13 @@ export default function SubmissionPage() {
         </div>
 
         {/* Actions */}
-        {isOwner && (
+        {(isOwner || isAdmin) && (
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 animate-slide-up">
             <button
               onClick={() => dialogStates.setDeleteSubmissionDialogOpen(true)}
               className="w-full sm:w-auto px-6 py-2.5 border border-destructive/50 text-destructive font-semibold rounded-lg hover:bg-destructive/10 hover:border-destructive transition-all duration-300 shadow-modern"
             >
-              Delete Submission
+              {isAdmin && !isOwner ? "Delete Submission (Admin)" : "Delete Submission"}
             </button>
           </div>
         )}
