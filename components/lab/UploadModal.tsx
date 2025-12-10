@@ -93,52 +93,40 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
       setFileError("Please paste some code first");
       return;
     }
-    
+
     const filename = pasteHandler.pastedFileName.trim() || `code.${pasteHandler.language}`;
-    
+
     addPastedCodeFile({
       filename,
       language: pasteHandler.language,
       content: pasteHandler.pastedContent,
     });
-    
+
     pasteHandler.setPastedContent("");
     pasteHandler.setPastedFileName("");
     setFileError("");
-  };
-
-  // Handle backdrop click - only close if clicking directly on backdrop, not modal content
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if clicking directly on the backdrop (not on modal content)
-    // Don't close if user has text selected (they might be selecting text in an input)
-    const selection = window.getSelection();
-    const hasSelection = selection && selection.toString().length > 0;
-    
-    if (e.target === e.currentTarget && !hasSelection) {
-      onClose();
-    }
   };
 
   return (
     <>
       {/* Global drag overlay - appears when dragging files anywhere on the page */}
       {isDraggingOverPage && (
-        <div 
+        <div
           className="fixed inset-0 bg-white/80 backdrop-blur-md z-[60] flex items-center justify-center pointer-events-none animate-fade-in"
         >
           <div className="bg-gradient-card border-4 border-primary border-dashed rounded-2xl p-12 max-w-2xl mx-4 shadow-modern-xl transform transition-all duration-300 scale-105 animate-scale-in backdrop-blur-sm">
             <div className="text-center">
-              <svg 
-                className="mx-auto h-16 w-16 text-primary mb-4 animate-bounce" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className="mx-auto h-16 w-16 text-primary mb-4 animate-bounce"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
               <h3 className="text-lg sm:text-2xl font-bold text-foreground mb-2">Drop files to upload</h3>
@@ -148,19 +136,17 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
         </div>
       )}
 
-      <div 
+      <div
         className="fixed inset-0 bg-white/80 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto animate-fade-in"
-        onClick={handleBackdropClick}
       >
-        <div 
+        <div
           className="bg-gradient-card border border-border/50 p-4 sm:p-5 lg:p-7 max-w-lg w-full my-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-modern-xl backdrop-blur-sm animate-scale-in"
-          onClick={(e) => e.stopPropagation()}
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-5 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Upload Solution
           </h2>
 
-          <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-3 sm:space-y-4 w-full min-w-0">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 w-full min-w-0">
             {/* Title */}
             <div>
               <label className="block text-sm sm:text-base text-foreground font-semibold mb-2.5">Solution Name</label>
@@ -169,13 +155,6 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                onFocus={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onMouseUp={(e) => e.stopPropagation()}
-                onMouseMove={(e) => e.stopPropagation()}
-                onSelect={(e) => e.stopPropagation()}
-                onDragStart={(e) => e.stopPropagation()}
                 className="w-full px-4 py-3 text-sm sm:text-base border border-border/50 bg-white/80 text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-modern transition-all duration-300 backdrop-blur-sm hover:border-primary/30"
                 required
               />
@@ -202,26 +181,25 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDropWithFiles}
-                className={`border-2 border-dashed rounded-xl p-4 sm:p-5 lg:p-7 transition-all duration-300 w-full min-w-0 ${
-                  isDragging 
-                    ? 'border-primary bg-primary/10 scale-105 shadow-primary-lg' 
-                    : 'border-border/50 bg-white/80 hover:bg-accent/30 hover:border-primary/40 shadow-modern backdrop-blur-sm'
-                }`}
+                className={`border-2 border-dashed rounded-xl p-4 sm:p-5 lg:p-7 transition-all duration-300 w-full min-w-0 ${isDragging
+                  ? 'border-primary bg-primary/10 scale-105 shadow-primary-lg'
+                  : 'border-border/50 bg-white/80 hover:bg-accent/30 hover:border-primary/40 shadow-modern backdrop-blur-sm'
+                  }`}
               >
                 <div className="text-center">
                   {isDragging ? (
                     <>
-                      <svg 
-                        className="mx-auto h-12 w-12 text-primary mb-3 animate-pulse" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className="mx-auto h-12 w-12 text-primary mb-3 animate-pulse"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                         />
                       </svg>
                       <p className="text-lg font-semibold text-foreground mb-1">
@@ -233,17 +211,17 @@ export function UploadModal({ labId, onClose }: UploadModalProps) {
                     </>
                   ) : (
                     <>
-                      <svg 
-                        className="mx-auto h-10 w-10 text-gray-400 mb-3" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className="mx-auto h-10 w-10 text-gray-400 mb-3"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                         />
                       </svg>
                       <p className="text-sm text-foreground mb-2">
