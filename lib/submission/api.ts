@@ -93,6 +93,33 @@ export async function updateSubmissionAnonymity(
 }
 
 /**
+ * Move submission to a different lab
+ */
+export async function moveSubmission(
+  submissionId: string,
+  targetLabId: string
+): Promise<{ submission: Submission; message: string }> {
+  const response = await fetch(`/api/submission/${submissionId}/move`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      targetLabId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to move submission");
+  }
+
+  const data = await response.json();
+  return { submission: data.submission, message: data.message };
+}
+
+/**
  * Update submission title (rename submission)
  */
 export async function updateSubmissionTitle(

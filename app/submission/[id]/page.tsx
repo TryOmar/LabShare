@@ -26,6 +26,7 @@ import { useFileSelection } from "@/hooks/submission/useFileSelection";
 import { useCommentsRefresh } from "@/hooks/submission/useCommentsRefresh";
 import { AddFilesModal } from "@/components/submission/AddFilesModal";
 import { SubmissionHeader } from "@/components/submission/SubmissionHeader";
+import { MoveSubmissionDialog } from "@/components/submission/MoveSubmissionDialog";
 import { FileSidebar } from "@/components/submission/FileSidebar";
 import { CodeViewer } from "@/components/submission/CodeViewer";
 import { AttachmentViewer } from "@/components/submission/AttachmentViewer";
@@ -72,8 +73,10 @@ export default function SubmissionPage() {
     isUpvoting,
     isRunningCode,
     isRenamingSubmission,
+    isMovingSubmission,
     handleToggleAnonymity,
     handleRenameSubmission,
+    handleMoveSubmission,
     handleToggleUpvote,
     handleDeleteSubmission,
     handleUpdateCodeFile,
@@ -136,6 +139,7 @@ export default function SubmissionPage() {
 
   // Mobile sheet state
   const [mobileFileSheetOpen, setMobileFileSheetOpen] = React.useState(false);
+  const [showMoveDialog, setShowMoveDialog] = React.useState(false);
 
   // Handle start edit code file (needs to also select the file)
   const handleStartEditCodeFile = (
@@ -242,9 +246,9 @@ export default function SubmissionPage() {
       <Navigation student={student} track={track} />
 
       <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
-        {/* Breadcrumb Navigation */}
+        {/* Breadcrumb Navigation with Move Button */}
         {submission?.labs?.courses && submission?.labs && (
-          <div className="mb-4 sm:mb-6 animate-slide-up">
+          <div className="mb-4 sm:mb-6 animate-slide-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -264,7 +268,7 @@ export default function SubmissionPage() {
                       href={`/lab/${submission.labs.id}`}
                       className="hover:text-primary transition-colors duration-200"
                     >
-                      Lab {submission.labs.lab_number}
+                      Lab {submission.labs.lab_number}: {submission.labs.title}
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -274,6 +278,31 @@ export default function SubmissionPage() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+
+            {/* Move Submission Button - Only for owners */}
+            {isOwner && (
+              <button
+                onClick={() => setShowMoveDialog(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-primary/40 text-primary font-medium rounded-lg hover:bg-primary/10 hover:border-primary transition-all duration-200"
+                title="Move this submission to a different lab"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                Move
+              </button>
+            )}
           </div>
         )}
 
@@ -554,6 +583,18 @@ export default function SubmissionPage() {
           onConfirm={handleDeleteAttachmentConfirm}
           isLoading={isDeleting}
         />
+
+        {/* Move Submission Dialog */}
+        {submission && (
+          <MoveSubmissionDialog
+            isOpen={showMoveDialog}
+            onClose={() => setShowMoveDialog(false)}
+            onMove={handleMoveSubmission}
+            currentLabId={submission.lab_id}
+            currentCourseId={submission.labs?.course_id || ""}
+            isMoving={isMovingSubmission}
+          />
+        )}
       </div>
     </div>
   );

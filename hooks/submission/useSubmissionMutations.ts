@@ -10,6 +10,7 @@ import type {
 import {
   updateSubmissionAnonymity,
   updateSubmissionTitle,
+  moveSubmission as moveSubmissionApi,
   updateCodeFile,
   renameCodeFile as renameCodeFileApi,
   deleteCodeFile as deleteCodeFileApi,
@@ -52,6 +53,7 @@ export function useSubmissionMutations({
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [isRunningCode, setIsRunningCode] = useState(false);
   const [isRenamingSubmission, setIsRenamingSubmission] = useState(false);
+  const [isMovingSubmission, setIsMovingSubmission] = useState(false);
 
   const handleToggleAnonymity = async (currentValue: boolean) => {
     if (!submission) return;
@@ -147,6 +149,26 @@ export function useSubmissionMutations({
       console.error("Error deleting submission:", err);
       toast.error("Failed to delete submission. Please try again.");
       setIsDeleting(false);
+    }
+  };
+
+  const handleMoveSubmission = async (targetLabId: string): Promise<boolean> => {
+    if (!submission) return false;
+
+    setIsMovingSubmission(true);
+    try {
+      const result = await moveSubmissionApi(submissionId, targetLabId);
+      setSubmission(result.submission);
+      toast.success(result.message);
+      return true;
+    } catch (err) {
+      console.error("Error moving submission:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to move submission"
+      );
+      return false;
+    } finally {
+      setIsMovingSubmission(false);
     }
   };
 
@@ -287,8 +309,10 @@ export function useSubmissionMutations({
     isUpvoting,
     isRunningCode,
     isRenamingSubmission,
+    isMovingSubmission,
     handleToggleAnonymity,
     handleRenameSubmission,
+    handleMoveSubmission,
     handleToggleUpvote,
     handleDeleteSubmission,
     handleUpdateCodeFile,
