@@ -64,12 +64,12 @@ export default function LabPage() {
     const returnTo = searchParams.get("returnTo");
 
     if (shouldUpload) {
-      setShowUploadModal(true);
       // Store the returnTo submission ID if present and valid (UUID format: 8-4-4-4-12)
       // This prevents path injection attacks
       if (returnTo && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(returnTo)) {
         setReturnToSubmission(returnTo);
       }
+      // Don't show modal yet - wait until we know if user needs to upload
       // Remove the query params from URL
       router.replace(`/lab/${labId}`, { scroll: false });
     }
@@ -81,6 +81,7 @@ export default function LabPage() {
         // Check if this is an upload request
         const searchParams = new URLSearchParams(window.location.search);
         const isUploadRequest = searchParams.get("upload") === "true";
+        const returnTo = searchParams.get("returnTo");
 
         // Fetch lab data from API route (server-side validation)
         const url = isUploadRequest
@@ -130,6 +131,23 @@ export default function LabPage() {
         setTrack(data.track);
         setUserSubmission(data.userSubmission);
         setSubmissions(data.submissions || []);
+
+        // Check if user already has access (has submission or is admin)
+        // If they came from a locked submission redirect, go directly to that submission
+        const validReturnTo = returnTo && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(returnTo);
+        if (isUploadRequest && validReturnTo && data.userSubmission) {
+          // User already has a submission - redirect directly to the original submission
+          router.push(`/submission/${returnTo}`);
+          return;
+        }
+
+        // If this is an upload request and user doesn't have a submission, show modal
+        if (isUploadRequest && !data.userSubmission) {
+          setShowUploadModal(true);
+          if (validReturnTo) {
+            setReturnToSubmission(returnTo);
+          }
+        }
       } catch (err) {
         console.error("Error loading lab:", err);
         // On error, redirect to login as a fallback
