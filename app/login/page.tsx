@@ -16,6 +16,14 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Store redirect URL in sessionStorage for after terms acceptance
+        // Validate that it's a safe internal redirect (starts with / and no protocol)
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectUrl = searchParams.get('redirect');
+        if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.includes('://')) {
+          sessionStorage.setItem('postLoginRedirect', redirectUrl);
+        }
+
         const authResponse = await fetch("/api/auth/status", {
           method: "GET",
           credentials: "include",
@@ -24,7 +32,15 @@ export default function LoginPage() {
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated) {
-            // User is already logged in, redirect to dashboard (no need to show terms)
+            // User is already logged in - check for redirect
+            const savedRedirect = sessionStorage.getItem('postLoginRedirect');
+            if (savedRedirect && savedRedirect.startsWith('/') && !savedRedirect.includes('://')) {
+              sessionStorage.removeItem('postLoginRedirect');
+              router.push(savedRedirect);
+              return;
+            }
+            // Default to dashboard
+            sessionStorage.removeItem('postLoginRedirect');
             router.push("/dashboard");
             return;
           }

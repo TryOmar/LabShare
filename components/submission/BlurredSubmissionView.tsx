@@ -107,10 +107,10 @@ export function BlurredSubmissionView({
     const lab = submission.labs;
     const course = lab?.courses;
 
-    // Build the CTA link
+    // Build the CTA link - include submission ID so user can be redirected back after upload
     const ctaLink = accessStatus.requiresLogin
-        ? `/login?redirect=${encodeURIComponent(`/lab/${accessStatus.labId}?upload=true`)}`
-        : `/lab/${accessStatus.labId}?upload=true`;
+        ? `/login?redirect=${encodeURIComponent(`/lab/${accessStatus.labId}?upload=true&returnTo=${submission.id}`)}`
+        : `/lab/${accessStatus.labId}?upload=true&returnTo=${submission.id}`;
 
     const ctaText = accessStatus.requiresLogin
         ? "Login & Submit to Unlock"

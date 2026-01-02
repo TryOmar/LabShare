@@ -22,6 +22,7 @@ export default function LabPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [userSubmission, setUserSubmission] = useState<Submission | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [returnToSubmission, setReturnToSubmission] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function LabPage() {
     if (typeof window !== 'undefined') {
       const referrer = document.referrer;
       const currentPath = window.location.pathname;
-      
+
       // Always try to get a valid referrer
       if (referrer && referrer.includes(window.location.origin)) {
         try {
@@ -60,10 +61,16 @@ export default function LabPage() {
     // Check if upload=true is in query params
     const searchParams = new URLSearchParams(window.location.search);
     const shouldUpload = searchParams.get("upload") === "true";
-    
+    const returnTo = searchParams.get("returnTo");
+
     if (shouldUpload) {
       setShowUploadModal(true);
-      // Remove the query param from URL
+      // Store the returnTo submission ID if present and valid (UUID format)
+      // This prevents path injection attacks
+      if (returnTo && /^[a-f0-9-]{36}$/i.test(returnTo)) {
+        setReturnToSubmission(returnTo);
+      }
+      // Remove the query params from URL
       router.replace(`/lab/${labId}`, { scroll: false });
     }
   }, [labId, router]);
@@ -74,12 +81,12 @@ export default function LabPage() {
         // Check if this is an upload request
         const searchParams = new URLSearchParams(window.location.search);
         const isUploadRequest = searchParams.get("upload") === "true";
-        
+
         // Fetch lab data from API route (server-side validation)
-        const url = isUploadRequest 
+        const url = isUploadRequest
           ? `/api/lab/${labId}?upload=true`
           : `/api/lab/${labId}`;
-        
+
         const response = await fetch(url, {
           method: "GET",
           credentials: "include", // Include cookies
@@ -117,7 +124,7 @@ export default function LabPage() {
         }
 
         const data = await response.json();
-        
+
         setLab(data.lab);
         setStudent(data.student);
         setTrack(data.track);
@@ -251,7 +258,7 @@ export default function LabPage() {
                 // Navigate back to previous page or dashboard when canceling
                 const referrer = sessionStorage.getItem('labPageReferrer');
                 const currentPath = window.location.pathname;
-                
+
                 // Check if we have a valid referrer that's different from current page
                 if (referrer && referrer !== currentPath && referrer.startsWith('/') && referrer !== `/lab/${labId}`) {
                   router.push(referrer);
@@ -259,8 +266,15 @@ export default function LabPage() {
                   // Default to dashboard
                   router.push('/dashboard');
                 }
+                setReturnToSubmission(null);
               } else {
-                // After successful upload, reload the page to refresh lab data
+                // After successful upload, check if we should return to a submission
+                if (returnToSubmission) {
+                  router.push(`/submission/${returnToSubmission}`);
+                  setReturnToSubmission(null);
+                  return;
+                }
+                // Default: reload the page to refresh lab data
                 window.location.href = `/lab/${labId}`;
               }
             }}
