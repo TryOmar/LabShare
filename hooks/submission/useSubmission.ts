@@ -7,16 +7,7 @@ import type {
   Student,
   Track,
 } from "@/lib/submission/types";
-import { fetchSubmission, getAuthStatus } from "@/lib/submission/api";
-
-export interface AccessStatus {
-  hasFullAccess: boolean;
-  isLoggedIn: boolean;
-  requiresLogin: boolean;
-  requiresSubmission: boolean;
-  userSubmissionId: string | null;
-  labId: string;
-}
+import { fetchSubmission, getAuthStatus, type AccessStatus } from "@/lib/submission/api";
 
 interface UseSubmissionResult {
   submission: Submission | null;

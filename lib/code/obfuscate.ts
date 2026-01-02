@@ -33,7 +33,7 @@ const PRESERVED_KEYWORDS = new Set([
     'string', 'boolean', 'number', 'array', 'object', 'any', 'type',
     'std', 'vector', 'map', 'set', 'list', 'queue', 'stack', 'pair',
     'Node', 'Tree', 'Graph', 'String', 'Integer', 'Boolean', 'Object',
-    'NULL', 'nullptr', 'true', 'false',
+    'NULL',
 ]);
 
 /**
@@ -48,7 +48,7 @@ const PRESERVED_KEYWORDS = new Set([
  * @returns Obfuscated code with same structure but no semantic meaning
  */
 export function obfuscateCode(code: string): string {
-    // Process line by line to preserve structure
+    // Obfuscate in a single pass while preserving overall code structure
     return code
         // Replace string literals first (to avoid processing their contents)
         .replace(/"(?:[^"\\]|\\.)*"/g, '""')

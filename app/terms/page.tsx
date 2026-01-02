@@ -72,9 +72,9 @@ export default function TermsPage() {
     acceptedRef.current = true;
 
     // Check for post-login redirect (from locked submission flow)
-    // Validate that it's a safe internal redirect
+    // Validate that it's a safe internal redirect (starts with / but not // and no protocol)
     const redirectUrl = sessionStorage.getItem('postLoginRedirect');
-    if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.includes('://')) {
+    if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') && !redirectUrl.includes('://')) {
       sessionStorage.removeItem('postLoginRedirect');
       router.push(redirectUrl);
       return;

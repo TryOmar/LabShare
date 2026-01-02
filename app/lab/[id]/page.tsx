@@ -65,9 +65,9 @@ export default function LabPage() {
 
     if (shouldUpload) {
       setShowUploadModal(true);
-      // Store the returnTo submission ID if present and valid (UUID format)
+      // Store the returnTo submission ID if present and valid (UUID format: 8-4-4-4-12)
       // This prevents path injection attacks
-      if (returnTo && /^[a-f0-9-]{36}$/i.test(returnTo)) {
+      if (returnTo && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(returnTo)) {
         setReturnToSubmission(returnTo);
       }
       // Remove the query params from URL

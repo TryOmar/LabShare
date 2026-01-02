@@ -17,10 +17,10 @@ export default function LoginPage() {
     const checkAuth = async () => {
       try {
         // Store redirect URL in sessionStorage for after terms acceptance
-        // Validate that it's a safe internal redirect (starts with / and no protocol)
+        // Validate that it's a safe internal redirect (starts with / but not // and no protocol)
         const searchParams = new URLSearchParams(window.location.search);
         const redirectUrl = searchParams.get('redirect');
-        if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.includes('://')) {
+        if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') && !redirectUrl.includes('://')) {
           sessionStorage.setItem('postLoginRedirect', redirectUrl);
         }
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
           if (authData.authenticated) {
             // User is already logged in - check for redirect
             const savedRedirect = sessionStorage.getItem('postLoginRedirect');
-            if (savedRedirect && savedRedirect.startsWith('/') && !savedRedirect.includes('://')) {
+            if (savedRedirect && savedRedirect.startsWith('/') && !savedRedirect.startsWith('//') && !savedRedirect.includes('://')) {
               sessionStorage.removeItem('postLoginRedirect');
               router.push(savedRedirect);
               return;
