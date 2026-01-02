@@ -31,6 +31,7 @@ import { FileSidebar } from "@/components/submission/FileSidebar";
 import { CodeViewer } from "@/components/submission/CodeViewer";
 import { AttachmentViewer } from "@/components/submission/AttachmentViewer";
 import { UpvoteSection } from "@/components/submission/UpvoteSection";
+import { BlurredSubmissionView } from "@/components/submission/BlurredSubmissionView";
 import {
   Sheet,
   SheetContent,
@@ -45,7 +46,6 @@ export default function SubmissionPage() {
   const params = useParams();
   const submissionId = params.id as string;
 
-  // Main submission data hook
   const {
     submission,
     codeFiles,
@@ -58,6 +58,7 @@ export default function SubmissionPage() {
     isAdmin,
     loading,
     error,
+    accessStatus,
     setSubmission,
     setSelectedCodeFile,
     setSelectedAttachment,
@@ -194,11 +195,11 @@ export default function SubmissionPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
               <h2 className="text-xl font-bold text-destructive">
-                Access Denied
+                Error
               </h2>
             </div>
             <p className="text-destructive/90 mb-5 leading-relaxed">{error}</p>
@@ -209,6 +210,23 @@ export default function SubmissionPage() {
               Back to Labs
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Locked state - show blurred view for users without full access
+  if (accessStatus && !accessStatus.hasFullAccess && submission) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-white via-white to-accent/10 animate-fade-in">
+        <Navigation student={student} track={track} />
+        <div className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+          <BlurredSubmissionView
+            submission={submission}
+            codeFiles={codeFiles}
+            attachments={attachments}
+            accessStatus={accessStatus}
+          />
         </div>
       </div>
     );

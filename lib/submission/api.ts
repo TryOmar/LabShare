@@ -7,6 +7,15 @@ import type {
   ExecutionResult,
 } from "./types";
 
+export interface AccessStatus {
+  hasFullAccess: boolean;
+  isLoggedIn: boolean;
+  requiresLogin: boolean;
+  requiresSubmission: boolean;
+  userSubmissionId: string | null;
+  labId: string;
+}
+
 export interface SubmissionData {
   submission: Submission;
   student: Student | null;
@@ -15,6 +24,7 @@ export interface SubmissionData {
   isAdmin: boolean;
   codeFiles: CodeFile[];
   attachments: Attachment[];
+  accessStatus?: AccessStatus;
 }
 
 export interface UpdateCodeFileData {
@@ -39,6 +49,7 @@ export interface UploadFile {
 
 /**
  * Fetch submission data from the API
+ * Now public - returns submission with accessStatus indicating if user can view full content
  */
 export async function fetchSubmission(
   submissionId: string
@@ -49,17 +60,8 @@ export async function fetchSubmission(
   });
 
   if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("UNAUTHORIZED");
-    }
-    if (response.status === 403) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error ||
-        "Access denied. You must submit a solution for this lab before viewing other submissions."
-      );
-    }
-    throw new Error(`Failed to load submission: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to load submission: ${response.statusText}`);
   }
 
   const data = await response.json();

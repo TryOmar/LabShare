@@ -9,6 +9,15 @@ import type {
 } from "@/lib/submission/types";
 import { fetchSubmission, getAuthStatus } from "@/lib/submission/api";
 
+export interface AccessStatus {
+  hasFullAccess: boolean;
+  isLoggedIn: boolean;
+  requiresLogin: boolean;
+  requiresSubmission: boolean;
+  userSubmissionId: string | null;
+  labId: string;
+}
+
 interface UseSubmissionResult {
   submission: Submission | null;
   codeFiles: CodeFile[];
@@ -21,6 +30,7 @@ interface UseSubmissionResult {
   isAdmin: boolean;
   loading: boolean;
   error: string;
+  accessStatus: AccessStatus | null;
   setSubmission: (submission: Submission | null) => void;
   setSelectedCodeFile: (file: CodeFile | null) => void;
   setSelectedAttachment: (attachment: Attachment | null) => void;
@@ -42,6 +52,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [accessStatus, setAccessStatus] = useState<AccessStatus | null>(null);
   const router = useRouter();
 
   const loadSubmission = async () => {
@@ -55,6 +66,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
       setIsAdmin(data.isAdmin || false);
       setCodeFiles(data.codeFiles || []);
       setAttachments(data.attachments || []);
+      setAccessStatus(data.accessStatus || null);
 
       // Set selected file (prefer code file, then attachment)
       if (data.codeFiles && data.codeFiles.length > 0) {
@@ -68,27 +80,15 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
       console.error("Error loading submission:", err);
 
       if (err instanceof Error) {
-        if (err.message === "UNAUTHORIZED") {
-          router.push("/login");
-          return;
-        }
-        if (err.message.includes("Access denied")) {
-          setError(err.message);
+        // Handle 404 - submission not found
+        if (err.message.includes("not found")) {
+          setError("Submission not found");
           setLoading(false);
-          // Still try to get student data for navigation
-          try {
-            const authData = await getAuthStatus();
-            if (authData.authenticated && authData.student) {
-              setStudent(authData.student);
-            }
-          } catch {
-            // Ignore auth errors
-          }
           return;
         }
       }
-      // On error, redirect to login as a fallback
-      router.push("/login");
+      // On other errors, set generic error
+      setError("Failed to load submission");
     } finally {
       setLoading(false);
     }
@@ -148,6 +148,7 @@ export function useSubmission(submissionId: string): UseSubmissionResult {
     isAdmin,
     loading,
     error,
+    accessStatus,
     setSubmission,
     setSelectedCodeFile,
     setSelectedAttachment,
