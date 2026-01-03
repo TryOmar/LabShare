@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,7 @@ export default function HomePage() {
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated) {
-            // User is already logged in, redirect to dashboard (no need to show terms)
+            // User is already logged in, redirect to dashboard
             router.push("/dashboard");
             return;
           }

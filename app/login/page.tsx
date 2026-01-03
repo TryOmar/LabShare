@@ -16,7 +16,7 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Store redirect URL in sessionStorage for after terms acceptance
+        // Store redirect URL in sessionStorage for after login
         const searchParams = new URLSearchParams(window.location.search);
         const redirectUrl = searchParams.get('redirect');
         if (redirectUrl) {
@@ -142,8 +142,24 @@ export default function LoginPage() {
       }
 
       // Cookies are set by the server (httpOnly, secure, 7 days expiration)
-      // Redirect to terms page (will show terms on every login)
-      router.push("/terms");
+      // Check for stored redirect URL
+      const storedRedirect = sessionStorage.getItem('postLoginRedirect');
+      if (storedRedirect) {
+        sessionStorage.removeItem('postLoginRedirect');
+        // Normalize backslashes and validate it's an internal path
+        const normalized = storedRedirect.replace(/\\/g, '/');
+        if (
+          normalized.startsWith('/') &&
+          !normalized.startsWith('//') &&
+          !normalized.includes('://') &&
+          !normalized.includes('/\\')
+        ) {
+          router.push(normalized);
+          return;
+        }
+      }
+      // Default to dashboard
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
