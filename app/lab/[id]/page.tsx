@@ -135,14 +135,16 @@ export default function LabPage() {
         // Check if user already has access (has submission or is admin)
         // If they came from a locked submission redirect, go directly to that submission
         const validReturnTo = returnTo && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(returnTo);
-        if (isUploadRequest && validReturnTo && data.userSubmission) {
-          // User already has a submission - redirect directly to the original submission
+        const hasAccess = data.userSubmission || data.isAdmin;
+
+        if (isUploadRequest && validReturnTo && hasAccess) {
+          // User already has access - redirect directly to the original submission
           router.push(`/submission/${returnTo}`);
           return;
         }
 
-        // If this is an upload request and user doesn't have a submission, show modal
-        if (isUploadRequest && !data.userSubmission) {
+        // If this is an upload request and user doesn't have access, show modal
+        if (isUploadRequest && !hasAccess) {
           setShowUploadModal(true);
           if (validReturnTo) {
             setReturnToSubmission(returnTo);
