@@ -287,7 +287,7 @@ export function BlurredSubmissionView({
                                 </div>
 
                                 {/* Code Content with Syntax Highlighting + Blur Overlay */}
-                                <div className="relative">
+                                <div className="relative min-h-[300px]">
                                     {/* Actual code with syntax highlighting */}
                                     <div className="w-full overflow-x-auto bg-gray-50">
                                         <pre className="p-0 m-0 text-xs sm:text-sm leading-relaxed min-w-full">
