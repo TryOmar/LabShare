@@ -71,12 +71,26 @@ export default function TermsPage() {
     // Mark as accepted to prevent logout
     acceptedRef.current = true;
 
-    // Check for post-login redirect (from locked submission flow)
-    // Validate that it's a safe internal redirect (starts with / but not // and no protocol)
-    const redirectUrl = sessionStorage.getItem('postLoginRedirect');
-    if (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') && !redirectUrl.includes('://')) {
+    // Validate that it's a safe internal redirect using URL parsing
+    // This prevents open redirect attacks including backslash-based ones like /\example.com
+    const storedRedirect = sessionStorage.getItem('postLoginRedirect');
+    let safeRedirect: string | null = null;
+    if (storedRedirect) {
+      // Normalize backslashes to forward slashes
+      const normalized = storedRedirect.replace(/\\/g, '/');
+      try {
+        const url = new URL(normalized, window.location.origin);
+        // Allow only same-origin absolute paths
+        if (url.origin === window.location.origin && url.pathname.startsWith('/')) {
+          safeRedirect = url.pathname + url.search + url.hash;
+        }
+      } catch {
+        // If URL construction fails, treat as invalid
+      }
+    }
+    if (safeRedirect) {
       sessionStorage.removeItem('postLoginRedirect');
-      router.push(redirectUrl);
+      router.push(safeRedirect);
       return;
     }
 

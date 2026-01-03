@@ -154,12 +154,13 @@ export async function GET(
         })
       );
     } else {
-      // No download URLs for unauthorized users
+      // No download URLs for unauthorized users; keep object shape consistent
       processedAttachments = (attachments || []).map((attachment) => ({
         id: attachment.id,
         filename: attachment.filename,
         file_type: attachment.file_type,
-        // Omit: storage_path, downloadUrl
+        storage_path: null,
+        downloadUrl: null,
       }));
     }
 

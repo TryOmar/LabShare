@@ -7,7 +7,7 @@ import type {
   Student,
   Track,
 } from "@/lib/submission/types";
-import { fetchSubmission, getAuthStatus, type AccessStatus } from "@/lib/submission/api";
+import { fetchSubmission, type AccessStatus } from "@/lib/submission/api";
 
 interface UseSubmissionResult {
   submission: Submission | null;
