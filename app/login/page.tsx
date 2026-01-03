@@ -17,19 +17,18 @@ export default function LoginPage() {
     const checkAuth = async () => {
       try {
         // Store redirect URL in sessionStorage for after terms acceptance
-        // Validate using URL parsing to prevent open redirect attacks
         const searchParams = new URLSearchParams(window.location.search);
         const redirectUrl = searchParams.get('redirect');
         if (redirectUrl) {
-          // Normalize backslashes and validate using URL parsing
+          // Normalize backslashes and validate it's an internal path
           const normalized = redirectUrl.replace(/\\/g, '/');
-          try {
-            const url = new URL(normalized, window.location.origin);
-            if (url.origin === window.location.origin && url.pathname.startsWith('/')) {
-              sessionStorage.setItem('postLoginRedirect', url.pathname + url.search + url.hash);
-            }
-          } catch {
-            // Invalid URL - don't store
+          if (
+            normalized.startsWith('/') &&
+            !normalized.startsWith('//') &&
+            !normalized.includes('://') &&
+            !normalized.includes('/\\')
+          ) {
+            sessionStorage.setItem('postLoginRedirect', normalized);
           }
         }
 
@@ -41,23 +40,22 @@ export default function LoginPage() {
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated) {
-            // User is already logged in - check for redirect using URL parsing
+            // User is already logged in - check for redirect
             const storedRedirect = sessionStorage.getItem('postLoginRedirect');
             if (storedRedirect) {
+              sessionStorage.removeItem('postLoginRedirect');
               const normalized = storedRedirect.replace(/\\/g, '/');
-              try {
-                const url = new URL(normalized, window.location.origin);
-                if (url.origin === window.location.origin && url.pathname.startsWith('/')) {
-                  sessionStorage.removeItem('postLoginRedirect');
-                  router.push(url.pathname + url.search + url.hash);
-                  return;
-                }
-              } catch {
-                // Invalid URL - ignore
+              if (
+                normalized.startsWith('/') &&
+                !normalized.startsWith('//') &&
+                !normalized.includes('://') &&
+                !normalized.includes('/\\')
+              ) {
+                router.push(normalized);
+                return;
               }
             }
             // Default to dashboard
-            sessionStorage.removeItem('postLoginRedirect');
             router.push("/dashboard");
             return;
           }
