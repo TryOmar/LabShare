@@ -9,6 +9,50 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CodeFile, Attachment } from "@/lib/submission/types";
 
+/**
+ * File icon SVG component
+ */
+function FileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Attachment/clip icon SVG component
+ */
+function AttachmentIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
+      />
+    </svg>
+  );
+}
+
 interface FileSidebarProps {
   codeFiles: CodeFile[];
   attachments: Attachment[];
@@ -123,14 +167,14 @@ export function FileSidebar({
                         onSelectCodeFile(file);
                         onResetPreview();
                       }}
-                      className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
-                        selectedCodeFile?.id === file.id
+                      className={`flex-1 flex items-center gap-2 text-left p-2.5 border rounded-lg text-xs pr-8 transition-all duration-200 ${selectedCodeFile?.id === file.id
                           ? "gradient-primary text-primary-foreground border-primary shadow-primary"
                           : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
-                      }`}
+                        }`}
                       title={file.filename}
                     >
-                      📄 {file.filename}
+                      <FileIcon className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{file.filename}</span>
                     </button>
                     {isOwner && (
                       <div className="absolute right-1 z-10">
@@ -140,11 +184,10 @@ export function FileSidebar({
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${
-                                selectedCodeFile?.id === file.id
+                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${selectedCodeFile?.id === file.id
                                   ? "text-white hover:bg-gray-700 bg-white/10"
                                   : "text-foreground hover:bg-accent/50 bg-white"
-                              }`}
+                                }`}
                               title="Options"
                               style={{
                                 fontSize: "12px",
@@ -262,14 +305,14 @@ export function FileSidebar({
                         onSelectAttachment(attachment);
                         onResetPreview();
                       }}
-                      className={`flex-1 text-left p-2.5 border rounded-lg text-xs truncate pr-8 transition-all duration-200 ${
-                        selectedAttachment?.id === attachment.id
+                      className={`flex-1 flex items-center gap-2 text-left p-2.5 border rounded-lg text-xs pr-8 transition-all duration-200 ${selectedAttachment?.id === attachment.id
                           ? "gradient-primary text-primary-foreground border-primary shadow-primary"
                           : "bg-white/80 text-foreground border-border/50 hover:bg-accent/50 hover:border-primary/40 shadow-modern backdrop-blur-sm"
-                      }`}
+                        }`}
                       title={attachment.filename}
                     >
-                      📎 {attachment.filename}
+                      <AttachmentIcon className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{attachment.filename}</span>
                     </button>
                     {isOwner && (
                       <div className="absolute right-1 z-10">
@@ -279,11 +322,10 @@ export function FileSidebar({
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${
-                                selectedAttachment?.id === attachment.id
+                              className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-none ${selectedAttachment?.id === attachment.id
                                   ? "text-white hover:bg-gray-700 bg-white/10"
                                   : "text-foreground hover:bg-accent/50 bg-white"
-                              }`}
+                                }`}
                               title="Options"
                               style={{
                                 fontSize: "12px",

@@ -70,8 +70,32 @@ export default function TermsPage() {
 
     // Mark as accepted to prevent logout
     acceptedRef.current = true;
-    
-    // Redirect to dashboard
+
+    // Validate that it's a safe internal redirect using URL parsing
+    // This prevents open redirect attacks including backslash-based ones like /\example.com
+    const storedRedirect = sessionStorage.getItem('postLoginRedirect');
+    let safeRedirect: string | null = null;
+    if (storedRedirect) {
+      // Normalize backslashes to forward slashes
+      const normalized = storedRedirect.replace(/\\/g, '/');
+      try {
+        const url = new URL(normalized, window.location.origin);
+        // Allow only same-origin absolute paths
+        if (url.origin === window.location.origin && url.pathname.startsWith('/')) {
+          safeRedirect = url.pathname + url.search + url.hash;
+        }
+      } catch {
+        // If URL construction fails, treat as invalid
+      }
+    }
+    if (safeRedirect) {
+      sessionStorage.removeItem('postLoginRedirect');
+      router.push(safeRedirect);
+      return;
+    }
+
+    // Clear any invalid redirect and go to dashboard
+    sessionStorage.removeItem('postLoginRedirect');
     router.push("/dashboard");
   };
 
@@ -101,9 +125,9 @@ export default function TermsPage() {
                 Platform Purpose
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                LabShare is designed to improve learning by creating a collaborative environment 
-                where students can learn from each other and provide constructive feedback. 
-                This platform encourages peer learning and helps you grow through shared knowledge 
+                LabShare is designed to improve learning by creating a collaborative environment
+                where students can learn from each other and provide constructive feedback.
+                This platform encourages peer learning and helps you grow through shared knowledge
                 and experiences.
               </p>
             </div>
@@ -113,20 +137,20 @@ export default function TermsPage() {
                 Your Commitment
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4 sm:mb-5">
-                To maintain the integrity of the learning process and ensure everyone benefits 
+                To maintain the integrity of the learning process and ensure everyone benefits
                 from this platform, you must agree to the following:
               </p>
               <ul className="list-disc list-inside space-y-2.5 text-sm sm:text-base text-muted-foreground ml-2 sm:ml-4">
                 <li>
-                  <strong className="text-foreground">Complete and upload your work:</strong> Finish each lab assignment, have it <strong className="text-foreground">reviewed by an instructor</strong>, 
+                  <strong className="text-foreground">Complete and upload your work:</strong> Finish each lab assignment, have it <strong className="text-foreground">reviewed by an instructor</strong>,
                   then upload your solution before accessing other students' submissions.
                 </li>
                 <li>
-                  <strong className="text-foreground">Learn from each other:</strong> Use this platform to learn from your peers' 
+                  <strong className="text-foreground">Learn from each other:</strong> Use this platform to learn from your peers'
                   approaches and solutions, not to copy them.
                 </li>
                 <li>
-                  <strong className="text-foreground">Respect everyone:</strong> Maintain a respectful and positive learning environment. 
+                  <strong className="text-foreground">Respect everyone:</strong> Maintain a respectful and positive learning environment.
                   Sharing feedback is optional but encouraged.
                 </li>
               </ul>

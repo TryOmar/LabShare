@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { requireAuth } from "@/lib/auth";
+import { getAuthenticatedStudentId, requireAuth } from "@/lib/auth";
 import { checkIsAdmin } from "@/lib/auth/admin";
 import {
   getAttachmentDownloadUrl,
@@ -8,40 +8,28 @@ import {
   deleteSubmissionFiles,
 } from "@/lib/storage";
 import { processAnonymousContent } from "@/lib/anonymity";
+import { obfuscateCode } from "@/lib/code/obfuscate";
 
 /**
  * GET /api/submission/[id]
  * Returns submission data including code files and attachments.
+ * 
+ * Access States:
+ * 1. Full Access: Owner OR has submitted this lab OR admin → Full code
+ * 2. No Access (Logged): Logged in but no submission → Obfuscated code
+ * 3. No Access (Guest): Not logged in → Obfuscated code + requiresLogin flag
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Validate authentication
-    const authResult = await requireAuth();
-    if ("error" in authResult) {
-      return authResult.error;
-    }
-    const studentId = authResult.studentId;
     const { id: submissionId } = await params;
-
     const supabase = await createClient();
 
-    // Get student info
-    const { data: studentData, error: studentError } = await supabase
-      .from("students")
-      .select("*, tracks(id, code, name)")
-      .eq("id", studentId)
-      .single();
-
-    if (studentError || !studentData) {
-      console.error("Error fetching student:", studentError);
-      return NextResponse.json(
-        { error: "Failed to fetch student data" },
-        { status: 500 }
-      );
-    }
+    // Try to get authenticated student (optional - returns null if not logged in)
+    const studentId = await getAuthenticatedStudentId();
+    const isLoggedIn = studentId !== null;
 
     // Get submission details with lab and course information
     const { data: submissionData, error: submissionError } = await supabase
@@ -52,26 +40,27 @@ export async function GET(
       .eq("id", submissionId)
       .single();
 
-    // Process anonymous display logic
-    const processedSubmission = submissionData
-      ? processAnonymousContent(submissionData, studentId)
-      : null;
-
-    if (submissionError || !processedSubmission) {
+    if (submissionError || !submissionData) {
       return NextResponse.json(
         { error: "Submission not found" },
         { status: 404 }
       );
     }
 
-    const isOwner = processedSubmission.student_id === studentId;
+    // Process anonymous display logic (pass null if not logged in)
+    const processedSubmission = processAnonymousContent(submissionData, studentId || "");
 
-    // Check if user is an admin
-    const isAdmin = await checkIsAdmin(supabase, studentId);
+    const isOwner = isLoggedIn && processedSubmission.student_id === studentId;
 
-    // Security check: User must have submitted a solution for this lab to view any submission
-    // Admins can bypass this requirement
-    if (!isOwner && !isAdmin) {
+    // Check if user is an admin (only if logged in)
+    const isAdmin = isLoggedIn ? await checkIsAdmin(supabase, studentId) : false;
+
+    // Determine access level
+    let hasFullAccess = isOwner || isAdmin;
+    let userSubmissionId: string | null = null;
+
+    // Check if user has submitted to this lab (only if logged in and not owner/admin)
+    if (isLoggedIn && !hasFullAccess) {
       const { data: userSubmission } = await supabase
         .from("submissions")
         .select("id")
@@ -79,19 +68,25 @@ export async function GET(
         .eq("student_id", studentId)
         .single();
 
-      if (!userSubmission) {
-        return NextResponse.json(
-          {
-            error:
-              "Access denied. You must submit a solution for this lab before viewing other submissions.",
-          },
-          { status: 403 }
-        );
+      if (userSubmission) {
+        hasFullAccess = true;
+        userSubmissionId = userSubmission.id;
       }
     }
 
-    // Increment view count (only for non-owners) - server-side validation
-    if (!isOwner) {
+    // Get student info (only if logged in)
+    let studentData = null;
+    if (isLoggedIn) {
+      const { data: fetchedStudent } = await supabase
+        .from("students")
+        .select("*, tracks(id, code, name)")
+        .eq("id", studentId)
+        .single();
+      studentData = fetchedStudent;
+    }
+
+    // Increment view count (only for non-owners who have access)
+    if (hasFullAccess && !isOwner) {
       await supabase
         .from("submissions")
         .update({
@@ -130,41 +125,79 @@ export async function GET(
       );
     }
 
-    // Generate signed URLs for attachments (valid for 1 hour)
-    const attachmentsWithUrls = await Promise.all(
-      (attachments || []).map(async (attachment) => {
-        const urlResult = await getAttachmentDownloadUrl(
-          attachment.storage_path,
-          3600
-        );
-        return {
-          ...attachment,
-          downloadUrl: "url" in urlResult ? urlResult.url : null,
-        };
-      })
-    );
+    // Process code files - obfuscate if user doesn't have full access
+    const processedCodeFiles = (codeFiles || []).map((file) => {
+      if (hasFullAccess) {
+        return file;
+      }
+      // Obfuscate code content server-side - real code never reaches client
+      return {
+        ...file,
+        content: obfuscateCode(file.content),
+      };
+    });
 
-    // Check if current user has upvoted this submission
-    const { data: userUpvote, error: upvoteCheckError } = await supabase
-      .from("submission_upvotes")
-      .select("id")
-      .eq("student_id", studentId)
-      .eq("submission_id", submissionId)
-      .single();
+    // Process attachments - only provide download URLs for users with full access
+    let processedAttachments;
+    if (hasFullAccess) {
+      // Generate signed URLs for attachments (valid for 1 hour)
+      processedAttachments = await Promise.all(
+        (attachments || []).map(async (attachment) => {
+          const urlResult = await getAttachmentDownloadUrl(
+            attachment.storage_path,
+            3600
+          );
+          return {
+            ...attachment,
+            downloadUrl: "url" in urlResult ? urlResult.url : null,
+          };
+        })
+      );
+    } else {
+      // No download URLs for unauthorized users; keep object shape consistent
+      processedAttachments = (attachments || []).map((attachment) => ({
+        id: attachment.id,
+        filename: attachment.filename,
+        file_type: attachment.file_type,
+        storage_path: null,
+        downloadUrl: null,
+      }));
+    }
 
-    const userHasUpvoted = userUpvote !== null && !upvoteCheckError;
+    // Check if current user has upvoted this submission (only if logged in)
+    let userHasUpvoted = false;
+    if (isLoggedIn) {
+      const { data: userUpvote, error: upvoteCheckError } = await supabase
+        .from("submission_upvotes")
+        .select("id")
+        .eq("student_id", studentId)
+        .eq("submission_id", submissionId)
+        .single();
 
+      userHasUpvoted = userUpvote !== null && !upvoteCheckError;
+    }
+
+    // Build response with access status
     return NextResponse.json({
       submission: {
         ...processedSubmission,
         user_has_upvoted: userHasUpvoted,
       },
       student: studentData,
-      track: studentData.tracks,
+      track: studentData?.tracks || null,
       isOwner,
       isAdmin,
-      codeFiles: codeFiles || [],
-      attachments: attachmentsWithUrls,
+      codeFiles: processedCodeFiles,
+      attachments: processedAttachments,
+      // Access control flags for frontend
+      accessStatus: {
+        hasFullAccess,
+        isLoggedIn,
+        requiresLogin: !isLoggedIn,
+        requiresSubmission: isLoggedIn && !hasFullAccess,
+        userSubmissionId,
+        labId: processedSubmission.lab_id,
+      },
     });
   } catch (error) {
     console.error("Error in submission API:", error);
